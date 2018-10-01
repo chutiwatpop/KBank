@@ -184,7 +184,15 @@ public without sharing class LeadTriggerHandler extends TriggerHandler {
 	}
 
 	public override void beforeUpdate(){
+		Id telesalesLeadMLPRecordType = GlobalUtility.getRecordTypeIdFromSObjectByDevName('Lead',GlobalConstants.LEAD_RECORDTYPE_TELESALES_LEAD_MLP_DEVNAME);
+		Id telesalesLeadMLPOnlyRecordType = GlobalUtility.getRecordTypeIdFromSObjectByDevName('Lead',GlobalConstants.LEAD_RECORDTYPE_TELESALES_LEAD_MLP_READ_ONLY_DEVNAME);
+		Id telesalesLeadRecordType = GlobalUtility.getRecordTypeIdFromSObjectByDevName('Lead',GlobalConstants.LEAD_RECORDTYPE_TELESALES_LEAD_DEVNAME);
+		Id telesalesScriptRecordType = GlobalUtility.getRecordTypeIdFromSObjectByDevName('Lead',GlobalConstants.LEAD_RECORDTYPE_TELESALES_SCRIPT_LEAD_DEVNAME);
+		Set<String> leadUpdateCampaignMemberStatusSet = new Set<String>{'Contacted','Unqualified','Qualified','App In'};
+		Set<Id> telesaleRecordTypeSet = new Set<Id>{telesalesLeadMLPRecordType,telesalesLeadMLPOnlyRecordType,telesalesLeadRecordType,telesalesScriptRecordType};
 		List<Id> possibleUserExtensionListId = new List<Id>();
+		Set<Id> leadUpdateRespondedCampaignMemberSet = new Set<Id>();
+		List<CampaignMember> campaignMemberRelatedList = new List<CampaignMember>();
 		Set<Id> setAccountId = new Set<Id>();
 		for(Lead eachLead : (List<Lead>) Trigger.new){
 			possibleUserExtensionListId.add(eachLead.Assigned_Owner__c);
@@ -212,21 +220,34 @@ public without sharing class LeadTriggerHandler extends TriggerHandler {
 				User_Extension__c userExFrom = userExtensionMapUserId.containsKey(eachLead.Assigned_Owner__c) ? userExtensionMapUserId.get(eachLead.Assigned_Owner__c) : null;
 				Team_Structure__c teamFrom = (userExFrom != null && userExFrom.Team_Structure__c != null && teamStructureMap.containsKey(userExFrom.Team_Structure__c)) ? teamStructureMap.get(userExFrom.Team_Structure__c) : null;
 				eachLead.Refer_From_Segment__c = (userExFrom != null ) ? userExFrom.Segment__c : null;
+				eachLead.AssignedOwnerProfile__c = userExFrom.User__r.Profile.Name;
+				eachLead.OwnerId = eachLead.Assigned_Owner__c;
 				if(teamFrom != null){
 					eachLead.Refer_From_Team_Name__c = teamFrom.Id;
 					eachLead.Refer_From_AH_Name__c = teamFrom.AH_Name__c;
 					eachLead.Refer_From_NH_Name__c = teamFrom.NH_Name__c;
 				}
 			}
-
-			if(eachLead.Submit_for_Approval__c != oldLead.Submit_for_Approval__c && eachLead.Submit_for_Approval__c == true){
-
+			if(oldLead.Status != eachLead.Status && telesaleRecordTypeSet.contains(eachLead.RecordTypeId) && leadUpdateCampaignMemberStatusSet.contains(eachLead.Status)){
+				leadUpdateRespondedCampaignMemberSet.add(eachLead.Id);
 			}
 
 			setTmNameTelesales(eachLead);
 			if(userExtensionMapUserId.containsKey(eachLead.FinServ__ReferredByUser__c)) eachLead.Refer_From_User_Extension__c = userExtensionMapUserId.get(eachLead.FinServ__ReferredByUser__c).Id;
 			if(userExtensionMapUserId.containsKey(eachLead.Refer_To_User__c)) eachLead.Refer_To_User_Extension__c = userExtensionMapUserId.get(eachLead.Refer_To_User__c).Id;
         }
+        
+        if(!leadUpdateRespondedCampaignMemberSet.isEmpty()){
+			campaignMemberRelatedList = [SELECT Id,Status,LeadId FROM CampaignMember WHERE LeadId=:leadUpdateRespondedCampaignMemberSet];
+			if(!campaignMemberRelatedList.isEmpty()){
+				for(CampaignMember eachCampaignMember : campaignMemberRelatedList){
+					eachCampaignMember.Status = 'Responded';
+				}
+			}
+			TriggerHandler.bypass('CampaignTriggerHandler');
+			if(!campaignMemberRelatedList.isEmpty()) update campaignMemberRelatedList;
+			TriggerHandler.clearBypass('CampaignTriggerHandler');
+		}
 	}
 
 	public override void afterFinally(){

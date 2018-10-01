@@ -1,0 +1,8 @@
+"Name","Product_Name__c","Is_Active__c","Priority__c","External_ID__c"
+"PM-000112","K PLUS SME","true","1",""
+"PM-000113","K PLUS SHOP","true","2",""
+"PM-000116","PromptPay","true","3",""
+"PM-000103","EDC/mPOS","true","5",""
+"PM-000114","ATM/CDM","true","",""
+"PM-000091","Account Link","true","",""
+"PM-000079","Third Party Transfer","true","",""

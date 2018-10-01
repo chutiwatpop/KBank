@@ -1,0 +1,97 @@
+<aura:component implements="force:hasRecordId,flexipage:availableForAllPageTypes,force:lightningQuickAction" access="global" controller="OpportunityProductApexController">
+    <style>
+        @media (min-width: 48em) {
+            .modal-container {
+                width: 95% !important;
+                max-width: 100% !important;
+            }
+
+            .hide-button {
+                display: block;
+            }
+        }
+        .modal-body {
+            padding: 0 !important;
+            position: relative;
+            overflow: hidden;
+        }
+        .modal-footer {
+            display: none !important;
+        }
+        .force-show {
+            display: block !important;
+        }
+        .cuf-content {
+            padding: 0 !important;
+        }
+        .hide-button {
+            display: none;
+        }
+    </style>
+    <!-- Error -->
+    <aura:attribute name="newApplicationIds" type="List" default="[]"/>
+    <aura:attribute name="contentHeight"    type="Integer" default="0"/>
+    <aura:attribute name="errorList"        type="List"/>
+    <aura:attribute name="errorHeader"      type="String"/>
+    <aura:attribute name="errorMessage"     type="String"/>
+    <aura:attribute name="isError"          type="Boolean" default="false" />
+    <aura:attribute name="requiredColumn"   type="Map"     default="{}"/>
+    <aura:attribute name="isNotNewApp"      type="Boolean" default="true" />
+
+    <aura:attribute name="recordId"         type="Id" />
+    <!-- Object Wrapper -->
+    <aura:attribute name="oppProductWrapperList"  type="Object[]" default="[]" />
+    <aura:attribute name="isLoading"        type="Boolean" default="false" />
+    <aura:attribute name="isSaving"         type="Boolean" default="false" />
+    <aura:registerEvent name="handleInitRow" type="c:DmlEvent"/>
+    <aura:handler name="init" value="{!this}" action="{!c.init}" />
+    <aura:handler name="handleInitialized"  event="c:DmlEvent" action="{!c.handleInitialized}"/>
+    <aura:handler name="handleNewApplicationModal" event="c:DmlEvent" action="{!c.handleNewApplicationModal}"/>
+
+    <div>
+        <!-- Error Panel -->
+        <aura:if isTrue="{!v.isError}">
+            <div class="pageLevelErrors" tabindex="-1">
+                <div class="desktop forcePageError">
+                    <div class="genericNotification"><span class="genericError uiOutputText">
+                        {!v.errorHeader}</span></div>
+                    <aura:iteration items="{!v.errorList}" var="eachError">
+                        <div class="errorsList">{!eachError}</div>
+                    </aura:iteration>
+                    <div class="errorsList">{!v.errorMessage}</div>
+                </div>
+            </div>
+        </aura:if>
+            
+        <aura:if isTrue="{!(v.oppProductWrapperList.length > 0)}">
+            <!-- Body -->
+            <div class="shadow-body">
+                <!-- Loading -->
+                <aura:if isTrue="{!v.isLoading}">
+                    <lightning:spinner alternativeText="Loading"/>
+                </aura:if>
+                <!-- Content -->
+                <section class="column-container">
+                    <div>
+                        <c:OpportunityProductResult jobId="{!v.recordId}" oppProductWrapperList="{!v.oppProductWrapperList}" contentHeight="{!v.contentHeight}"/>
+                    </div>
+                </section>
+                <!-- Footer -->
+                <div class="footer-wrapper" aura:id="btnGroup">
+                    <div class="modal-footer slds-modal__footer force-show">
+                        <lightning:button disabled="{!v.isSaving}" label="Cancel" onclick="{!c.closeModal}"/>
+                        <lightning:button disabled="{!v.isSaving}" label="Save" onclick="{!c.updateRecords}" variant="brand"/>
+                        <aura:if isTrue="{!v.isSaving}">
+                            <lightning:spinner alternativeText="Saving" size="small" />
+                        </aura:if>
+                    </div>
+                </div>
+            </div>
+        <aura:set attribute="else">
+            <div style="padding:24px;">
+                <div class="slds-text-align--center">ไม่มีรายการที่จะแสดง</div>
+            </div>
+        </aura:set>
+        </aura:if>
+    </div>
+</aura:component>

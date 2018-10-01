@@ -1,0 +1,108 @@
+<aura:component implements="lightning:actionOverride,force:hasRecordId,force:lightningQuickActionWithoutHeader,flexipage:availableForAllPageTypes" controller="EditOpportunityProductController">
+    <lightning:workspaceAPI aura:id="workspace" />
+    <aura:attribute name="hasError" type="Boolean" default="false"/>
+    <aura:attribute name="errorList" type="List"/>
+    <aura:attribute name="errorMessage" type="String"/>
+    <aura:attribute name="opportunityProduct" type="OpportunityLineItem"/>
+    <aura:attribute name="fieldSection1" type="Object[]" default="[]" access="private"/>
+    <aura:attribute name="fieldSection2" type="Object[]" default="[]" access="private"/>
+    <aura:attribute name="fieldSection3" type="Object[]" default="[]" access="private"/>
+    <aura:attribute name="componentSection1" type="Object[]" default="[]"/>
+    <aura:attribute name="componentSection2" type="Object[]" default="[]"/>
+    <aura:attribute name="componentSection3" type="Object[]" default="[]"/>
+    <aura:attribute name="applicationHistory" type="Application_History__c" default="{}"/>
+    <aura:attribute name="product" type="Product2" default="{}"/>
+    <aura:attribute name="job" type="Opportunity" default="{}"/>
+    <aura:attribute name="createBy" type="User" default="{}"/>
+    <aura:attribute name="lastModifiedBy" type="User" default="{}"/>
+    <aura:attribute name="disableSaveButton" type="Boolean" default="true"/>
+    <aura:attribute name="disableReasonsPicklist" type="Boolean" default="false"/>
+    <aura:attribute name="optionsReasonsPicklist" type="Object[]" default="[]"/>
+    <aura:attribute name="isNotSetCustomLookup" type="Boolean" default="true"/>
+    <aura:attribute name="isNotSetCustomLookupCBS" type="Boolean" default="true"/><!-- waiting for migrate -->
+    <aura:attribute name="productResultList" type="Object[]" default="[]"/>
+    <aura:attribute name="reasonList" type="Object" default="{}"/>
+    <aura:attribute name="requiredReason" type="Boolean" default="false"/>
+    <aura:attribute name="requiredRemark" type="Boolean" default="false"/>
+    <aura:attribute name="isOpenNewAppModal" type="Boolean" default="false" />
+    <aura:attribute name="newAppHistIdList" type="String[]" default="[]"/>
+    <aura:attribute name="defaultQueryCondition" type="String"/>
+    <aura:attribute name="tabId" type="String"/>
+    <aura:attribute name="pageStyle" type="String" default=""/>
+    <aura:attribute name="containerStyle" type="String" default=""/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler name="render" value="{!this}" action="{!c.doRender}"/>
+    <aura:handler event="lightning:tabClosed" action="{! c.handleTabClosed }"/>
+    <aura:handler name="handleNewRecord" event="c:DmlEvent" action="{!c.handleNewRecord}"/>
+    <aura:handler name="handleNewApplication" event="c:DmlEvent" action="{!c.handleNewApplication}"/>
+    <aura:handler name="oSelectedRecordEvent" event="c:selectedsObjectRecordEvent" action="{!c.handleSelectedApplication}"/>
+    <div class="slds-theme--default" style="{!v.pageStyle}">
+        <div aura:id="loadingOverlay" class="mOverlay hideEle">
+            <lightning:spinner aura:id="spinner" class="hideBackground" alternativeText="Loading"/>
+        </div>
+        <!-- Modal New App -->
+        <aura:if isTrue="{!v.isOpenNewAppModal}">
+        <div id="mOverlay" class="mOverlay mModal-bg"></div>
+        <!-- <div id="mDialog" class="slds-modal slds-fade-in-open"> -->
+        <c:NewApplicationHistory applicationRecord="{!v.applicationHistory}"/>
+        <!-- </div> -->
+        </aura:if>
+        <div class="slds-template__container slds-p-around--medium" style="{!v.containerStyle}">
+            <div class="slds-box slds-p-around--medium">
+                <div class="slds-form slds-form_stacked">
+                    <!-- Header -->
+                    <div class="slds-form-element">
+                        <h2 class="inlineTitle slds-p-top--large slds-p-horizontal--medium slds-p-bottom--medium slds-text-heading--medium">Edit Opportunity Product</h2>
+                    </div>
+                    <!-- Error Panel -->
+                    <aura:if isTrue="{!v.hasError}">
+                    <div class="pageLevelErrors" tabindex="-1" aura:id="errorPanel">
+                        <div class="desktop forcePageError">
+                            <div class="genericNotification"><span class="genericError uiOutputText">Review the errors on this page.</span></div>
+                            <aura:iteration items="{!v.errorList}" var="eachError">
+                                <div class="errorsList">{!eachError}</div>
+                            </aura:iteration>
+                            <div class="errorsList">{!v.errorMessage}</div>
+                        </div>
+                    </div>
+                    </aura:if>
+                    <!-- Section Header -->
+                    <div class="slds-form-element">
+                        <h3 class="slds-section__title slds-theme--shade primaryPaletteBorder"><span class="section-header-title slds-p-horizontal--small slds-truncate">Product Information</span></h3>
+                    </div>
+                    <!-- Section Body -->
+                    <lightning:layout multipleRows="true">
+                    <aura:iteration items="{!v.componentSection1}" var="eachComponent" indexVar="index">
+                        {!eachComponent}
+                    </aura:iteration>
+                    </lightning:layout>
+                    <div class="slds-form-element">
+                        <h3 class="slds-section__title slds-theme--shade primaryPaletteBorder"><span class="section-header-title slds-p-horizontal--small slds-truncate">Product Result</span></h3>
+                    </div>
+                    <lightning:layout multipleRows="true">        
+                    <aura:iteration items="{!v.componentSection2}" var="eachComponent" indexVar="index">
+                        {!eachComponent}
+                    </aura:iteration>
+                    </lightning:layout>
+                    <lightning:layout multipleRows="true">        
+                    <aura:iteration items="{!v.componentSection3}" var="eachComponent" indexVar="index">
+                        {!eachComponent}
+                    </aura:iteration>
+                    </lightning:layout>
+                </div>
+            </div>
+        </div>
+        <div class="inlineFooter" style="bottom:40px;">
+            <div class="slds-text-align_center forceRecordEditActions">
+                <div class="actionsContainer">
+                    <aura:if isTrue="{!v.hasError}">
+                    <lightning:icon iconName="utility:warning" style="margin-right: .25rem;" alternativeText="Error!" variant="error" size="x-small" title="Review the errors on this page."/>
+                    </aura:if>
+                    <ui:button aura:id="saveButton" class="button uiButton--brand" label="Save" disabled="{!v.disableSaveButton}" press="{!c.handleSave}"/>
+                    <ui:button aura:id="cancelButton" class="button" label="Cancel" press="{!c.handleCancel}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+</aura:component>

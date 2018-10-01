@@ -1,0 +1,46 @@
+<aura:component implements="flexipage:availableForAllPageTypes" access="global" controller="OpportunityProductApexController">
+<style>
+	.mModal-bg {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 9000;
+        opacity: 0.3;
+        visibility: visible;
+        background-color: rgba(43, 40, 38, 0.6);
+    }
+</style>
+<aura:attribute name="oppProductWrapper" type="Object"/>
+<aura:attribute name="isOpenAppModal"   type="Boolean" default="false" />
+<aura:attribute name="isEditMode" 		type="Boolean" default="false"/>
+<aura:attribute name="tableBody" 		type="Object[]"/>
+<aura:attribute name="fields" 			type="Object[]" access="private" />
+<aura:attribute name="errorMsg"  		type="String" />
+<aura:attribute name="itemId" 			type="String" />
+<aura:attribute name="jobId" 			type="Id" />
+<aura:attribute name="productSettings" 	type="Object[]"/>
+<aura:registerEvent name="handleInitRow" type="c:DmlEvent"/>
+<aura:handler name="init" value="{!this}" action="{!c.init}" />
+<aura:handler name="handleNewRecord"      event="c:DmlEvent" action="{!c.handleNewRecord}"/>
+<aura:handler name="handleRemoveRecord"   event="c:DmlEvent" action="{!c.handleRemoveRecord}"/>
+<aura:handler name="handleNewApplication" event="c:DmlEvent" action="{!c.handleNewApplication}"/>
+<aura:handler name="oSelectedRecordEvent" event="c:selectedsObjectRecordEvent" action="{!c.handleSelectedApplication}"/>
+<aura:registerEvent name="handleNewApplicationModal" type="c:DmlEvent"/>
+
+<!-- Modal New App -->
+<aura:if isTrue="{!v.isOpenAppModal}">
+    <div id="mOverlay" class="mModal-bg"></div>
+    <c:NewApplicationHistory applicationRecord="{!v.oppProductWrapper.application}"/>
+</aura:if>
+<!-- Table row -->
+<tr>
+	<aura:iteration items="{!v.tableBody}" var="obj" indexVar="index">
+	<td>
+	    {!obj}
+	</td>
+	</aura:iteration>
+</tr>
+	
+</aura:component>

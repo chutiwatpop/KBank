@@ -1,0 +1,6 @@
+.THIS .has-required{
+    background-color: white;
+    border-color: #c23934;
+    box-shadow: #c23934 0 0 0 1px inset;
+    background-clip: padding-box;
+}

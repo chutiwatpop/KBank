@@ -1,0 +1,115 @@
+<apex:page showHeader="true" sidebar="true" lightningStylesheets="true" standardController="Account" extensions="ProductUsageSummaryController">
+    <apex:slds />
+    <apex:includeLightning />
+    <apex:includeScript value="{!$Resource.jquery}"/>
+    <style>
+        .Table-Fixed {
+            table-layout: fixed;
+            width: 100%
+        }
+        .Table-Wrap {
+            word-wrap: break-word;
+        }
+        .Table-scroll {
+             overflow: scroll;
+        }
+        .PaddingBottom {
+         padding-bottom: 20px;
+      }
+      .errorMessage {
+            color: red;
+            display: none;
+        }
+    </style>
+    <div class="slds-grid slds-wrap">
+   
+  <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium headerTopic">
+   <span>เลขที่บัญชี</span>
+  </div>
+  <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium">
+   <span>0000111112201</span>
+  </div>
+   <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium headerTopic">
+   <span>เลขที่บัญชีเดิม</span>
+  </div>
+  <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium">
+   <span>0000000012201</span>
+  </div>
+   <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium headerTopic">
+   <span>LPM NO</span>
+  </div>
+  <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium">
+   <span>00000012345</span>
+  </div>
+
+  <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium headerTopic">
+   <span>CIS ID</span>
+  </div>
+  <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium">
+   <span>1</span>
+  </div>
+   <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium headerTopic">
+   <span>ผลิตภัณฑ์</span>
+  </div>
+  <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium">
+   <span>0000000012345</span>
+  </div>
+   <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium headerTopic">
+   <span>ประเภทของการเก็บดอกเบี้ยของ PN</span>
+  </div>
+  <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium">
+   <span>เก็บดอกเบี้ยล่วงหน้า</span>
+  </div>
+
+  <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium headerTopic">
+   <span>เลขที่บัญชีสำหรับหักเงินอัตโนมัติ</span>
+  </div>
+  <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium">
+   <span>12112345601</span>
+  </div>
+   <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium headerTopic">
+   <span>ยอดคงเหลือ</span>
+  </div>
+  <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium">
+   <span>1000000</span>
+  </div>
+   <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium headerTopic">
+   <span>วันที่เปิดตั้ว</span>
+  </div>
+  <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium">
+   <span>01-10-2559</span>
+  </div>
+  
+   <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium headerTopic">
+   <span>วันครบกำหนด</span>
+  </div>
+  <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium">
+   <span>31-10-2559</span>
+  </div>
+   <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium headerTopic">
+   <span>อัตราดอกเบี้ยหน้าตั้ว</span>
+  </div>
+  <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium">
+   <span>MRR +2%</span>
+  </div>
+   <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium headerTopic">
+   <span>จำนวนวันค้างชำระ</span>
+  </div>
+  <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium">
+   <span>0</span>
+  </div>
+   <div class="slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium headerTopic">
+   <span>จำนวนวันค้างชำระ</span>
+  </div>
+  <div class="slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium">
+   <span>0</span>
+  </div>
+  <div class="slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium headerTopic">
+   <span>จำนวนวันค้างชำระ</span>
+  </div>
+  <div class="slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large slds-p-top_medium">
+   <span>0</span>
+  </div>
+
+</div> 
+</apex:page>

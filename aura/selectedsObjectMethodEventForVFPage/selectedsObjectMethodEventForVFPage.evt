@@ -1,0 +1,5 @@
+<aura:event type="APPLICATION" description="by this event we are pass the selected sObject(lookup record) to vf page">
+    <aura:attribute name="selectedRecord" type="Object"/>
+    <aura:attribute name="arguments" type="Object"/>
+    <aura:attribute name="objectName" type="String" default=""/>
+</aura:event>

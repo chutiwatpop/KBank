@@ -1,0 +1,46 @@
+<apex:page lightningStylesheets="true" standardController="Account" extensions="CreateRBSPortController" action="{!saveRBSPort}" recordSetVar="accountListSetVar" showHeader="true" sidebar="true">
+	<apex:slds />
+	<header>
+        <apex:includeScript value="{!URLFOR($Resource.jquery, '')}"/>
+        <style type="text/css">
+            
+        </style>
+    </header>
+    <script>
+    function validateOnload(accountLists){
+            var errorMsg;
+            if(!accountLists.length){
+                errorMsg = 'Please select at least one Customer.';
+            }
+
+            if(errorMsg){
+                var r = confirm(errorMsg);
+                if(r){
+                    gotoRecentListView();
+                }else{
+                    gotoRecentListView();
+                }
+            }
+        }
+
+        function resultSaveRBSPort(){
+            alert('ทำรายการสำเร็จ');
+            window.history.go(-1);
+        }
+
+    $(document).ready(function() {
+            validateOnload({!accountListsJSONString});
+        });
+</script>
+
+ 			<apex:form >
+ 			 <apex:pageBlock >
+ 			 <apex:pageMessages ></apex:pageMessages>
+              <apex:outputText value="{!callfunc}" escape="false"></apex:outputText>
+                <apex:actionFunction action="{!gotoRecentListView}" name="gotoRecentListView" ></apex:actionFunction>
+                <apex:pageBlockButtons location="bottom">
+                        <apex:commandButton value="Back" id="back" oncomplete="gotoRecentListView();"/>
+                    </apex:pageBlockButtons>
+            </apex:pageBlock>
+            </apex:form>
+</apex:page>

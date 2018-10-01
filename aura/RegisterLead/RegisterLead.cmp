@@ -1,0 +1,313 @@
+<aura:component implements="lightning:actionOverride,force:hasRecordId,force:hasSObjectName,flexipage:availableForAllPageTypes,force:lightningQuickActionWithoutHeader" access="global" controller="RegisterLeadController">
+	
+    <aura:attribute name="wrapperTargetListRecord" type="Object" access="global"/>
+    <aura:attribute name="loadingCanRegisterComplete" type="Boolean" default="false"/>
+    <aura:attribute name="loadingDataComplete" type="Boolean" default="false"/>
+    <aura:attribute name="rewardList" type="List"/>
+	<aura:attribute name="listDistrict" type="List"/>
+    <aura:attribute name="listSubDistrict" type="List"/>
+    <aura:attribute name="listProvince" type="List"/>
+    <aura:attribute name="listRewardItems" type="List"/>
+    <aura:attribute name="isError" type="Boolean" default="false"/>
+    <aura:attribute name="canRegister" type="Boolean" default="false"/>
+    <aura:attribute name="isMobile" type="Boolean" default="false"/>
+    <aura:attribute name="errorMessage" type="String"/>
+    <aura:attribute name="extendHeight" type="Integer" default='100'/>
+    <style>         
+        .modal-body{
+            max-height:{!(v.wrapperTargetListRecord.maxHeight + v.extendHeight) +'px'} !important;
+            height:{!(v.wrapperTargetListRecord.maxHeight + v.extendHeight)+'px'} !important;
+            position: relative;
+        }
+        .mobile-align-center{
+            text-align:center;
+        }
+    </style>
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="force:refreshView" action="{!c.doInit}" />
+    <aura:if isTrue="{!v.isError}">
+        <ui:message severity="info" closable="false" class="mobile-align-center">
+            {!v.errorMessage}
+            <aura:if isTrue="{!v.isMobile}">
+                <div>
+                    <ui:button aura:id="cancelButton" class="button" label="Cancel" press="{!c.actionCancelMobile}"/>
+                </div>
+            </aura:if>
+        </ui:message>
+    </aura:if>
+    <aura:if isTrue="{!v.loadingCanRegisterComplete}">
+        <aura:if isTrue="{!v.canRegister}">
+            <aura:if isTrue="{!!v.wrapperTargetListRecord.canUpdateImmediately}">
+                <aura:if isTrue="{!v.loadingDataComplete}">
+                	<div class="slds-form slds-form_stacked">
+                		<div class="slds-form-element">
+                		    <label class="slds-form-element__label title">{!v.wrapperTargetListRecord.pageHeaderTitle}</label>
+                		    <div class="slds-form-element__control slds-m-left_x-large">
+                		    	<ui:outputText value="{!'CIS ID : ' + v.wrapperTargetListRecord.targetList.CIS_ID_Prospect_Name__r.CIS__c + ' '+ v.wrapperTargetListRecord.targetList.CIS_ID_Prospect_Name__r.Name}" />
+                		    </div>
+                		</div>
+                        <aura:if isTrue="{!v.wrapperTargetListRecord.isShowRewardSection}">
+                            <aura:if isTrue="{!!v.wrapperTargetListRecord.mustSelectReward}">
+                        		<div class="slds-form-element ">
+                        		    <div class="slds-form-element__control slds-m-left_x-large">
+                        		    	<ui:outputText value="{!v.wrapperTargetListRecord.rewardLabel + ' : ' + v.wrapperTargetListRecord.targetList.Campaign_Reward_Calc__c + ' ' +v.wrapperTargetListRecord.targetList.Campaign_Reward_Amount__c}" />
+                        		    </div>
+                        		</div>
+                                <aura:set attribute="else">    
+                                    <div class="slds-form-element">
+                                        <div class="slds-form-element__control slds-m-left_x-large">
+                                            <ui:outputText value="{!v.wrapperTargetListRecord.rewardLabel}" />
+                                            <ui:inputSelect aura:id="inputRewardAmount"  change="{!c.validatePickRewardController}">
+                                                <aura:iteration items="{!v.rewardList}" var="eachReward">
+                                                    <ui:inputSelectOption text="{!eachReward.value}" label="{!eachReward.label}">
+                                                    </ui:inputSelectOption>
+                                                </aura:iteration>
+                                            </ui:inputSelect>
+                                        </div>
+                                    </div>
+                                </aura:set>
+                            </aura:if>
+                        </aura:if>
+                        
+                        <aura:if isTrue="{!v.wrapperTargetListRecord.isShowAddressSection}">
+                    		<div class="slds-form-element" id="pageDetail">
+                    			<label class="slds-form-element__label title">{!v.wrapperTargetListRecord.pageDetailTitle}</label>
+                                <aura:if isTrue="{!and(v.isMobile,not($Browser.isTablet))}">
+                                    <table class="slds-table slds-table_bordered slds-max-medium-table_stacked-horizontal">
+                                        <thead>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="slds-hint-parent">
+                                                <td data-label="{!v.wrapperTargetListRecord.contactPersonLabel}">
+                                                    <ui:inputText aura:id="contactPerson" value="{!v.wrapperTargetListRecord.targetList.Contact_Name__c}" required="true" change="{!c.checkButton}"/>
+                                                </td>
+                                                <td data-label="{!v.wrapperTargetListRecord.mobileNoLabel}">
+                                                    <ui:inputText aura:id="mobileNo" value="{!v.wrapperTargetListRecord.targetList.Mobile_No__c}" required="true" change="{!c.onchangeMobileNumber}" keyup="{!c.checkMobileNumber}" updateOn="keyup" maxlength="10"/>
+                                                </td>
+                                                <td data-label="{!v.wrapperTargetListRecord.houseNoLabel}">
+                                                    <ui:inputText aura:id="houseNo" value="{!v.wrapperTargetListRecord.targetList.Address_House_No__c}" required="true" change="{!c.checkButton}"  maxlength="30"/>
+                                                </td>
+                                                <td data-label="{!v.wrapperTargetListRecord.mooLabel}">
+                                                    <ui:inputText aura:id="moo" value="{!v.wrapperTargetListRecord.targetList.Address_Moo__c}" maxlength="30"/>
+                                                </td>
+                                                <td data-label="{!v.wrapperTargetListRecord.villageLabel}">
+                                                    <ui:inputText aura:id="village" value="{!v.wrapperTargetListRecord.targetList.Address_Mooban__c}" maxlength="100"/>
+                                                </td>
+                                                <td data-label="{!v.wrapperTargetListRecord.buildingLabel}">
+                                                    <ui:inputText aura:id="building" value="{!v.wrapperTargetListRecord.targetList.Address_Building__c}" maxlength="100"/>
+                                                </td>
+                                                <td data-label="{!v.wrapperTargetListRecord.floorLabel}">
+                                                    <ui:inputText aura:id="floor" value="{!v.wrapperTargetListRecord.targetList.Address_Floor__c}" maxlength="30"/>
+                                                </td>
+                                                <td data-label="{!v.wrapperTargetListRecord.roomLabel}">
+                                                    <ui:inputText aura:id="room" value="{!v.wrapperTargetListRecord.targetList.Address_Room__c}" maxlength="30"/>
+                                                </td>
+                                                <td data-label="{!v.wrapperTargetListRecord.soiLabel}">
+                                                    <ui:inputText aura:id="soi" value="{!v.wrapperTargetListRecord.targetList.Address_Soi__c}" maxlength="100"/>
+                                                </td>
+                                                <td data-label="{!v.wrapperTargetListRecord.streetLabel}">
+                                                    <ui:inputText aura:id="street" value="{!v.wrapperTargetListRecord.targetList.Address_Street__c}" maxlength="100"/>
+                                                </td>
+                                                <td data-label="{!v.wrapperTargetListRecord.provinceLabel}">
+                                                    <ui:inputSelect aura:id="province" change="{!c.loadDistrict}" value="{!v.wrapperTargetListRecord.targetList.Province__c}">
+                                                        <aura:iteration items="{!v.listProvince}" var="eachProvince">
+                                                             <ui:inputSelectOption text="{!eachProvince}" label="{!eachProvince}"/>
+                                                        </aura:iteration>
+                                                    </ui:inputSelect>
+                                                </td>
+                                                <td data-label="{!v.wrapperTargetListRecord.districtLabel}">
+                                                    <ui:inputSelect aura:id="district" change="{!c.loadSubDistrict}" value="{!v.wrapperTargetListRecord.targetList.District__c}">
+                                                        <aura:iteration items="{!v.listDistrict}" var="eachDistrict">
+                                                             <ui:inputSelectOption text="{!eachDistrict}" label="{!eachDistrict}"/>
+                                                        </aura:iteration>
+                                                    </ui:inputSelect>
+                                                </td>
+                                                <td data-label="{!v.wrapperTargetListRecord.subDistrictLabel}">
+                                                    <ui:inputSelect aura:id="subDistrict" change="{!c.loadPostCode}" value="{!v.wrapperTargetListRecord.targetList.Sub_District__c}">
+                                                        <aura:iteration items="{!v.listSubDistrict}" var="eachSubDistrict">
+                                                             <ui:inputSelectOption text="{!eachSubDistrict}" label="{!eachSubDistrict}"/>
+                                                        </aura:iteration>
+                                                    </ui:inputSelect>
+                                                </td>
+                                                <td data-label="{!v.wrapperTargetListRecord.postCodeLabel}">
+                                                    <ui:inputText aura:id="postCode" required="true"  change="{!c.checkButton}" value="{!v.wrapperTargetListRecord.targetList.PostCode__c}"  maxlength="5"/>
+                                                </td>
+                                                <td data-label="{!v.wrapperTargetListRecord.memoLabel}">
+                                                    <ui:inputTextArea aura:id="memo" value="{!v.wrapperTargetListRecord.targetList.Memo__c}" change="{!c.checkButton}"/>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>    
+                                    <aura:set attribute="else">
+                            			<table class="slds-table slds-no-row-hover">
+                            				<thead></thead>
+                            				<tbody>
+                                				<tr>
+                                					<td>
+                                						<ui:outputText value="{!v.wrapperTargetListRecord.contactPersonLabel}" />
+                                					</td>
+                                					<td>
+                                						<ui:inputText aura:id="contactPerson" value="{!v.wrapperTargetListRecord.targetList.Contact_Name__c}" required="true" change="{!c.checkButton}"/>
+                                					</td>
+                                					<td>
+                                						<ui:outputText value="{!v.wrapperTargetListRecord.mobileNoLabel}" />
+                                					</td>
+                                					<td>
+                                						<ui:inputText aura:id="mobileNo" value="{!v.wrapperTargetListRecord.targetList.Mobile_No__c}" required="true" change="{!c.onchangeMobileNumber}" keyup="{!c.checkMobileNumber}" updateOn="keyup" maxlength="10"/>
+                                					</td>
+                                				</tr>
+                                				<tr>
+                                					<td>
+                                						<ui:outputText value="{!v.wrapperTargetListRecord.houseNoLabel}" />
+                                					</td>
+                                					<td>
+                                						<ui:inputText aura:id="houseNo" value="{!v.wrapperTargetListRecord.targetList.Address_House_No__c}" required="true" change="{!c.checkButton}"  maxlength="30"/>
+                                					</td>
+                                					<td>
+                                						<ui:outputText value="{!v.wrapperTargetListRecord.mooLabel}" />
+                                					</td>
+                                					<td>
+                                						<ui:inputText aura:id="moo" value="{!v.wrapperTargetListRecord.targetList.Address_Moo__c}" maxlength="30"/>
+                                					</td>
+                                				</tr>
+                                				<tr>
+                                					<td>
+                                						<ui:outputText value="{!v.wrapperTargetListRecord.villageLabel}"/>
+                                					</td>
+                                					<td>
+                                						<ui:inputText aura:id="village" value="{!v.wrapperTargetListRecord.targetList.Address_Mooban__c}" maxlength="100"/>
+                                					</td>
+                                					<td>
+                                						<ui:outputText value="{!v.wrapperTargetListRecord.buildingLabel}" />
+                                					</td>
+                                					<td>
+                                						<ui:inputText aura:id="building" value="{!v.wrapperTargetListRecord.targetList.Address_Building__c}" maxlength="100"/>
+                                					</td>
+                                				</tr>
+                                				<tr>
+                                					<td>
+                                						<ui:outputText value="{!v.wrapperTargetListRecord.floorLabel}" />
+                                					</td>
+                                					<td>
+                                						<ui:inputText aura:id="floor" value="{!v.wrapperTargetListRecord.targetList.Address_Floor__c}" maxlength="30"/>
+                                					</td>
+                                					<td>
+                                						<ui:outputText value="{!v.wrapperTargetListRecord.roomLabel}" />
+                                					</td>
+                                					<td>
+                                						<ui:inputText aura:id="room" value="{!v.wrapperTargetListRecord.targetList.Address_Room__c}" maxlength="30"/>
+                                					</td>
+                                				</tr>
+                                				<tr>
+                                					<td>
+                                						<ui:outputText value="{!v.wrapperTargetListRecord.soiLabel}" />
+                                					</td>
+                                					<td>
+                                						<ui:inputText aura:id="soi" value="{!v.wrapperTargetListRecord.targetList.Address_Soi__c}" maxlength="100"/>
+                                					</td>
+                                					<td>
+                                						<ui:outputText value="{!v.wrapperTargetListRecord.streetLabel}" />
+                                					</td>
+                                					<td>
+                                						<ui:inputText aura:id="street" value="{!v.wrapperTargetListRecord.targetList.Address_Street__c}" maxlength="100"/>
+                                					</td>
+                                				</tr>
+                                				<tr>
+                                					<td>
+                                						<ui:outputText value="{!v.wrapperTargetListRecord.provinceLabel}" />
+                                					</td>
+                                					<td>
+                                						<ui:inputSelect aura:id="province" change="{!c.loadDistrict}" value="{!v.wrapperTargetListRecord.targetList.Province__c}">
+                            						        <aura:iteration items="{!v.listProvince}" var="eachProvince">
+                            						             <ui:inputSelectOption text="{!eachProvince}" label="{!eachProvince}"/>
+                            						        </aura:iteration>
+                            						    </ui:inputSelect>
+                                					</td>
+                                					<td>
+                                						<ui:outputText value="{!v.wrapperTargetListRecord.districtLabel}" />
+                                					</td>
+                                					<td>
+                                						<ui:inputSelect aura:id="district" change="{!c.loadSubDistrict}" value="{!v.wrapperTargetListRecord.targetList.District__c}">
+                            						        <aura:iteration items="{!v.listDistrict}" var="eachDistrict">
+                            						             <ui:inputSelectOption text="{!eachDistrict}" label="{!eachDistrict}"/>
+                            						        </aura:iteration>
+                            						    </ui:inputSelect>
+                                					</td>
+                                				</tr>
+                                				<tr>
+                                					<td>
+                                						<ui:outputText value="{!v.wrapperTargetListRecord.subDistrictLabel}" />
+                                					</td>
+                                					<td>
+                                						<ui:inputSelect aura:id="subDistrict" change="{!c.loadPostCode}" value="{!v.wrapperTargetListRecord.targetList.Sub_District__c}">
+                            						        <aura:iteration items="{!v.listSubDistrict}" var="eachSubDistrict">
+                            						             <ui:inputSelectOption text="{!eachSubDistrict}" label="{!eachSubDistrict}"/>
+                            						        </aura:iteration>
+                            						    </ui:inputSelect>
+                                					</td>
+                                					<td>
+                                						<ui:outputText value="{!v.wrapperTargetListRecord.postCodeLabel}" />
+                                					</td>
+                                					<td>
+                                						<ui:inputText aura:id="postCode" required="true"  change="{!c.checkButton}" value="{!v.wrapperTargetListRecord.targetList.PostCode__c}"  maxlength="5"/>
+                                					</td>
+                                				</tr>
+                                				<tr>
+                                					<td>
+                                						<ui:outputText value="{!v.wrapperTargetListRecord.memoLabel}" />
+                                					</td>
+                                					<td>
+                                						<ui:inputTextArea aura:id="memo" value="{!v.wrapperTargetListRecord.targetList.Memo__c}" change="{!c.checkButton}"/>
+                                					</td>
+                                				</tr>
+                                			</tbody>
+                            			</table>
+                                    </aura:set>
+                                </aura:if>    
+                    		</div>
+                            <aura:set attribute="else">
+                                <div class="slds-form-element" id="pageDetail">
+                                    <label class="slds-form-element__label title">{!v.wrapperTargetListRecord.pageDetailTitle}</label>
+                                    <table class="slds-table slds-no-row-hover">
+                                        <thead></thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <ui:outputText value="{!v.wrapperTargetListRecord.accountNumberLabel}" />
+                                                </td>
+                                                <td>
+                                                    <ui:inputText aura:id="accountNumber" change="{!c.onchangeAccountNumber}" keyup="{!c.validateAccountNumber}" updateOn="keyup" value="{!v.wrapperTargetListRecord.targetList.Account_Number__c}" maxlength='10'/>
+                                                </td>
+                                                <td></td>
+                                                <td></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </aura:set>
+                        </aura:if>
+                		<div id="confirmSection" style="text-align:center">
+                	    	<ui:button aura:id="saveButton" class="button" disabled="true" label="Save" press="{!c.actionSaveController}"/>
+                	    	<ui:button aura:id="cancelButton" class="button" label="Cancel" press="{!c.actionCancel}"/>
+                	    </div>
+                	</div>
+                </aura:if>
+                <aura:set attribute="else">    
+                    <div class="slds-form-element">
+                        <div id="confirmSection" style="text-align:center">
+                            ต้องการลงทะเบียนหรือไม่ ?
+                            <br/>
+                            <ui:button aura:id="saveImmediatelyButton" class="button" label="ใช่" press="{!c.actionRegisterImmediately}"/>
+                            <ui:button aura:id="cancelImmediatelyButton" class="button" label="ไม่ใช่" press="{!c.actionNotRegisterImmediately}"/>
+                        </div>
+                    </div>
+                </aura:set>
+            </aura:if>
+        </aura:if>
+        <aura:set attribute="else">    
+            <div class="slds-form-element">
+                <img id="loadingImg" style="display:block;margin-left: auto;margin-right:auto;" src="/img/loading32.gif"/>
+            </div>
+        </aura:set>
+    </aura:if>
+</aura:component>

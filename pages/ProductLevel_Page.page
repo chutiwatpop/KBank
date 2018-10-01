@@ -7,6 +7,9 @@
     <apex:includeScript value="{!$Resource.jquery}"/>
     <apex:includeScript value="/support/console/43.0/integration.js"/>
      <style>
+     html body.sfdcBody {
+        overflow:visible;
+     }
         .Table-Fixed {
             table-layout: fixed;
             width: 100%
@@ -82,7 +85,7 @@
     <script type='text/javascript'>
 
     	function formatDateDDMMYYYY(date) {
-            if(date == ''){
+            if(date == '' || date === null){
                 return '';
             }     
     	    var d = new Date(date),
@@ -97,6 +100,9 @@
 	    }
 
     	function formatDateMMMYY(date) {
+            if(date == '' || date === null){
+                return '';
+            }
     		var dd = new Date(date);
     		var m = dd.getMonth();
     		var y = dd.getYear().toString();
@@ -104,6 +110,19 @@
 
     		return arr[m] + "-" + y.substr(y.length-2);
     	}
+
+        function formatDateMMYYYY(date) {
+            if(date == '' || date === null){
+                return '';
+            }     
+            var d = new Date(date),
+                month = '' + (d.getMonth() + 1),
+                year = d.getFullYear();
+
+            if (month.length < 2) month = '0' + month;
+
+            return [month, year].join('-');
+        }
         
     	function formatNumber(num) {
             var retNum = '';
@@ -160,7 +179,7 @@
                 }else if(Object.values(dataProduct)[i].Type == 'date'){
                 	text += "<div class='slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium'><div class='border_Bottom'>" + formatDateDDMMYYYY(Object.values(dataProduct)[i].Body) + "</div></div>";
                 }else if(Object.values(dataProduct)[i].Type == 'ccexpiredate'){
-                	text += "<div class='slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium'><div class='border_Bottom'>" + formatDateMMMYY(Object.values(dataProduct)[i].Body) + "</div></div>";
+                	text += "<div class='slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium'><div class='border_Bottom'>" + formatDateMMYYYY(Object.values(dataProduct)[i].Body) + "</div></div>";
                 }else{
                 	text += "<div class='slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium'><div class='border_Bottom'>" + Object.values(dataProduct)[i].Body + "</div></div>";
                 }
@@ -200,11 +219,13 @@
                 element.classList.add("Table-scroll");
                 element.style.height = (screen.height-200)+"px";
             }
-            var text = "<table class='slds-table slds-table_bordered slds-table_cell-buffer'> <thead> <tr class='slds-text-title_caps' style='background-color:#f5f5f0'>";
+            
+            var text = "<table class='slds-table slds-table_bordered slds-table_cell-buffer'>";
             //resp = resp.productUsageTables;
             if(resp != null) {
                 for (var i = 0; i < Object.keys(resp).length; i++) {
                     if(Object.keys(resp)[i] == tableKey){
+                        text += "<thead> <tr class='slds-text-title_caps' style='background-color:#f5f5f0'>";
                         var columnHeader = Object.values(resp)[i].columnHeaders;
                         var columnDetail = '';
                         if(columnHeader != null){
@@ -263,7 +284,7 @@
                                         }else if(columnHeader[index].type == 'percent'){
                                             text += "<td><div class='slds-truncate'>" + nextLevelTextStart + formatPercent(value) + nextLevelTextEnd + "</div></td>";
                                         }else if(columnHeader[index].type == 'ccexpiredate'){
-                                            text += "<td><div class='slds-truncate'>" + nextLevelTextStart + formatDateMMMYY(value) + nextLevelTextEnd + "</div></td>";
+                                            text += "<td><div class='slds-truncate'>" + nextLevelTextStart + formatDateMMYYYY(value) + nextLevelTextEnd + "</div></td>";
                                         }else if(columnHeader[index].type == 'integer'){
                                             text += "<td><div class='slds-truncate' style='text-align:right'>" + nextLevelTextStart + value + nextLevelTextEnd + "</div></td>";
                                         }else{
@@ -295,13 +316,13 @@
                                 text += "</tr>";
                             }
                         }
+                        text += "</tbody>";
                         break;
                     }
-                    
                 }
             }
             
-            text += "</tbody></table>";
+            text += "</table>";
             if(isIOS){
                 document.getElementById("contentIOS").innerHTML = text;
             }else{
@@ -359,10 +380,10 @@
 
         function getRealLevelByKey(key) {
             var keySplit = key.split("_");
-            if(keySplit.length == 4) {
-                return parseInt(keySplit[2]);
-            } else {
+            if(keySplit[1] == '0') {//keySplit.length == 2
                 return 1;
+            } else {
+                return parseInt(keySplit[2]);
             }
         }
 

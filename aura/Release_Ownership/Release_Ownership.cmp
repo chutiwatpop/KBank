@@ -1,0 +1,23 @@
+<aura:component implements="lightning:actionOverride,force:hasRecordId,force:hasSObjectName,flexipage:availableForAllPageTypes,force:lightningQuickActionWithoutHeader" access="global" controller="ReleaseOwnershipController">
+	<aura:attribute name="releaseSegment" type="String"/>
+    <aura:attribute name="cmpTheme"     type="String"/>
+    <aura:attribute name="displayMsg"   type="String"  default="Loading..."/>
+    <aura:attribute name="isError"      type="Boolean" default="false"/>
+    <aura:attribute name="isLoading"    type="Boolean" default="true"/>
+    <aura:attribute name="showConfirm" type="Boolean" default="false"/>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+    <div>
+        <aura:if isTrue="{!v.isLoading}">
+            <lightning:spinner alternativeText="Loading" class="bg-transparent"/>
+        </aura:if>
+        <!-- Error Panel -->
+        <div style="text-align:center;">{!v.displayMsg}</div>
+        <aura:if isTrue="{!and(and(v.isError == false, v.isLoading == false), v.showConfirm == true)}">
+            <div id="confirmSection" style="text-align:center;padding:8px;">
+                <ui:button aura:id="okButton" class="button" label="Yes" press="{!c.onClickYes}"/>
+                <ui:button aura:id="cancelButton" class="button" label="No" press="{!c.closeModal}"/>
+            </div>
+        </aura:if>
+    </div>
+</aura:component>

@@ -21,7 +21,11 @@ public class ProductUsageHelper {
 
 	public static string getSpreadInterestRate(string interestRate){
 		if(!String.isBlank(interestRate)){
-			Decimal rateVal = decimal.valueOf(interestRate).setScale(2);
+			Decimal rateVal = decimal.valueOf(interestRate).stripTrailingZeros();
+			//minimal scale = 2
+			if(rateVal.scale() < 2) {
+				rateVal = rateVal.setScale(2);
+			}
 			if(rateVal == 0){
 				return '';
 			}
@@ -183,7 +187,7 @@ public class ProductUsageHelper {
 	public static Map<String, ProductUsageController.CalculatedAccount> calculateAccountData(List<FNCModel.FNCDetailInfo> fncDetails) {
         Map<String, ProductUsageController.CalculatedAccount> calculatedAccountMap =  new Map<String, ProductUsageController.CalculatedAccount>();
         for(FNCModel.FNCDetailInfo fncDetail : fncDetails) {
-            if(Integer.valueOf(fncDetail.LMT_LVL_IND) == SUBCOMMITMENT_DATA && fncDetail.PCB_AR_LIST != null && fncDetail.PCB_AR_LIST.PCB_AR_INF.size() > 0) {
+            if(Integer.valueOf(fncDetail.LMT_LVL_IND) == SUBCOMMITMENT_DATA && fncDetail.LMT_AR_ID != fncDetail.ROOT_LMT_AR_ID && fncDetail.PCB_AR_LIST != null && fncDetail.PCB_AR_LIST.PCB_AR_INF.size() > 0) {
                 Decimal result = 0;
                 ProductUsageController.CalculatedAccount calculatedForRoot = new ProductUsageController.CalculatedAccount();
                 ProductUsageController.CalculatedAccount calculatedForUpper = new ProductUsageController.CalculatedAccount();

@@ -1,0 +1,66 @@
+<apex:page showHeader="false" standardController="Account" standardStylesheets="false" sidebar="false"
+      applyHtmlTag="false" applyBodyTag="false" docType="html-5.0">
+  <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" ng-app="MobileFrameworksApp">
+    <head>
+      <meta charset="utf-8" />
+      <meta http-equiv="x-ua-compatible" content="ie=edge" />
+      <title>SLDS Visualforce Page in Salesforce Mobile</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <script src= "https://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+      <!-- Import the Design System style sheet -->
+        <apex:slds />
+        <script>
+                //alert(window.innerWidth);
+                //alert(window.innerHeight);
+                if(window.innerHeight>200){
+                    window.location.href='/TestAccountRelated';
+                }
+         
+        </script>
+    <style>
+        .PaddingBottom {
+            padding-bottom: 5px;
+        }
+    </style>
+    </head>
+    <body>
+        <div class="slds-scoped-notification slds-media slds-media_center" role="status">
+        <div class="slds-media__body">
+        <p>It looks as if duplicates exist for this lead. <a href="javascript:void(0);">View Duplicates.</a></p>
+        </div>
+        </div>
+        <!-- <div class="slds-scope">
+            <div class="slds-page-header" id="header-domain1">
+                <div class="slds-media">
+                    <div class="slds-media__figure">
+                            <span class="slds-icon_container slds-icon-standard-opportunity" title="Description of icon when needed">
+                                <svg class="slds-icon slds-page-header__icon" aria-hidden="true">
+                                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/standard-sprite/svg/symbols.svg#case')}" />
+                                </svg>
+                            </span>
+                    </div>
+                    <div class="slds-media__body">
+                            <h1 class="slds-page-header__title slds-align-middle">Domain 1 : OPERATION &amp; TRANSACTION</h1>
+                    </div>
+                </div>
+            </div>
+            <div id="content" class="PaddingBottom"></div>
+            <div class="slds-page-header" id="header-domain1">
+                <div class="slds-media">
+                    <div class="slds-media__figure">
+                            <span class="slds-icon_container slds-icon-standard-opportunity" title="Description of icon when needed">
+                                <svg class="slds-icon slds-page-header__icon" aria-hidden="true">
+                                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/standard-sprite/svg/symbols.svg#case')}" />
+                                </svg>
+                            </span>
+                    </div>
+                    <div class="slds-media__body">
+                            <h1 class="slds-page-header__title slds-align-middle">Domain 1 : OPERATION &amp; TRANSACTION</h1>
+                    </div>
+                </div>
+            </div>
+            <div id="content" class="PaddingBottom"></div>
+        </div> -->
+    </body>
+  </html>
+</apex:page>

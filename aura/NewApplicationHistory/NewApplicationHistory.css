@@ -1,0 +1,45 @@
+.THIS {
+    max-width: 840px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 24px;
+    margin-bottom: 24px;
+    overflow-y: scroll;
+}
+.THIS .mOverlay {
+    width: 100%;
+    height: 100%;
+    vertical-align: middle;
+    z-index: 100 !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: none;
+}
+.THIS .hideBackground {
+    background-color: transparent !important;
+}
+.THIS .hideEle {
+    display: none;
+}
+.THIS .slds-template__container {
+    height: auto;
+}
+.THIS .slds-modal__header {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.THIS .inlineFooter {
+    bottom:40px;
+    margin-bottom:60px !important;
+}
+.THIS .help-text {
+    display: inline;
+    top: -2px;
+}
+@media (min-width: 65em) {
+    .THIS .inlineFooter {
+        bottom:40px;
+        margin-bottom:0px !important;
+    }
+}

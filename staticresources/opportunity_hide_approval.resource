@@ -1,0 +1,1 @@
+(function(){$('[name="inject"]').hide();$(function(){$('[name="inject"]').hide();if($('input[title="Submit for Approval"]').length)$('input[title="Submit for Approval"]').val('Override Setup');});})();

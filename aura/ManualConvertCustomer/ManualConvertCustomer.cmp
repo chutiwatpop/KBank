@@ -1,0 +1,179 @@
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:lightningQuickAction" access="global" controller="ManualConvertCustomerApexController" >
+<aura:attribute name="isError" type="Boolean" default="false"/>
+<aura:attribute name="isValidByIdent" type="Boolean" default="false"/>
+<aura:attribute name="isCustomerExist" type="Boolean" default="false"/>
+<aura:attribute name="checkExistCustomer" type="Boolean" default="false"/>
+<aura:attribute name="inputCISValue" type="String"/>
+<aura:attribute name="inputDOBValue" type="String"/>
+<aura:attribute name="inputIdentificationValue" type="String"/>
+<aura:attribute name="errorMessage" type="String"/>
+<aura:attribute name="customerObj" type="Account"/>
+<aura:attribute name="customerTypeShow" type="String" default=""/>
+<div class="slds-theme--default slds-p-around--medium">
+    <div aura:id="loadingOverlay" class="mOverlay hideEle">
+		<lightning:spinner aura:id="spinner" class="hideBackground"/>
+	</div>
+    <div class="slds-template__container slds-p-around--medium ">
+		<div class="slds-form slds-form_stacked">
+			<!-- Header -->
+			<div class="slds-form-element">
+		    	<h2 class="inlineTitle slds-p-top--large slds-p-horizontal--medium slds-p-bottom--medium slds-text-heading--medium">Manual Convert Customer</h2>
+		    </div>
+		    <!-- Error Panel -->
+		    <aura:if isTrue="{!v.isError}">
+				<div class="slds-notify_container slds-is-relative">
+					<div class="slds-notify slds-notify_toast slds-theme_error" role="alert">
+					  <span class="slds-assistive-text">error</span>
+					  	<div class="slds-notify__content">
+							<h3 class="slds-text-heading_small ">{!v.errorMessage}</h3>
+						</div>
+					</div>
+				</div>
+			</aura:if>
+	
+			<!-- Section Body -->
+			<div class="slds-form-element slds-p-horizontal_medium marginSection">
+				<div class="slds-grid">
+					<div class="slds-has-flexi-truncate slds-p-horizontal_medium slds-form-element__control">
+						<ui:inputText aura:id="inputCIS" label="CIS" value="{!v.inputCISValue}"/>
+					</div>
+				</div>
+				<div class="slds-grid">
+					<div class="slds-has-flexi-truncate slds-p-horizontal_medium">
+						<ui:inputText aura:id="inputDOBAndIdent" maxlength="13" label="Identification No" value="{!v.inputIdentificationValue}"/>
+					</div>
+					<div class="slds-has-flexi-truncate slds-p-horizontal_medium slds-form-element__control">
+						<ui:inputDate aura:id="inputDOBAndIdent" label="Birth Date/Registeration Date"
+						value="{!v.inputDOBValue}"
+						format="dd/MM/yyyy"
+						displayDatePicker="true" />
+					</div>
+				</div>
+		    </div>
+		</div>
+	</div>
+	<!-- Footer -->
+	<div class="inlineFooter slds-grid" style="bottom:40px;">
+		<div class="slds-align_absolute-center">
+				<lightning:button aura:id="searchBtn" variant="brand" class="button" label="Search" onclick="{!c.searchCustomer}"/>
+    			<lightning:button aura:id="saveButton" variant="brand" class="button" label="Convert" disabled="{!v.isCustomerExist == false || v.customerObj.CIS__c == null || v.customerObj.CIS__c == ''}" onclick="{!c.convertCustomer}"/>
+    	</div>
+	</div>
+
+	<!-- Customer Detail -->
+	<aura:if isTrue="{!(v.checkExistCustomer == true)}">
+		<aura:if isTrue="{!(v.isCustomerExist == false)}">
+				<div class="slds-notify_container slds-is-relative">
+						<div class="slds-notify slds-notify_toast slds-theme_info" role="alert">
+						  <span class="slds-assistive-text">notify</span>
+							  <div class="slds-notify__content">
+								<h3 class="slds-text-heading_small ">Customer doesn't exist</h3>
+							</div>
+						</div>
+				</div>
+		</aura:if>
+		<aura:if isTrue="{!(v.isCustomerExist == true)}">
+		<div class="slds-box marginSection">
+			<h1 class="slds-section__title slds-theme_shade slds-p-horizontal_medium  slds-theme_default slds-theme--default">Customer Detail</h1>
+							
+			<div class="slds-section__container">
+					
+				<div class="slds-grid">
+					<div class="slds-has-flexi-truncate slds-p-horizontal_medium">
+						<span class="slds-form-element__label">CIS ID</span>
+							<div class="slds-form-element__control">
+							  <span class="slds-form-element__static">{!v.customerObj.CIS__c}</span>
+							</div>
+					</div>
+					<div class="slds-has-flexi-truncate slds-p-horizontal_medium">
+							<span class="slds-form-element__label">Birth Date/Registeration Date</span>
+							<div class="slds-form-element__control">
+								<lightning:formattedDateTime aura:id="customerForm" name="birthDate" year="numeric" month="numeric" day="numeric" readonly="true" label="Date of Birth" value="{!v.customerObj.Birthdate_Registration_Date__c}"/>
+							</div>
+					</div>
+				</div>
+				<div class="slds-grid">
+					<div class="slds-has-flexi-truncate slds-p-horizontal_medium">
+						<span class="slds-form-element__label">Name - Surname</span>
+						<div class="slds-form-element__control">
+							<span class="slds-form-element__static">{!v.customerObj.Salutation}&nbsp;{!v.customerObj.FirstName}&nbsp;{!v.customerObj.LastName}</span>
+						</div>
+					</div>
+					<div class="slds-has-flexi-truncate slds-p-horizontal_medium">
+						<span class="slds-form-element__label">Name - Surname [TH]</span>
+						<div class="slds-form-element__control">
+							<span class="slds-form-element__static">{!v.customerObj.Encrypt_Title_TH__c}&nbsp;{!v.customerObj.Encrypt_Name_TH__c}&nbsp;{!v.customerObj.Encrypt_Middle_Name_TH__c}&nbsp;{!v.customerObj.Encrypt_Surname_TH__c}</span>
+						</div>
+					</div>
+				</div>
+				<div class="slds-grid">
+					<div class="slds-has-flexi-truncate slds-p-horizontal_medium">
+						<span class="slds-form-element__label">Name - Surname [EN]</span>
+						<div class="slds-form-element__control">
+							<span class="slds-form-element__static">{!v.customerObj.Encrypt_Title_EN__c}&nbsp;{!v.customerObj.Encrypt_Name_EN__c}&nbsp;{!v.customerObj.Encrypt_Middle_Name_EN__c}&nbsp;{!v.customerObj.Encrypt_Surname_EN__c}</span>
+						</div>
+					</div>
+				</div>
+				<div class="slds-grid">
+					<div class="slds-has-flexi-truncate slds-p-horizontal_medium">
+						<span class="slds-form-element__label">Customer Type</span>
+							<div class="slds-form-element__control">
+								<span class="slds-form-element__static">{!v.customerTypeShow}</span>
+							</div>
+					</div>
+					<div class="slds-has-flexi-truncate slds-p-horizontal_medium">
+						<span class="slds-form-element__label">Identification</span>
+							<div class="slds-form-element__control">
+							  <span class="slds-form-element__static">{!v.customerObj.Encrypt_Identification_No__c}</span>
+							</div>
+					</div>				
+				</div>
+				<div class="slds-grid">
+						<div class="slds-has-flexi-truncate slds-p-horizontal_medium">
+							<span class="slds-form-element__label">Customer Status</span>
+								<div class="slds-form-element__control">
+									<span class="slds-form-element__static">{!v.customerObj.Customer_Status__c}</span>
+								</div>
+						</div>
+						<div class="slds-has-flexi-truncate slds-p-horizontal_medium">
+							<span class="slds-form-element__label">Status</span>
+								<div class="slds-form-element__control">
+								  <span class="slds-form-element__static">{!v.customerObj.Status__c}</span>
+								</div>
+						</div>				
+				</div>
+				<div class="slds-grid">
+						<div class="slds-has-flexi-truncate slds-p-horizontal_medium">
+							<span class="slds-form-element__label">Customer Segment Code</span>
+								<div class="slds-form-element__control">
+									<span class="slds-form-element__static">{!v.customerObj.Customer_Segment_Code__c}</span>
+								</div>
+						</div>
+						<div class="slds-has-flexi-truncate slds-p-horizontal_medium">
+							<span class="slds-form-element__label">Primary Segment Code</span>
+								<div class="slds-form-element__control">
+								  <span class="slds-form-element__static">{!v.customerObj.Primary_Segment_Code__c}</span>
+								</div>
+						</div>				
+				</div>
+				<div class="slds-grid">
+						<div class="slds-has-flexi-truncate slds-p-horizontal_medium">
+							<span class="slds-form-element__label">Customer/Business Code</span>
+								<div class="slds-form-element__control">
+									<span class="slds-form-element__static">{!v.customerObj.Customer_s_Business_Code__c}</span>
+								</div>
+						</div>
+						<div class="slds-has-flexi-truncate slds-p-horizontal_medium">
+							<span class="slds-form-element__label">Industry Classification Code</span>
+								<div class="slds-form-element__control">
+								  <span class="slds-form-element__static">{!v.customerObj.Industry_Classification_Code__c}</span>
+								</div>
+						</div>				
+				</div>
+			</div>
+		</div>
+		</aura:if>
+	</aura:if>
+	
+</div>
+</aura:component>

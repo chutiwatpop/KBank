@@ -1,0 +1,168 @@
+<apex:component controller="RemoterExtensions">
+<apex:stylesheet value="{!$Resource.ext6}/ext6/build/classic/theme-classic/resources/theme-classic-all.css"/>
+    <script>var __sfdcSessionId = '{!GETSESSIONID()}';</script>
+    <script src="/soap/ajax/36.0/connection.js" type="text/javascript"></script>
+    <script src="/soap/ajax/36.0/apex.js" type="text/javascript"></script>
+    <apex:includeScript value="{!$Resource.underscore}"/>
+     <style type="text/css">
+        .x-grid-td > .x-grid-cell-inner{
+            height:20px !important;
+        }
+        .biggertext{
+            font-size: 35px !important;
+        }
+        .sort_ASC{
+            background-image:url('{!$Resource.ext_debug}/resources/images/grid/sort_asc.gif');
+        }
+        .sort_DESC{
+            background-image:url('{!$Resource.ext_debug}/resources/images/grid/sort_desc.gif');
+        }
+        .x-btn-wrap-default-small.x-btn-split-right::after ,.x-btn-wrap-default-toolbar-small.x-btn-split-right:after,.x-btn-wrap-default-toolbar-small.x-btn-arrow-right:after{
+            background-image:url('{!$Resource.ext_debug}/resources/images/dd/drop-no.gif') !important;
+            background-size: contain;
+        }
+        .my-boundlist-item-menu {
+            padding: 0 6px;
+            line-height: 22px;
+            cursor: pointer;
+            cursor: hand;
+            position: relative;
+            zoom: 1;
+            border-width: 1px;
+            border-style: dotted;
+            border-color: white;
+        }
+
+        .my-boundlist-item-menu:hover {
+            background: #D6E8F6;
+            border-color: #D6E8F6;
+        }
+    </style>
+    <script>
+        Visualforce.remoting.timeout = 120000;
+        var controllers = [RemoterExtensions];
+        for(var i=0;i<controllers.length;i++){
+            for(var method in controllers[i]){
+                if(controllers[i].hasOwnProperty(method)){
+                    controllers[i][method].directCfg.method.getArgs = Ext.direct.RemotingMethod.prototype.getArgs;
+                }
+            }
+        }
+        Ext.data.proxy.Direct.prototype.createRequestCallback =
+            function(request, operation, callback, scope){
+                var me = this;
+                return function(data, event){
+                    me.processResponse(event.status, operation, request,
+                                       {data: data}, callback, scope);
+                };
+            };
+        Ext.define('Jet.SFDC.writer', {
+            extend: 'Ext.data.writer.Json',
+            alias: 'writer.sfdc',
+            config: {extraParams: undefined},
+            constructor: function(config) {
+                this.callParent([config]);
+            },
+            writeRecords: function(request, data) {
+                this.callParent([request, data]);
+                if ((this.extraParams !== undefined)) {
+                    Ext.apply(request.jsonData, this.extraParams);
+                }
+                return request;
+            }
+        });
+        Ext.override(Ext.data.Store,{
+            createSortersCollection: function(){
+                var sorters = this.callParent();
+
+                if(!Ext.isEmpty(this.multiSortLimit)) {
+                            sorters.getOptions().setMultiSortLimit(this.multiSortLimit);
+                }
+                return sorters
+            }
+        });
+
+        Ext.override(Ext.grid.filters.filter.Base,{
+            onValueChange: function(field, e) {
+                var me = this,
+                    updateBuffer = me.updateBuffer;
+                if (!field.isFormField) {
+                    Ext.raise('`field` should be a form field instance.');
+                }
+                if (field.isValid()) {
+                    if (e.getKey() === e.RETURN) {
+                        me.menu.hide();
+                        return;
+                    }
+                    if (updateBuffer) {
+                        me.task.delay(updateBuffer, null, null, [
+                            me.getValue(field)
+                        ]);
+                    } else {
+                        me.setValue(me.getValue(field));
+                    }
+                }
+            },
+        });
+        Ext.define('Ext.grid.filters.filter.numString', {
+            extend: 'Ext.grid.filters.filter.String',
+            alias: 'grid.filter.numstring',
+            //prefix: '#',
+            setValue: function(value) {
+
+                var me = this;
+                if (me.inputItem) {
+                    me.inputItem.setValue(value);
+                }
+                //var filterValue = (!isNaN(parseFloat(value)) && isFinite(value))?'#'+value:value;
+                me.filter.setValue(value);
+                if (value && me.active) {
+                    me.value = value;
+                    me.updateStoreFilter();
+                } else {
+                    me.setActive(!!value);
+                }
+            },
+        });
+
+        /*Panachai Reinthavorn 11012017
+        *Bypass due to the problem occurs when use ptype cellediting and ftype summary at the same time
+        */
+        Ext.override(Ext.dom.Element,{
+            query: function(am, av, at) {
+                var ao = this.dom, aq, ar, au, al, ak, ap, an;
+                if (!ao) {
+                    return null
+                }
+                av = (av !== false);
+                //bypass if am is undefined
+                if(typeof am !== "undefined"){
+                    am = am.split(",");
+                    if (!at) {
+                    aq = []
+                    }
+                    for (ap = 0,
+                    ar = am.length; ap < ar; ap++) {
+                        if (typeof am[ap] === "string") {
+                            if (at) {
+                                al = ao.querySelector(am[ap]);
+                                return av ? al : Ext.get(al)
+                            }
+                            ak = ao.querySelectorAll(am[ap]);
+                            for (an = 0,
+                            au = ak.length; an < au; an++) {
+                                aq.push(av ? ak[an] : Ext.get(ak[an]))
+                            }
+                        }
+                    }
+                }
+                return aq
+            }
+        });
+        /*Panachai Reinthavorn 11012017*/
+        
+        Ext.dom.Element.prototype.validIdRe = /^[a-z_][:a-z0-9\-_]*$/i;
+    </script>
+    <apex:includeScript value="{!$Resource.ext6}/ext6/build/ext-all.js"/>
+    <apex:includeScript value="{!$Resource.extjs_util}"/>
+</apex:component>

@@ -1,0 +1,57 @@
+<aura:component implements="lightning:actionOverride,force:hasRecordId,force:hasSObjectName,flexipage:availableForAllPageTypes,force:lightningQuickActionWithoutHeader" access="global" controller="TelesalesController">
+	<aura:attribute name="recordId" type="Id" />
+    <aura:attribute name="question" type="String" default="Test Question" />
+    <aura:attribute name="idQuestion" type="String" />
+    <aura:attribute name="lastQuestion" type="String[]" />
+    <aura:attribute name="lastAnswer" type="String[]" />
+    <aura:attribute name="numberQuestion" type="String" default="Question 1" />
+    <aura:attribute name="options" type="List" />
+    <aura:attribute name="radioGrpValue" type="String"/>
+    <aura:attribute name="mapQuestions" type="Map" default="{}"/>
+    <aura:attribute name="allQuestions" type="String"/>
+    <aura:attribute name="questionList" type="String[]" />
+    <aura:attribute name="answerList" type="String[]" />
+    <aura:attribute name="freeTextList" type="String[]" />
+    <aura:attribute name="freeNumberList" type="String[]" />
+    <aura:attribute name="freeTextListHistory" type="String[]" />
+    <aura:attribute name="freeNumberListHistory" type="String[]" />
+    <aura:attribute name="today" type="DateTime" />
+    <aura:attribute name="dateStringList" type="String[]" />
+    <aura:attribute name="isHasText" type="Boolean" />
+    <aura:attribute name="isHasNumber" type="Boolean" />
+    <aura:attribute name="isHasDate" type="Boolean" />
+    <aura:attribute name="isHasStatusLead" type="Boolean" />
+    <aura:attribute name="isHasOnlineStatus" type="Boolean" />
+    <aura:attribute name="statusLeadList" type="string[]" />
+    <aura:attribute name="onlineStatusList" type="string[]" />
+    <aura:attribute name="noteText" type="string" default=""/>
+    <aura:attribute name="numberText" type="integer" default=""/>
+    <aura:attribute name="questionNameList" type="String[]" />
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    
+    <div class="slds-text-heading_small">{!v.numberQuestion}</div><br/>
+    <div class="slds-text-title" style="white-space: pre-wrap;">
+   		{!v.question}
+   
+    <lightning:radioGroup 
+        aura:id="mygroup"
+        name="Answer"
+        options="{! v.options }"
+        value="{! v.radioGrpValue }"
+        onchange="{! c.handleChange }"
+        required="false" />
+         </div>
+    
+    <div aura:id="freeText" class="MarginTop HideInput"><ui:inputTextArea rows="3" label="รายละเอียด: " value="{!v.noteText}"/></div>
+    <div aura:id="inputNumber" class="MarginTop HideInput"><ui:inputNumber label="วงเงิน: " value="{!v.numberText}" /></div>
+    <div aura:id="inputDate" class="MarginTop HideInput"><ui:inputDateTime aura:id="expdate" label="วันที่ลูกค้าสะดวกติดต่อกลับ" class="form-control"
+   value="{!v.today}" displayDatePicker="true" /></div>
+    <br/>
+    		<br/>
+     <lightning:button label="ย้อนกลับ" class="HideButton" aura:id="backButton" onclick="{! c.backClick }" />
+     <lightning:button label="ถัดไป" onclick="{! c.nextClick }" />
+    <lightning:button label="ยกเลิก" onclick="{! c.cancelTeleSale }" />
+    <!-- <lightning:button label="Finish" class="slds-button slds-button_success" onclick="{! c.saveTeleSale }" />-->
+    
+     
+</aura:component>

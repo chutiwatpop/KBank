@@ -1,0 +1,10 @@
+.THIS {
+}
+.THIS .slds-th__action_form span {
+  display: none;
+} 
+.THIS .table_container
+{
+    padding: 10px;
+    max-height: 680px;
+}

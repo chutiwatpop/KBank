@@ -31,7 +31,6 @@ public class TransformationLetterOfGuarantee implements IProductUsageTransformat
         ProductUsageController.ProductUsageModel productUsageModel = new ProductUsageController.ProductUsageModel();
         productUsageModel.siteMap = productUsageConfig.getSiteMaps(productCode);
         productUsageModel.productUsageTables = setProductUsageTable(fncModel, lpmModel);
-        System.debug('test:' + JSON.serialize(productUsageModel));
         return productUsageModel;
     }
 
@@ -141,7 +140,7 @@ public class TransformationLetterOfGuarantee implements IProductUsageTransformat
                     lpmDetailInfo = lpmDetailMap.get(fncDetailAR.AR_ID_ENCODED);
                 }
 
-                 if(!productUsageTables.containsKey(keyModel)) {
+                if(!productUsageTables.containsKey(keyModel)) {
                     ProductUsageController.ProductUsageTable tableLevelAccount = new ProductUsageController.ProductUsageTable();
                     tableLevelAccount.columnHeaders = getColumnHeader(ACCOUNT_LEVEL);
                     productUsageTables.put(keyModel, tableLevelAccount);

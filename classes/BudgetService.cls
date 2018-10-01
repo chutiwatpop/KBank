@@ -39,15 +39,6 @@ public without sharing class BudgetService {
 			if(mainBudgetIdSet.contains(newBudgetInfo.recordTypeId)) {
 				Budget__c newItemBudget = new Budget__c();
 				Budget__c oldMainBudgetInfo = oldBudgetInfoMapById.get(newBudgetInfo.Id);
-				System.debug(oldMainBudgetInfo.Account_Increase_Subtype__c == null && newBudgetInfo.Account_Increase_Subtype__c != null);
-				System.debug(oldMainBudgetInfo.Account_Increase_Subtype__c);
-				System.debug(newBudgetInfo.Account_Increase_Subtype__c);
-				System.debug(oldMainBudgetInfo.Account_Decrease_Subtype__c == null && newBudgetInfo.Account_Decrease_Subtype__c != null);
-				System.debug(oldMainBudgetInfo.Account_Decrease_Subtype__c);
-				System.debug(newBudgetInfo.Account_Decrease_Subtype__c);
-				System.debug(oldMainBudgetInfo.Account_Subtype__c == null && newBudgetInfo.Account_Subtype__c != null);
-				System.debug(oldMainBudgetInfo.Account_Subtype__c);
-				System.debug(newBudgetInfo.Account_Subtype__c);
 				if(oldMainBudgetInfo.Account_Increase_Subtype__c == null 
 				&& newBudgetInfo.Account_Increase_Subtype__c != null) {
 					newItemBudget.Budget_ParentId__c			= newBudgetInfo.Id;
@@ -84,7 +75,6 @@ public without sharing class BudgetService {
 				}
 			}
 		}
-		System.debug(newItemBudgetList.size());
 		try {
 			if(!newItemBudgetList.isEmpty()) Database.insert(newItemBudgetList);
 		}
@@ -106,14 +96,10 @@ public without sharing class BudgetService {
 		Map<Id, Budget__c> budgetInfoTeamNameMapById = getMainBudgetAdditionalInfoMapById(new Map<Id, Budget__c>(newMainBudgetInfoList).keySet());
 		
 		for(Budget__c newMainBudgetInfo : newMainBudgetInfoList) {
-			System.debug(mainBudgetIdSet.contains(newMainBudgetInfo.recordTypeId));
 			if(mainBudgetIdSet.contains(newMainBudgetInfo.recordTypeId)) {
 				Budget__c updatedMainBudget = new Budget__c();
 				Budget__c mainBudgetAdditionalInfo 	= budgetInfoTeamNameMapById.get(newMainBudgetInfo.Id);
 				Budget__c oldMainBudgetInfo = oldMainBudgetInfoMapById.get(newMainBudgetInfo.Id);
-				System.debug(oldMainBudgetInfo.Account_Increase_Subtype__c == null && newMainBudgetInfo.Account_Increase_Subtype__c != null);
-				System.debug(oldMainBudgetInfo.Account_Decrease_Subtype__c == null && newMainBudgetInfo.Account_Decrease_Subtype__c != null);
-				System.debug(oldMainBudgetInfo.Account_Subtype__c == null && newMainBudgetInfo.Account_Subtype__c != null);
 				if(oldMainBudgetInfo.Account_Increase_Subtype__c == null 
 				&& newMainBudgetInfo.Account_Increase_Subtype__c != null) {
 					updatedMainBudget.Id							= newMainBudgetInfo.Id;
@@ -125,7 +111,6 @@ public without sharing class BudgetService {
 					updatedMainBudget.Total_Increase__c				= newMainBudgetInfo.Total_Increase__c + newMainBudgetInfo.Increase_Amount__c;
 					updatedMainBudget.Increase_Branch__c			= addingIncreaseBranchName(newMainBudgetInfo.Increase_Branch__c, mainBudgetAdditionalInfo.Team_Name__r.Name);
 					updatedMainBudgetList.add(updatedMainBudget);
-					System.debug(updatedMainBudget.Id);
 					}
 				else if(oldMainBudgetInfo.Account_Decrease_Subtype__c == null 
 				&& newMainBudgetInfo.Account_Decrease_Subtype__c != null) {
@@ -137,7 +122,6 @@ public without sharing class BudgetService {
 					updatedMainBudget.Is_Increase__c				= true;
 					updatedMainBudget.Decrease_Branch__c			= addingIncreaseBranchName(newMainBudgetInfo.Decrease_Branch__c, mainBudgetAdditionalInfo.Team_Name__r.Name);
 					updatedMainBudgetList.add(updatedMainBudget);
-					System.debug(updatedMainBudget.Id);
 				}
 				else if(oldMainBudgetInfo.Account_Subtype__c == null 
 				&& newMainBudgetInfo.Account_Subtype__c != null) {
@@ -149,11 +133,9 @@ public without sharing class BudgetService {
 					updatedMainBudget.Total_Increase__c				= newMainBudgetInfo.Total_Increase__c + newMainBudgetInfo.Increase_Amount__c;
 					updatedMainBudget.Increase_Branch__c			= addingIncreaseBranchName(newMainBudgetInfo.Increase_Branch__c, mainBudgetAdditionalInfo.Team_Name__r.Name);
 					updatedMainBudgetList.add(updatedMainBudget);
-					System.debug(updatedMainBudget.Id);
 				}
 			}
 		}
-		System.debug(updatedMainBudgetList.size());
 		TriggerHandler.bypass('BudgetTriggerHandler');
 		if(!updatedMainBudgetList.isEmpty()) update updatedMainBudgetList;
 		TriggerHandler.clearBypass('BudgetTriggerHandler');
@@ -196,26 +178,21 @@ public without sharing class BudgetService {
 				mainBudgetOfChangedItemBudget.add(newItemBudgetInfo.Budget_ParentId__c);
 			}
 		}
-		System.debug(mainBudgetOfChangedItemBudget.size());
 		Map<Id, Team_Structure__c> assignedTeamStructureMapById = getAssignedTeamStructureMapById(assignedTeamStructureIdSet);
 		Map<Id, Budget__c> mainBudgetOfItemInfoMapById = getMainBudgetAdditionalInfoMapById(mainBudgetOfChangedItemBudget);
 		Map<Id, List<Budget__c>> itemBudgetListMapByMainBudgetId = getItemBudgetListMapByMainBudgetId(mainBudgetOfChangedItemBudget);
-		System.debug(itemBudgetListMapByMainBudgetId.size());
-		System.debug(itemBudgetListMapByMainBudgetId);
 		for(Budget__c newItemBudgetInfo : newItemBudgetInfoList) {
 			Budget__c updatedMainBudget = new Budget__c();
 			Budget__c oldItemBudgetInfo = oldItemBudgetInfoMapById.get(newItemBudgetInfo.Id);
 			if(newItemBudgetInfo.recordTypeId == DECREASE_BUDGET_ITEM) {
 				if(oldItemBudgetInfo.Account_Increase_Type__c != newItemBudgetInfo.Account_Increase_Type__c
 				|| oldItemBudgetInfo.Total_Decrease__c != newItemBudgetInfo.Total_Decrease__c) {
+					if(!isHaveDecreaseItemOnly(itemBudgetListMapByMainBudgetId.get(newItemBudgetInfo.Budget_ParentId__c))) {	
+						newItemBudgetInfo.addError(Label.Budget_Not_Allow_To_Edit_Decrease_Budget);
+					}
 					if(oldItemBudgetInfo.Account_Decrease_Type__c != newItemBudgetInfo.Account_Decrease_Type__c) {
-						System.debug('Debug - UpdateItemBudget : ' + isHaveDecreaseItemOnly(itemBudgetListMapByMainBudgetId.get(newItemBudgetInfo.Budget_ParentId__c)));
-						if(isHaveDecreaseItemOnly(itemBudgetListMapByMainBudgetId.get(newItemBudgetInfo.Budget_ParentId__c))) {
-							updatedMainBudget.Id 						= newItemBudgetInfo.Budget_ParentId__c;
-							updatedMainBudget.Account_Decrease_Type__c	= newItemBudgetInfo.Account_Decrease_Type__c;
-						} else {
-							newItemBudgetInfo.Account_Decrease_Type__c.addError(Label.Budget_Not_Allow_To_Edit_Decrease_Budget);
-						}
+						updatedMainBudget.Id 						= newItemBudgetInfo.Budget_ParentId__c;
+						updatedMainBudget.Account_Decrease_Type__c	= newItemBudgetInfo.Account_Decrease_Type__c;
 					}
 					if(oldItemBudgetInfo.Total_Decrease__c != newItemBudgetInfo.Total_Decrease__c) {
 						updatedMainBudget.Id 					= newItemBudgetInfo.Budget_ParentId__c;
@@ -317,9 +294,6 @@ public without sharing class BudgetService {
 
 		for(Budget__c newBudgetInfo : newBudgetInfoList) {
 			Budget__c oldBudgetInfo = oldBudgetInfoMapById.get(newBudgetInfo.Id);
-  			System.debug(newBudgetInfo.Stage__c);
-            System.debug(oldBudgetInfo.Stage__c);
-			System.debug(newBudgetInfo.OwnerId);
 			if((oldBudgetInfo.Stage__c == GlobalConstants.BUDGET_OPEN && newBudgetInfo.Stage__c == GlobalConstants.BUDGET_WAITING_FOR_APPROVE)
 			|| (oldBudgetInfo.Stage__c == GlobalConstants.BUDGET_WAITING_FOR_APPROVE && newBudgetInfo.Stage__c == GlobalConstants.BUDGET_APPROVED)
 			|| (oldBudgetInfo.Stage__c == GlobalConstants.BUDGET_WAITING_FOR_APPROVE && newBudgetInfo.Stage__c == GlobalConstants.BUDGET_REJECTED)
@@ -343,10 +317,6 @@ public without sharing class BudgetService {
 		for(Budget__c newBudgetInfo : newBudgetInfoList) {
 			Budget__c oldBudgetInfo = oldBudgetInfoMapById.get(newBudgetInfo.Id);
 			User budgetOwner 		= budgetOwnerMapById.get(oldBudgetInfo.OwnerId);
-			System.debug(oldBudgetInfo.Stage__c);
-			System.debug(newBudgetInfo.Stage__c);
-			System.debug(!budgetIdSet.contains(newBudgetInfo.recordTypeId));
-			System.debug(budgetOwner);
 
 			if(oldBudgetInfo.Stage__c == GlobalConstants.BUDGET_OPEN 
 			&& newBudgetInfo.Stage__c == GlobalConstants.BUDGET_WAITING_FOR_APPROVE 
@@ -591,21 +561,12 @@ public without sharing class BudgetService {
 				}
 			}
 		}
-		System.debug(mainBudgetOfDeletedItemIdSet.size());
 
 		Map<Id, Budget__c> mainBudgetOfItemInfoMapById = getMainBudgetAdditionalInfoMapById(mainBudgetOfDeletedItemIdSet);
 		Map<Id, List<Budget__c>> itemBudgetListMapByMainBudgetId = getItemBudgetListMapByMainBudgetId(mainBudgetOfDeletedItemIdSet);
 
-		System.debug(mainBudgetOfItemInfoMapById.size());
-		System.debug(itemBudgetListMapByMainBudgetId.values()[0].size());
-
 		for(Budget__c deletedBudgetInfo : deletedBudgetInfoList) {
 			if(itemBudgetIdSet.contains(deletedBudgetInfo.recordTypeId)) {
-				System.debug(deletedBudgetInfo.OwnerId);
-				System.debug(userInfo.getUserId());
-				System.debug(deletedBudgetInfo.OwnerId == userInfo.getUserId());
-				System.debug(profileName);
-				System.debug(!Label.Profile_can_delete_budget.contains(profileName));
 				if(deletedBudgetInfo.OwnerId == userInfo.getUserId() && !Label.Profile_can_delete_budget.contains(profileName)) {
 					if(deletedBudgetInfo.recordTypeId == INCREASE_BUDGET_ITEM 
 					|| deletedBudgetInfo.recordTypeId == REQUEST_BUDGET_ITEM) {
@@ -613,7 +574,6 @@ public without sharing class BudgetService {
 						if(mainBudgetOfItemInfo.Stage__c != GlobalConstants.BUDGET_OPEN){
 							deletedBudgetInfo.addError(Label.Not_Allow_To_Delete_Decrease_Budget);
 						}else {
-							System.debug('Delete item');
 							Budget__c updatedMain = deletedIncreaseItemBudget(deletedBudgetInfo, mainBudgetOfItemInfo, itemBudgetListMapByMainBudgetId.get(deletedBudgetInfo.Budget_ParentId__c));
 							updatedMainList.add(updatedMain);
 						}

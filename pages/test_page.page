@@ -1,0 +1,5 @@
+<apex:page standardController="Account" extensions="test_page_controller" showHeader="false" sidebar="false">
+
+{!testId}
+
+</apex:page>

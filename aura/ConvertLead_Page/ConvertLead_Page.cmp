@@ -1,0 +1,88 @@
+<aura:component implements="force:lightningQuickActionWithoutHeader,force:hasRecordId" controller="ConvertLeadController">
+    <aura:attribute name="messageSuccess" type="String" default="{!$Label.c.Referral_Converted_Message}"/>
+    <aura:attribute name="massageNotAssigned" type="String" default="{!$Label.c.Referral_can_not_be_convert_if_not_assigned}"/>
+    <aura:attribute name="showError" type="Boolean" default="false"/>
+    <aura:attribute name="messageError" type="String"/>
+    <aura:attribute name="fieldLabel" type="Map"/>
+    <aura:attribute name="isPersonAccount" type="Boolean" default="true"/>
+    <aura:attribute name="isNewCustomer" type="Boolean" default="true"/>
+    <aura:attribute name="isMlpRequireField" type="Boolean" default="false"/>
+    <aura:attribute name="createNewJob" type="Boolean" default="true"/>
+    <aura:attribute name="selectedJob" type="sObject" default="{}"/>
+    <aura:attribute name="existingJobQueryCondition" type="String"/>
+    <aura:attribute name="userId" type="Id"/>
+    <aura:attribute name="lead" type="Lead"/>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <div aura:id="thecontainer" class="thecontainer" id="thecontainer">
+        <div role="dialog" tabindex="-1" aria-labelledby="header43" class="slds-modal slds-fade-in-open slds-modal--large" >
+            <div class="slds-modal__container">
+                <div class="slds-modal__header">
+                    <h2 id="header43" class="slds-text-heading--medium">Convert Referral</h2>
+                </div>
+                <div class="slds-modal__content" aura:id="modalbody" id="modalbody">
+                <fieldset class="slds-form-element">
+                    <aura:if isTrue="{!v.showError}">
+                        <ui:message severity="error" closable="false">
+                            {!v.messageError}
+                        </ui:message>
+                    </aura:if>
+                    <div class="entityPanel first-block open-bottom">
+                        <div class="header">
+                            <aura:if isTrue="{!v.isNewCustomer}">
+                                <span>New Prospect</span>
+                                <aura:set attribute="else">
+                                    <span>Merge Customer</span>
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                        <div class="panelDetail">
+                            <aura:if isTrue="{!v.isNewCustomer}">
+                                <ui:inputSelect label="Customer Type" aura:id="inputCustomerType" change="{!c.onCustomerTypeChange}"/>
+                                <ui:inputText aura:id="inputCIS_ID" label="{!v.fieldLabel.CIS_ID__c}" value="{!v.lead.CIS_ID__c}"/>
+                                <div id="personField">
+                                    <ui:inputSelect label="{!v.fieldLabel.Salutation}" aura:id="inputSalutation" value="{!v.lead.Salutation}"/>
+                                    <ui:inputText aura:id="inputFirstName" label="{!v.fieldLabel.FirstName}" value="{!v.lead.FirstName}"/>
+                                    <ui:inputText aura:id="inputLastName" label="{!v.fieldLabel.LastName}" value="{!v.lead.LastName}" required="true"/>
+                                </div>
+                                <div id="organizationField" class="hide">
+                                    <ui:inputText aura:id="inputTitle" label="{!v.fieldLabel.Title}" value="{!v.lead.Title}"/>
+                                    <ui:inputText aura:id="inputCompanyName" label="{!v.fieldLabel.Company}" value="{!v.lead.Company}" required="true"/>
+                                </div>
+                                <ui:inputSelect label="{!v.fieldLabel.Document_Type__c}" aura:id="inputDocumentType" value="{!v.lead.Document_Type__c}"/>
+                                <ui:inputText aura:id="inputIdentificationNumber" label="{!v.fieldLabel.Identification_No__c}" value="{!v.lead.Identification_No__c}"/>
+                                <ui:inputDate aura:id="inputBirthdate_RegistrationDate" label="{!v.fieldLabel.Birthdate_Registration_Date__c}" value="{!v.lead.Birthdate_Registration_Date__c}" displayDatePicker="true"/>
+                                <aura:set attribute="else">
+                                    <ui:inputText aura:id="InputCustomer" label="{!v.fieldLabel.Customer__c}" value="{!v.lead.Customer__r.Name}" disabled="true"/>
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div class="entityPanel first-block open-top open-bottom">
+                        <div class="header">
+                            <span>Create new job</span>
+                        </div>
+                        <div class="panelDetail">
+                            <ui:inputCheckbox aura:id="createJob" value="{!v.createNewJob}"/>
+                        </div>
+                    </div>
+                    <aura:if isTrue="{!!v.isNewCustomer}">
+                        <div class="entityPanel first-block open-top">
+                            <div class="header">
+                                <span>Existing Job</span>
+                            </div>
+                            <div class="panelDetail">
+                                <c:CustomLookup aura:id="customLookupJob" objectAPIName="Opportunity" IconName="standard:opportunity" queryField="Id,Name,Owner.Name,Format(CreatedDate) format_createddate" queryCondition="{!v.existingJobQueryCondition}" selectedRecord="{!v.selectedJob}" isOpportunityCustomSubField="true" primaryFieldAPIName="Name" secondaryFieldAPIName="Owner.Name" primaryFieldLabel="Name" secondaryFieldLabel="Owner"/>
+                            </div>
+                        </div>
+                    </aura:if>
+                </fieldset>
+                </div>
+                <div class="slds-modal__footer">
+                     <ui:button label="Cancel" press="{!c.handleCancel}"/>
+                     <ui:button label="Convert" class="uiButton--brand" press="{!c.handleBeforeConvert}"/>
+                </div>
+            </div>
+        </div>
+        <div class="slds-backdrop slds-backdrop--open" style="background-color: transparent;"></div>
+    </div>
+</aura:component>

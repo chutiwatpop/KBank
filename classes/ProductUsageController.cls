@@ -85,11 +85,9 @@ public class ProductUsageController {
 				cisId = '21027657';
 				productUsageTransformer = new TransformationCommercialLoan(cisId, productCode, productUsageConfig);
 			}else if(productCode.equalsIgnoreCase('PN')){
-				//cisId = '12792873';
-				cisId = '14502653';
-				//cisId ='3281732';
+				cisId = '12792873';
+				//cisId = '14502653'; //No commitmentLV 
 				productUsageTransformer = new TransformationPromissoryNote(cisId, productCode, productUsageConfig);
-				//productUsageTransformer = new TransformationLetterOfGuarantee2(cisId, productCode, productUsageConfig);
 			}else if(productCode.equalsIgnoreCase('AV')){
 				cisId = '4133681';
 				//cisId = '132016'; only account level

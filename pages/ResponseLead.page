@@ -1,0 +1,453 @@
+<apex:page title="Answer Lead" showHeader="false" sidebar="false"  lightningStylesheets="true" standardController="Target_List__c" recordSetVar="targetLists" extensions="ResponseLeadApexController">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+    <head>
+      <meta charset="utf-8" /> 
+      <meta http-equiv="x-ua-compatible" content="ie=edge" />
+      <title>Response Lead</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <!-- Import the Design System style sheet -->
+      <apex:slds />
+      <apex:includeLightning />
+      <apex:includeScript value="{!URLFOR($Resource.jquery, '')}"/>
+      <script>  
+        var jobId = '{!form.Job}';
+        var obj = jQuery.parseJSON('{!JSENCODE(formJSONString)}');
+        var component;
+        if({!!isListViewPage} && '{!leadType}' != 'Lead for Feedback' && {!!form.isError}){
+                $Lightning.use("c:CustomLookupApp", function() {
+                $Lightning.createComponent("c:CustomLookup",
+                {   objectAPIName : "Opportunity",
+                    IconName : "standard:opportunity",
+                    queryField : "Id,Name,StageName,Remark__c",
+                    label : "เลือกจาก Job ที่มีอยู่แล้ว / Existing Job",
+                    queryCondition : "AccountId = '{!form.ParentId}' AND (StageName NOT IN ('Finished','Finished.','Reopen')  OR (StageName IN ('Finished','Finished.') AND CloseDate >= LAST_N_DAYS:"+{!$Label.Lead_Response_Limit_Job_xx_Days_Backward}+"))"
+                },
+                "callLightningCustomLookup",
+                function(cmp) {
+                    component = cmp;
+                    callLightningEvent();
+                    cmp.set('v.isCalledFromVFPage',true);
+                    cmp.set('v.selectedRecord',obj.Job);
+                    $A.eventService.addHandler({ "event": "c:selectedsObjectRecordEventForVFPage", "handler" : jobsHandlingFunction });                
+                });
+            });
+        }
+                
+        // Manually call aura method for set old value
+        function callLightningEvent(){
+            component.oSelectedRecordMethod('Opportunity',obj.Job);
+        }
+
+        function jobsHandlingFunction (event){
+            let job = event.getParam('recordByEvent');
+            jobId = job.Id;
+        }
+
+        function refreshFromLC() {
+            top.postMessage('refreshPage', '*');
+        }
+
+        function closeLightningModalForMobile() {
+            top.postMessage('closeResponsePageModal', '*');
+        }
+    
+
+      </script>
+      <style>
+
+        #main-content{
+            background-color: #fff;
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        .spinnerBg{
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            background-color: #000;
+            opacity: 0.2;
+            z-index: 999999;
+        }
+
+        .spinner{
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            background-image: url("/img/loading32.gif");
+            background-size: 16px;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-position: center;
+            z-index: 9999999;
+            opacity: 1;
+        }
+
+        select, option.selected {
+            width:100%;
+            overflow:hidden;
+            white-space:nowrap;
+            text-overflow:ellipsis;
+        }
+
+      </style>
+    </head>
+    <body>
+      <div id="spinnerStatus" style="display: none;">
+            <div class="spinnerBg" />
+            <div class="spinner" />
+      </div>
+      <div id="main-content" class="slds-scope">
+        <div id="alertContainer" class="slds-hide slds-notify slds-notify_alert slds-theme_alert-texture" role="alert">
+            <span class="slds-assistive-text"></span>
+            <h2 id="alertMsg"></h2>
+        </div>
+        <div class="slds-box slds-m-around_xx-small">
+            <div class="slds-container_large slds-container--center">
+                <div class="slds-m-around_x-small ">
+                <apex:outputPanel id="datapanel" rendered="{!!hasExpireCampaign}" layout="block">
+                    <apex:repeat value="{!questionMap}" var="key"> 
+                                <div class="container slds-border_bottom slds-m-bottom_x-small" id="{!'container_'+key}" level="{!questionMap[key].Level}" isMain="{!questionMap[key].isMain}">
+                                <apex:outputPanel id="view"  layout="block">
+                                <apex:variable value="{!questionMap[key].Choices}" var="choiceList"/>
+                                <apex:variable var="answer" value="{!questionMap[key].Answered}"/>
+                                <apex:variable value="{!IF(OR(OR(questionMap[key].isMain,choiceList.size > 0),answer.answerId == '1'),true,false)}" var="isRequiredResponse"/>
+                                    <div class="slds-grid slds-wrap  slds-m-bottom_x-small" id="{!'level_'+questionMap[key].Level}" >
+                                        <div class="slds-col  slds-size_1-of-1 slds-small-size_1-of-3 slds-has-flexi-truncate slds-p-horizontal_medium">
+                                            <div class="slds-form-element">
+                                                <div class="slds-form-element__control">
+                                                <label for="{!key}" style="font-size:.8125rem;">{!questionMap[key].Message} <abbr class="{!IF(isRequiredResponse,'slds-required slds-show_inline-block','slds-required slds-hide')}" title="required">*</abbr>
+                                                <!-- /{!questionMap[key].Level}/{!questionMap[key].isMain}/{!questionMap[key].Lead_Code_Type}  -->
+                                                </label>
+                                                <apex:outputPanel >
+                                                    <select class="slds-select" style="font-size:.8125rem;" id="{!key}" isMain="{!questionMap[key].isMain}" level="{!questionMap[key].Level}" onchange="populateAnswer(this,'onchange');" ontouchstart="removeOldResponseForMobile(this)" disable="" isRequiredResponse="{!isRequiredResponse}">
+                                                        <option questionId="{!key}" choiceLevel="{!questionMap[key].Level}" isRequiredMemo="false" value="0" >-- Please Select --</option>
+                                                            <apex:outputPanel rendered="{!IF(answer.answerId == '1',true,false)}" layout="block">
+                                                                <option style="display:none" class="{!IF(answer.answerId == '1','slds-show','slds-hide')}" questionId="{!key}" choiceLevel="{!answer.level}" isShowMemo="{!answer.isShowMemo}" isRequiredMemo="{!answer.isRequiredMemo}" value="{!answer.answerId}" selected="selected">{!answer.answerText}</option>    
+                                                            </apex:outputPanel>
+                                                            <apex:repeat value="{!questionMap[key].Choices}" var="choices">
+                                                                <option title="{!choices.Help_Text__c}" questionId="{!key}" choiceLevel="{!questionMap[key].Level}" isRequiredMemo="{!choices.Required_Memo__c}" isShowMemo="{!choices.Show_Memo__c}" value="{!choices.Response_ID__c}"  >{!choices.Message__c} </option>
+                                                            </apex:repeat>
+                                                    </select>
+                                                </apex:outputPanel>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-grid slds-wrap  slds-size_1-of-1 slds-small-size_2-of-3">
+                                            <apex:outputPanel styleClass="slds-col  slds-size_1-of-1 slds-small-size_1-of-2 slds-has-flexi-truncate slds-p-horizontal_medium" rendered="{!IF(AND(answer['isShowMemo'],answer['isShowMemo'] != null),true,false)}">
+                                                <div class="slds-form-element">
+                                                        <div class="slds-form-element__control" id="{!'Memo_'+key}">
+                                                            <label style="font-size:.8125rem;" for="{!'Memo_'+key}">Memo <abbr class="{!IF(AND(answer.isRequiredMemo,answer.isRequiredMemo != null),'slds-required slds-show_inline-block','slds-hide')}" id="{!'Memo_required_'+key}" title="required">*</abbr></label>
+                                                            <input style="font-size:.8125rem;" type="text" id="{!'MemoTxt_'+key}" name="Memo_{!questionMap[key].Level}" class="slds-input memoTxt" placeholder="Memo" required="{!IF(AND(answer['isRequiredMemo'],answer['isRequiredMemo'] != null),true,false)}" value="{!answer.memoText}"/>  
+                                                        </div>
+                                                    
+                                                </div>
+                                            </apex:outputPanel>
+                                            <apex:outputPanel styleClass="slds-col  slds-size_1-of-1 slds-small-size_1-of-2 slds-has-flexi-truncate slds-p-horizontal_medium" rendered="{!IF(AND(answer.noteText != null,answer.noteText != ''),true,false)}" >
+                                                <div class="slds-form-element__control " id="{!'Note_'+key}">
+                                                    <label style="font-size:.8125rem;" for="Note">Note </label>
+                                                    <input style="font-size:.8125rem;" type="text" id="{!'NoteTxt_'+key}" class="slds-input txt" placeholder="Note" value="{!IF(answer.noteText != null,answer.noteText,'')}" />  
+                                                </div>
+                                            </apex:outputPanel>
+                                        </div>
+                                    </div>
+                                    
+                                   </apex:outputPanel>
+    
+                                </div>
+                    </apex:repeat>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!IF(OR(leadType == 'Lead for Feedback',isListViewPage),false,true)}" layout="block">
+                        <div id="jobsContainer" class="slds-grid slds-wrap"  >
+                            <div class="slds-col slds-size_1-of-1 slds-small-size_1-of-2 slds-has-flexi-truncate slds-p-horizontal_medium slds-m-bottom_x-small">
+                                <div class="slds-form-element__control ">
+                                    <div id="callLightningCustomLookup" />
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-small-size_1-of-2 slds-has-flexi-truncate slds-p-horizontal_medium slds-m-bottom_x-small">
+                                <div class="slds-form-element__control ">
+                                    <span class="slds-checkbox slds-checkbox_stacked">
+                                        <input id="checkNewJob" type="checkbox"/>
+                                        <label class="slds-checkbox__label" for="checkNewJob">
+                                            <span class="slds-checkbox_faux"></span>
+                                            <span class="slds-form-element__label">Create New Job</span>
+                                        </label>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    </div>
+                </div>
+                <apex:form >
+                    <div id="errorContainer" class="slds-grid slds-align_absolute-center"></div><br/>
+
+                    <div id="btnContainer" class="slds-grid slds-align_absolute-center">
+                        <apex:commandButton id="saveBtn" styleClass="slds-button slds-button_brand" value="Save" onclick="save()" oncomplete="doInit({!selectedJSONString})" status="spinnerStatus"/>
+                        <apex:commandButton id="cancelBtn" styleClass="slds-button slds-button_neutral" value="Cancel" onclick="cancel()"/>
+                    </div>
+                    <apex:actionFunction action="{!gotoRecentView}" name="gotoRecentView" ></apex:actionFunction>
+                    <apex:actionFunction name="callOnchangeFunction" action="{!onChangeResponse}" rerender="view" oncomplete="doInit({!selectedJSONString})">       
+                        <apex:param id="answer" name="answer" value="" assignTo="{!selectedAnswer}" />                    
+                        <apex:param id="question" name="question" value="" assignTo="{!answerQuestion}" />
+                        <apex:param id="nextLv" name="nextLv" value="" assignTo="{!nextLv}" />  
+                        <apex:param id="mapAnswerObjStr" name="mapAnswerObjStr" value="" assignTo="{!mapAnswerObjStr}" />   
+                    </apex:actionFunction>
+                    <apex:actionFunction name="callSaveFunction" action="{!save}" oncomplete="showResponseResult({!resultResponseJSONString})">
+                        <apex:param id="jobId" name="jobId" value="" assignTo="{!opportunityId}" />   
+                        <apex:param id="isCheckedNewJob" name="isCheckedNewJob" value="" assignTo="{!isCheckedNewJob}" />   
+                        <apex:param id="mapAnswerObjStr2" name="mapAnswerObjStr2" value="" assignTo="{!mapAnswerObjStr}" />   
+                    </apex:actionFunction> 
+                </apex:form>
+        </div>
+      </div>
+      <script> 
+
+          $(document).ready(function() {
+             validateOnload({!targetListsJSONString}); 
+             doInit({!selectedJSONString});
+             console.log('questionMap','{!questionMap}');
+             callRefreshPage();
+          });
+          
+          // For vf in Record Page to refresh after redirect.
+          function callRefreshPage(){
+              var executed = false;
+              if('{!isRedirectPage}' == 'true' || '{!isListViewPage}' == 'true'){
+                  return false;
+              }else if (!executed) {
+                    console.log('callRefreshPage');
+                    executed = true;
+                    refreshFromLC();
+              }
+          }
+
+         var currentProfile =  '{!$Profile.Name}';
+         function validateOnload(targetLists){
+            var errorMsg;
+            console.log(targetLists.length);
+            if(!targetLists.length){
+                errorMsg = 'Please select at least one Lead.';
+            }else if(!["CBS-RM", "CBS-TM", "CBS-TL"].includes(currentProfile)){
+                errorMsg = '{!$Label.CBSLead_OnlyCBScanAnswerLeadForFeedback}';
+            }else if(!targetLists.every(checkLeadOwnershipOfThisUser)){
+                errorMsg = '{!$Label.CBSLead_Only_Owner_can_Update_Target_List_Status}';
+            }else if(!targetLists.every(checkLeadSameSubtype)){
+                errorMsg = '{!$Label.CBSLead_OnlySameLeadForFeedBackSubType}';
+            }else if('{!hasOtherLeadType}' == 'true'){
+                errorMsg = '{!$Label.CBSLead_OnlySameTypeFeedback}';
+            }else if('{!hasExpireCampaign}' == 'true'){
+                errorMsg = '{!$Label.CBSLead_Cannot_Answer_Expired_Lead}';
+            }else if('{!questionMap}' == '' || '{!questionMap}' == '{}'){
+                errorMsg = 'ResponseLead: Empty lead master.';
+            }
+
+            if(errorMsg){
+                if('{!isListViewPage}' == 'true'){
+                    var r = confirm(errorMsg);
+                    if(r){
+                            gotoRecentView();
+                    }else{
+                            gotoRecentView();
+                    }
+                }else{
+                    $('input[id*=saveBtn]').hide();
+                    $('div[id*=datapanel]').hide();
+                    $('#jobsContainer').hide();
+                    $('#errorContainer').html(errorMsg);
+                }
+            }
+          }
+
+          function checkLeadOwnershipOfThisUser(eachtargetList){
+            return eachtargetList.isCurrentOwner__c == 1;
+          }
+
+          function checkLeadSameSubtype(eachtargetList){
+            return  String(eachtargetList.Lead_Subtype_CBS__c) == '{!leadSubType}'
+          }
+          
+          function removeOldResponseForMobile(element){
+                $(element).find('option[value="1"]').remove();
+          }
+
+          function validateFormBeforeSave(){
+              var isValidForm = false;
+              $('.container').each(function(index,element){
+                let currentLv = parseInt($(this).attr('level'));
+                let questionId = this.id.substr(10);
+                let selectedAttr = $('select[id="'+questionId+'"]').find(':selected');
+                let isRequiredMemo = $(selectedAttr).attr('isRequiredMemo') == 'true' ? true : false;
+                let isRequiredAnswer = $('select[id="'+questionId+'"]').attr('isRequiredResponse') == 'true' ? true : false;
+                let ansId = $(selectedAttr).val();
+                var responseResult = {};
+                 if(isRequiredAnswer && ansId == '0'){
+                    responseResult.isSuccess = false;
+                    responseResult.message ='Please Select Response Level '+currentLv;
+                    showResponseResult(responseResult);
+                    $('select[level="'+currentLv+'"]').focus();
+                    isValidForm = false;
+                    return false;
+                 }else if (isRequiredMemo && ($('input[id="MemoTxt_'+questionId+'"]').val() === undefined || $('input[id="MemoTxt_'+questionId+'"]').val() == '')){
+                    responseResult.isSuccess = false;
+                    responseResult.message ='Please Fill in Memo Level '+currentLv;
+                    showResponseResult(responseResult);
+                    $('input[name="Memo_'+currentLv+'"]').focus();
+                    isValidForm = false;
+                    return false;
+                 }else{
+                    isValidForm = true;
+                 }
+              });
+            return isValidForm;
+          }
+
+          function cancel(){
+              if('{!$User.UITheme}' == 'Theme4t'){
+                closeLightningModalForMobile();
+              }else{
+                setTimeout(function(){ 
+                    gotoRecentView(); 
+                }, 100);
+              }
+          }
+
+          function save(){
+                hideElement($('#alertContainer'));
+                showLoading();
+                if(validateFormBeforeSave()){
+                   populateAnswer(null,'onsave'); 
+                }
+          }
+
+          function showResponseResult(responseResult){
+            // console.log('showResponseResult');
+            // console.log(responseResult);
+            if(typeof(responseResult) == undefined || !responseResult.isSuccess || responseResult.isSuccess == 'false'){
+                console.log('Save Failed');
+                $('#alertContainer').removeClass('slds-theme_success');
+                $('#alertContainer').addClass('slds-theme_error');
+                $('#alertMsg').html('Save Failed : '+responseResult.message);
+                hideLoading();
+                showElement($('#alertContainer'));
+            }else if(responseResult.isSuccess || responseResult.isSuccess == 'true'){
+                console.log('Save successfully');
+                $('#alertContainer').removeClass('slds-theme_error');
+                $('#alertContainer').addClass('slds-theme_success');
+                $('#alertMsg').html('Save Successfully');
+                hideLoading();
+                showElement($('#alertContainer'));
+                setTimeout(function(){ 
+                    hideElement($('#alertContainer'));
+                    if('{!isListViewPage}' == 'false'){
+                        // refresh the entire page to render new value
+                            if('{!$User.UITheme}' == 'Theme4t'){
+                                closeLightningModalForMobile();
+                            }else if('{!isRedirectPage}' == 'true'){
+                                sforce.one.navigateToSObject("{!recordId}","detail");                    
+                            }else{
+                                refreshFromLC();
+                            }
+                     }else{
+                        gotoRecentView(); 
+                    }
+                }, 800);
+            }
+          }
+
+          function populateAnswer(elementOption,type){
+                console.log('populateAnswer');              
+                if(type == 'onchange' && elementOption != null){
+                    var answerId = elementOption.value;
+                    var questionId = elementOption.id;
+                    var nextLv = parseInt($(elementOption).attr('level'))+1;
+                }
+
+                var objList = [];
+                $('.container').each(function(index,element){
+                    let qId = this.id.substr(10);
+                    let selectedAttr = $('select[id="'+qId+'"]').find(':selected');
+                    let ansId = $(selectedAttr).val();
+                    let obj = new Object(); // "object constructor" syntax
+                    let nextLv = parseInt($(this).attr('level'))+1;
+                    let isRequiredMemo = $(selectedAttr).attr('isRequiredMemo');
+                    let isShowMemo = $(selectedAttr).attr('isShowMemo');
+
+                    obj.questionId = qId;
+                    obj.level = $(this).attr('level');
+                    obj.answerId = ansId;
+                    obj.answerText = $(selectedAttr).text();
+                    obj.memoText = $('input[id="MemoTxt_'+qId+'"]').val();
+                    obj.noteText = $('input[id="NoteTxt_'+qId+'"]').val();
+                    obj.isRequiredMemo = isRequiredMemo == 'true' ? true : false;
+                    obj.isShowMemo = isShowMemo == 'true' ? true : false;
+                    objList.push(obj);
+                });
+                // console.log(objList);
+                // console.log(JSON.stringify(mapObj));
+                if(type == 'onchange'){
+                    console.log('onchange');
+                    callOnchangeFunction(answerId,questionId,nextLv,JSON.stringify(objList));
+                }else if(type == 'onsave'){
+                    var isCheckedNewJob = $('input[id="checkNewJob"]:checked').length > 0;
+                    if(jobId === undefined || jobId == null){
+                        console.log('undefined  job')
+                        jobId = '';
+                    }
+                    callSaveFunction(jobId,isCheckedNewJob,JSON.stringify(objList));
+                }
+          }
+
+          function doInit(mapResponseQuestion){
+            console.log("doInit");
+            $('.slds-select').each(function(){
+                 let attrDefaultAnswerLen = $(this).find("option[value='1']").length;
+                 if(attrDefaultAnswerLen == 0){
+                     $(this).find("option[value='0']").attr('selected','selected');
+                 }
+                 let lenOptions = $(this).find('option').length;
+                 let totalOptionsLen = lenOptions - attrDefaultAnswerLen;
+                  if($(this).attr('isMain') != 'true' && totalOptionsLen <= 1){
+                      $(this).attr('disabled',true);
+                  }
+                //else{
+                     // $(this).attr('disabled',false);
+                 // }
+             });
+                console.log('mapResponseQuestion',mapResponseQuestion);
+              if(mapResponseQuestion !== undefined){
+                for (key in mapResponseQuestion) {                 
+                    console.log('key',key);
+                    $("select[id='"+key+"']").val(mapResponseQuestion[key]);
+                }
+              }
+
+            }
+
+          function hideElement(ele){
+              $(ele).addClass('slds-hide');
+              $(ele).removeClass('slds-show');
+          }
+
+          function showElement(ele){
+              $(ele).addClass('slds-show');
+              $(ele).removeClass('slds-hide');
+          }
+
+          function showElementInline(ele){
+              $(ele).addClass('slds-show_inline-block');
+              $(ele).removeClass('slds-hide');
+          }
+
+          function showLoading() {
+            $('#spinnerStatus').css('display', 'block');
+          }
+
+          function hideLoading() {
+            $('#spinnerStatus').css('display', 'none');
+          }
+
+      </script>
+    </body>
+  </html>
+</apex:page>

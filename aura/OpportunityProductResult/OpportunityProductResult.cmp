@@ -1,0 +1,91 @@
+<aura:component implements="force:hasRecordId,flexipage:availableForAllPageTypes" access="global" controller="OpportunityProductApexController">
+    <aura:attribute name="contentHeight"    type="Integer"/>
+    <aura:attribute name="oppProductWrapperList" type="Object[]" default="[]" />
+	<aura:attribute name="oppProductList"  	type="OpportunityLineItem[]" default="[]"/>
+	<aura:attribute name="isLoading" 		type="Boolean" 	default="false"/>
+	<aura:attribute name="isMobile" 		type="Boolean" 	default="false"/>
+	<aura:attribute name="isEditMode" 		type="Boolean" 	default="false"/>
+    <aura:attribute name="columns" 			type="List" 	default="[]"/>
+    <aura:attribute name="requiredColumn"   type="Map"      default="{}"/>
+    <aura:attribute name="jobId" 		type="Id" />
+    <aura:attribute name="isNotNewApp" 		type="Boolean" />
+
+    <style>
+        .content {
+            position:relative;
+            overflow:scroll !important;
+            min-height:60px;
+            height: calc({!'100vh - 6rem - 59px - 58px - '+ v.contentHeight +'px'}) !important;  
+        }
+ 
+        @media 
+        screen 
+        and (min-device-width : 320px) 
+        and (max-device-width : 1024px) 
+        and (orientation : landscape) {
+       		/* desktop */
+            .content {
+                position:relative;
+                overflow:auto;
+        		min-height:60px;
+        		-webkit-overflow-scrolling: touch;
+                height: calc({!'100vh - 6rem - 59px - 58px - '+ v.contentHeight +'px'}) !important;
+            }
+        	/* mobile */
+        	.content-mobile {
+                position:relative;
+                overflow:auto;
+        		min-height:60px;
+        		-webkit-overflow-scrolling: touch;
+                height: calc({!'100vh - 3rem - 59px - 58px - '+ v.contentHeight +'px'}) !important;
+            }
+        }
+        @media
+        screen 
+        and (min-device-width : 320px) 
+        and (max-device-width : 1024px) 
+        and (orientation : portrait) {
+            .content {
+                position:relative;
+                overflow:auto;
+                min-height:60px;
+                height: calc({!'100vh - 2rem - 59px - 58px - '+ v.contentHeight +'px'}) !important;
+            }
+        }
+    </style>
+
+    <aura:handler name="init" value="{!this}" action="{!c.init}" />
+    <aura:handler name="handleInitRow" event="c:DmlEvent" action="{!c.handleInitRow}"/>
+    <aura:registerEvent name="handleInitialized" type="c:DmlEvent"/>
+    <div aura:id="divC" class="content">
+    	<aura:if isTrue="{!v.isLoading}">
+            <div class="slds-align--absolute-center">
+                <lightning:spinner alternativeText="Loading"/>
+            </div>
+        </aura:if>
+        <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+            <thead>
+                <tr class="slds-text-title--caps">
+					<aura:iteration items="{!v.columns}" var="eachColumns" indexVar="index">
+                		<th scope="col">
+                			<div class="slds-truncate">
+                                <aura:if isTrue="{!eachColumns.lnIsRequired}">
+                                    <span class="slds-required" title="required">*</span>
+                                </aura:if>
+                                {!eachColumns.lnLabel}
+                            </div>
+                		</th>
+                	</aura:iteration>
+                </tr>
+            </thead>
+            <tbody>
+            	<!-- <aura:iteration items="{!v.oppProductList}" var="oppLineItem" indexVar="indexRow">
+            		<c:OpportunityProductRow isEditMode="{!v.isEditMode}" oppLineItem="{!oppLineItem}" jobId="{!v.jobId}"/>
+			    </aura:iteration> -->
+                <aura:iteration items="{!v.oppProductWrapperList}" var="oppProductWrapper" indexVar="indexRow">
+                    <c:OpportunityProductRow oppProductWrapper="{!oppProductWrapper}" jobId="{!v.jobId}"/>
+                </aura:iteration>
+            </tbody>
+        </table>
+    </div>
+</aura:component>

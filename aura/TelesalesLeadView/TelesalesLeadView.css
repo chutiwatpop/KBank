@@ -1,0 +1,20 @@
+.THIS.HideButton{
+    pointer-events:none;
+    color:#AAA;
+    background:#F5F5F5;
+}
+.THIS.ShowButton{
+    pointer-events:auto;
+    color:#0070d2;
+    background:#ffffff;
+}
+
+.THIS.HideInput{
+    display: none;
+}
+.THIS.ShowInput{
+    display: inline;
+}
+.THIS.MarginTop{
+    margin-top: 10px;
+}
