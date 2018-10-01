@@ -1,0 +1,50 @@
+<apex:page showHeader="false" standardStylesheets="false" sidebar="false" applyHtmlTag="false" applyBodyTag="false" docType="html-5.0" controller="ProductHolding_Controller">
+ 	<html>
+    <head>
+    	<script>
+    	console.log('ProductHolding');
+    	function requestJsx(){
+    		console.log('requestJsx');
+    		var productId = '1';
+    		var latency = '2000';
+    		Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.ProductHolding_Controller.getProduct}', productId, latency, function (result) {
+						// Send result to Lightning Component
+						console.log('result',result);
+						var message = {
+							topic: "com.mycompany.message",
+							result: result
+						};
+						parent.postMessage(message, lcBaseURL);
+			});
+    	}
+    	requestJsx();
+    	
+
+			// var lcBaseURL = "https://kasikornbank--fscdev.lightning.force.com";
+
+			// // Listen for messages from the Lightning Component
+			// window.addEventListener("message", function (event) {
+			// 	if (event.origin !== lcBaseURL) {
+			// 		// Not the expected origin: reject message
+			// 		return;
+			// 	}
+			// 	// Only handle messages we are interested in            
+			// 	if (event.data.topic === "com.mycompany.message") {
+			// 		// var productId = event.data.productId;
+			// 		// var latency = event.data.latency;
+			// 		Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.ProductHolding_Controller.request}', function (result) {
+			// 			// Send result to Lightning Component
+			// 			var message = {
+			// 				topic: "com.mycompany.message",
+			// 				result: result
+			// 			};
+			// 			parent.postMessage(message, lcBaseURL);
+			// 		});
+			// 	}
+			// }, false);
+
+		</script>
+		
+	</head>
+	</html>
+</apex:page>

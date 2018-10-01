@@ -1,0 +1,243 @@
+<apex:page title="Issue Log" showHeader="true" sidebar="true" standardController="Issue_Log__c" extensions="CBS_NewIssueLog_Controller">
+    <apex:includeScript value="{!URLFOR($Resource.jquery, '')}"/>
+    <style type="text/css">
+        .closeIcon{
+            display:none !important;
+        }
+
+        #divCisId img{
+            display:none !important;
+        }
+    </style>
+
+    <script type="text/javascript">
+    console.log('script');
+        $(document).ready(function() {
+            console.log('ready')
+            if({!isChildIssue} || '{!accountId}' != ''){
+                $('[id$="divCisId"] .lookupIcon').remove();
+                $('[id$="divCisId"] .closeIcon').remove();
+            }else{
+                $('[id$="divCisId"] .lookupIcon').attr('style', 'display: inline-block !important;')
+                $('[id$="divCisId"] .closeIcon').attr('style', 'display: inline-block !important;')
+            }
+        });
+
+        function reRenderIcon(){
+            console.log('reRenderIcon',{!isChildIssue})
+            if(!{!isChildIssue}){
+                $('[id$="divCisId"] .lookupIcon').attr('style', 'display: inline-block !important;')
+                $('[id$="divCisId"] .closeIcon').attr('style', 'display: inline-block !important;')
+            }
+        }
+    </script>
+
+    <apex:sectionHeader title="Issue Log" subtitle="New Issue Log" />
+    <apex:pageMessages id="errorMsg"></apex:pageMessages>
+    <apex:form id="mainForm">
+        <apex:inputHidden id="inputHidden" value="{!issueLog.CIS_ID_or_Prospect_Name__c}"/>
+        <apex:pageBlock id="pBlock" title="Issue Log Detail" mode="edit">
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Save" action="{!save}"/>
+                <apex:commandButton value="Cancel" action="{!cancel}"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection columns="2" id="pageBlockSection1">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Subject__c.Label}" />
+                    <apex:actionRegion >
+                        <apex:inputField value="{!issueLog.Subject__c}" required="true">
+                            <apex:actionSupport event="onchange" reRender="Subject" status="loadingBar"/>
+                        </apex:inputField>
+                    </apex:actionRegion>
+                </apex:pageBlockSectionItem>
+
+                <!-- <apex:inputField value="{!issueLog.Date_Time_Opened__c}" rendered="{!closeDateRender}"/> -->
+
+                <apex:pageBlockSectionItem rendered="{!closeDateRender}">
+                    <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Date_Time_Opened__c.Label}" />
+                    <apex:actionRegion >
+                        <apex:inputField value="{!issueLog.Date_Time_Opened__c}" required="true">
+                            <apex:actionSupport event="onchange" reRender="openDate" status="loadingBar"/>
+                        </apex:inputField>
+                    </apex:actionRegion>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!!closeDateRender}"/>
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Status__c.Label}" />
+                    <apex:outputPanel >
+                        <apex:actionRegion >
+                        <apex:selectList id="issueStatus" value="{!selectStatus}" multiselect="false" size="1" label="Status">
+                            <apex:actionSupport event="onchange" reRender="pageBlockSection1" status="loadingBar" 
+                            action="{!checkCloseDate}"/>
+                            <apex:selectOptions value="{!statusList}" />
+                        </apex:selectList>
+                        </apex:actionRegion>
+                        <apex:outputText id="divStatusHelpText" value="{!statusHelpText}"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+
+
+                <apex:pageBlockSectionItem rendered="{!closeDateRender}">
+                   <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Date_Time_Closed__c.Label}" />
+                    <apex:actionRegion >
+                        <apex:inputField value="{!issueLog.Date_Time_Closed__c}" required="true">
+                            <apex:actionSupport event="onchange" reRender="closeDate" status="loadingBar"/>
+                        </apex:inputField>
+                    </apex:actionRegion>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!!closeDateRender}"/>
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Need_Long_Term_Solution__c.Label}" />
+                    <apex:inputCheckbox value="{!issueLog.Need_Long_Term_Solution__c}"/>
+                </apex:pageBlockSectionItem>
+                <apex:actionFunction name="callCheckClose" action="{!checkCloseDate}" rerender="pageBlockSection1"/>
+
+
+                <apex:pageBlockSectionItem rendered="{!reOpenReasonRender}">
+                    <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Re_Open_Reason__c.Label}" />
+                    <apex:actionRegion >
+                        <apex:inputField value="{!issueLog.Re_Open_Reason__c}" required="true">
+                            <apex:actionSupport event="onchange" reRender="reopenreason" status="loadingBar"/>
+                        </apex:inputField>
+                    </apex:actionRegion>
+                </apex:pageBlockSectionItem>
+
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection id="customerInformation" title="Customer Information" columns="2">
+                <apex:pageBlockSectionItem id="cisBlockSection">
+                    <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.CIS_ID_or_Prospect_Name_Text__c.Label}" />
+                    <apex:actionRegion >
+                        <div id = "divCisId">
+                        <apex:inputField id="cisId" value="{!issueLog.CIS_ID_or_Prospect_Name__c}" required="true">
+                            <apex:actionsupport oncomplete="reRenderIcon()" event="onchange" action="{!updateSelectAccount}" reRender="customerInformation"/>
+                        </apex:inputField>
+                        </div>
+                    </apex:actionRegion>
+                </apex:pageBlockSectionItem>
+
+                <apex:outputField value="{!selectAccount.Group__c}"/>
+                <apex:outputField value="{!selectAccount.Name_TH__c}"/>
+                <apex:outputField value="{!selectAccount.Sub_Group__c}"/>
+            </apex:pageBlockSection>
+
+            <!-- Issue Information Section -->
+            <apex:pageBlockSection id="issueInformation" title="Issue Information" columns="2">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Division_Formula__c.Label}" />
+                    <apex:outputPanel layout="block" styleClass="requiredInput">
+                    <apex:outputPanel layout="block" styleClass="requiredBlock" rendered="true"/>
+                        <apex:actionRegion >
+                            <apex:selectList id="divisionSelectList" value="{!selectDivision}" multiselect="false" size="1" required="true">
+                                <apex:actionSupport event="onchange" reRender="productSelectList,categorySelectList,subCategorySelectList,issueInformation,divHelpText" status="loadingBar" action="{!validateSelectDivision}"/>
+                                <apex:selectOptions value="{!divisionList}" />
+                            </apex:selectList>
+                        </apex:actionRegion>
+                        <apex:outputText id="divHelpText" value="{!divisionHelpText}"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem />
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Product_Formula__c.Label}" />
+                    <apex:outputPanel layout="block" styleClass="requiredInput">
+                    <apex:outputPanel layout="block" styleClass="requiredBlock" rendered="{!!productDisabled}"/>
+                        <apex:actionRegion >
+                            <apex:selectList id="productSelectList" value="{!selectProduct}" multiselect="false" size="1" label="Product" disabled="{!productDisabled}">
+                                <apex:actionSupport event="onchange" reRender="categorySelectList,subCategorySelectList,issueInformation" status="loadingBar" action="{!validateSelectProduct}"/>
+                                <apex:selectOptions value="{!productList}" />
+                            </apex:selectList>
+                        </apex:actionRegion>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem rendered="{!!otherProductRender}"/>
+
+                <apex:pageBlockSectionItem rendered="{!otherProductRender}">
+                    <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Product_Text__c.Label}" />
+                    <apex:actionRegion >
+                        <apex:inputField value="{!issueLog.Product_Text__c}" required="{!otherProductRender}">
+                            <apex:actionSupport event="onchange" reRender="productText" status="loadingBar"/>
+                        </apex:inputField>
+                    </apex:actionRegion>
+                </apex:pageBlockSectionItem>
+
+
+                <apex:pageBlockSectionItem >
+                     <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Category_Formula__c.Label}" />
+                    <apex:outputPanel layout="block" styleClass="requiredInput">
+                    <apex:outputPanel layout="block" styleClass="requiredBlock" rendered="{!!categoryDisabled}"/>
+                        <apex:actionRegion >
+                            <apex:selectList id="categorySelectList" value="{!selectCategory}" multiselect="false" 
+                            size="1" label="Category" disabled="{!categoryDisabled}" >
+                                <apex:actionSupport event="onchange" reRender="subCategorySelectList,issueInformation" status="loadingBar" action="{!validateSelectCategory}"/>
+                                <apex:selectOptions value="{!categoryList}" />
+                            </apex:selectList>
+                        </apex:actionRegion>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+          
+                <apex:pageBlockSectionItem rendered="{!!otherCategoryRender}"/>
+
+                <apex:pageBlockSectionItem rendered="{!otherCategoryRender}">
+                    <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Category_Specify__c.Label}" />
+                    <apex:actionRegion >
+                        <apex:inputField value="{!issueLog.Category_Specify__c}" required="{!otherCategoryRender}">
+                            <apex:actionSupport event="onchange" reRender="categoryText" status="loadingBar"/>
+                        </apex:inputField>
+                    </apex:actionRegion>
+                </apex:pageBlockSectionItem>
+
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Sub_Category_Formula__c.Label}" />
+                    <apex:outputPanel layout="block" styleClass="requiredInput">
+                    <apex:outputPanel layout="block" styleClass="requiredBlock" rendered="{!!subCatagoryDisabled}"/>
+                        <apex:actionRegion >
+                            <apex:selectList id="subCategorySelectList" value="{!selectSubCategory}" multiselect="false" size="1" label="Sub Product" disabled="{!subCatagoryDisabled}" >
+                                <apex:actionSupport event="onchange" reRender="issueInformation" status="loadingBar" action="{!validataSelectSubCategory}" />
+                                <apex:selectOptions value="{!subCategoryList}" />
+                            </apex:selectList>
+                        </apex:actionRegion>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>    
+
+                <apex:pageBlockSectionItem rendered="{!!otherSubCategoryRender}"/>
+
+                <apex:pageBlockSectionItem rendered="{!otherSubCategoryRender}">
+                    <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Sub_Category_Specify__c.Label}" />
+                    <apex:actionRegion >
+                        <apex:inputField value="{!issueLog.Sub_Category_Specify__c}" required="{!otherSubCategoryRender}" style="width:95%;">
+                            <apex:actionSupport event="onchange" reRender="subCategoryText" status="loadingBar"/>
+                        </apex:inputField>
+                    </apex:actionRegion>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Issue_Description__c.Label}" />
+                    <apex:actionRegion >
+                        <apex:inputField value="{!issueLog.Issue_Description__c}" required="true" style="width:95%;">
+                            <apex:actionSupport event="onchange" reRender="Issue_Description" status="loadingBar"/>
+                        </apex:inputField>
+                    </apex:actionRegion>
+                </apex:pageBlockSectionItem>
+                <!-- <apex:inputField value="{!issueLog.Issue_Description__c}" style="width:95%;"/> -->
+
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <apex:inputField value="{!issueLog.Progress_Solution__c}" style="width:95%;"/>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection title="Related Issues Summary" columns="2" rendered="{!issueLog.IsParentIssue__c}">
+            </apex:pageBlockSection>
+
+
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

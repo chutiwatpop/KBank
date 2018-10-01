@@ -1,0 +1,34 @@
+<apex:page showHeader="true" sidebar="true">
+	<!-- for apply lightning style lightningStylesheets="true" and slds -->
+	<apex:slds />
+	<apex:includeScript value="{!$Resource.jquery}"/>
+    <script type='text/javascript'>
+    	function disabled(targetComponent) {
+    		targetComponent.attr('disabled','disabled');
+            targetComponent.prop('disabled', true);
+    	}
+
+    	function hide(targetComponent) {
+            targetComponent.prop('hidden', true);
+            $('[id$="componentId"]').css('display','none');
+    	}
+
+    	function display(targetComponent) {
+            targetComponent.prop('hidden', false);
+            $('[id$="componentId"]').css('display','');
+    	}
+    </script>
+    <apex:form id="mainForm">
+        <apex:pageBlock id="pBlock" title="Prospect" mode="edit">
+        	<apex:pageBlockSection title="Section Title" columns="2">
+        		<input id="componentId" maxlength="255" name="companyName" size="20" type="text"/>
+                <!-- <apex:outputField value="{!Account.OwnerId}"/> -->
+            </apex:pageBlockSection>
+        	
+        	<div class="pbBottomButtons">
+        		<input type="button" class="btn" onclick="display('{!$Component.componentId}');" value="Display"/>
+    			<input type="button" class="btn" onclick="hide('{!$Component.componentId}');" value="Hide"/>
+        	</div>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

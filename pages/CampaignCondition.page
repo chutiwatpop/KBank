@@ -1,0 +1,109 @@
+<apex:page showHeader="true" sidebar="true" controller="CampaignConditionController" lightningStylesheets="true">
+    <apex:includeScript value="{!$Resource.jquery}"/>
+    <apex:slds />
+    <head>
+        <style type="text/css">
+            #loading-box {
+                left: 50%;
+                top:30%;
+                position: absolute;
+                width: 32px;
+                height: 32px;
+                scroll no-repeat 0 0;
+                background: url('/img/loading32.gif');
+            }
+            #overlay-bg {
+                display: none;
+                position: fixed;
+                z-index:70000;
+                top: 0px;
+                left: 0px;
+                height:100%;
+                width:100%;
+                background: #000;
+                opacity: 0.5;
+            }
+            .errorMsgHide {
+                display: none;
+            }
+        </style>
+        <script type="text/javascript">
+            function showLoading() {
+                $('#overlay-bg').css('display', 'block');
+            }
+            function hideLoading() {
+                $('#overlay-bg').css('display', 'none');
+            }
+
+            function validateSave(isShowError) {
+                if(isShowError == false) {
+                    alert('บันทึกข้อมูลเรียบร้อยแล้ว');
+                    location.reload();
+                }
+            }
+        </script>
+    </head>
+    <apex:form id="mForm">
+    <div id="overlay-bg">
+        <div id="loading-box"/>
+    </div>
+    <apex:pageBlock mode="edit">
+        <apex:pageMessages id="errMessage" escape="false"></apex:pageMessages>
+        <apex:pageBlockSection columns="1" title="Add Campaign Condition">
+            <apex:inputText label="New Booking Code" value="{!bookingCode}"/>
+            <apex:outputText label="Object Name" value="Application History" />
+            <apex:selectList value="{!campaignSegment}" multiselect="false" size="1" label="Segment">
+                <apex:selectOptions value="{!SegmentSelectOption}" />
+                <apex:actionSupport event="onchange"  action="{!init}" reRender="errMessage,pbTable,conditionId"/>
+            </apex:selectList>
+        </apex:pageBlockSection>
+        <apex:pageBlockTable value="{!conditionList}" var="eachCond" id="pbTable" columns="5">
+            <apex:inputHidden id="isError" value="{!isShowError}"/>
+            <apex:column headerValue="No.">
+                <apex:outputText value="{!eachCond.indexOfRec}" />
+            </apex:column>
+            <apex:column headerValue="Field">
+                <apex:selectList value="{!eachCond.campaignExpression.Field__c}" multiselect="false" size="1" label="Field">
+                    <apex:selectOptions value="{!eachCond.fieldSelectOption}" />
+                    <apex:actionSupport event="onchange" action="{!setType}" reRender="forRefresh">
+                        <apex:param name="toSetTypeIdent" value="{!eachCond.indexOfRec}" assignTo="{!toSetTypeIdent}"/>
+                    </apex:actionSupport>
+                </apex:selectList>
+            </apex:column>
+            <apex:column headerValue="Operator">
+                <apex:selectList value="{!eachCond.campaignExpression.Operator__c}" multiselect="false" size="1" label="Operator">  
+                    <apex:selectOptions value="{!operatorSelectOption}" />
+                </apex:selectList>
+            </apex:column>
+            <apex:column headerValue="Value">
+                <apex:inputText value="{!eachCond.campaignExpression.Value__c}"></apex:inputText>
+                <apex:outputPanel id="errorMsgIdValue">
+                    <div class="{!if(eachCond.errorMsgValue==null,'errorMsgHide','errorMsg')}">{!eachCond.errorMsgValue}</div>
+                </apex:outputPanel>
+            </apex:column>
+            <apex:column headerValue="Action">
+                <apex:commandButton value="Delete" action="{!deleteRow}" immediate="true" rerender="pbTable">
+                    <apex:param name="toDelIdent" value="{!eachCond.indexOfRec}" assignTo="{!toDelIdent}"/>
+                </apex:commandButton>
+            </apex:column>
+        </apex:pageBlockTable>
+        <br/>
+        <apex:commandButton value="Add" action="{!addRow}" rerender="errMessage,pbTable"/>
+        <apex:outputText id="forRefresh"/>
+        <br/>
+        <apex:pageBlockSection >
+            <apex:pageBlockSectionItem helpText="{!$Label.Help_Text_For_Campaign_Setting}" labelTitle="Campaign Condition">
+                <apex:outputText >Condition</apex:outputText>
+                <apex:inputText label="Condition" value="{!campaignConditionString}" id="conditionId" />
+            </apex:pageBlockSectionItem>
+            
+        </apex:pageBlockSection>
+
+        <apex:pageBlockButtons location="bottom">
+            <apex:commandButton value="Save" action="{!save}" status="showLoading" oncomplete="validateSave({!isShowError})" reRender="errMessage,pbTable" />
+            <apex:actionStatus id="showLoading" onstart="showLoading();" onstop="hideLoading();" />
+        </apex:pageBlockButtons>
+
+    </apex:pageBlock>
+    </apex:form>
+</apex:page>

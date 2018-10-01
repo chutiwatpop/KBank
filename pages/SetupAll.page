@@ -1,0 +1,22 @@
+<apex:page standardController="Credit_Info__c" extensions="SetupAll_Controller" showHeader="false" sidebar="false">
+<apex:form >
+	<apex:message id="ps" />
+    <apex:pageblock mode="maindetail">
+    	<apex:pageBlockSection id="panelsetupall" columns="1">
+	    	<apex:inputField value="{!setupall.Setup_Date__c}" required="true" />
+	    	<apex:inputField value="{!setupall.Setup_Amount__c}" required="true" />
+	    </apex:pageBlockSection>
+	    <apex:pageBlockButtons location="bottom">
+	    	<!--apex:commandButton value="Save" action="{!savingSetupall}" status="savingStatus" reRender="panelsetupall,ps" oncomplete="completeSave({!shouldReload});" />
+	    	<apex:actionStatus id="savingStatus" startText="Start Saving..." stopText=""></apex:actionStatus>-->
+	    	<apex:commandButton value="Save" action="{!savingSetupall}" />
+	    </apex:pageBlockButtons>
+	</apex:pageblock>
+</apex:form>
+<script type="text/javascript">
+	/*function completeSave(shouldReload){
+		if(shouldReload) window.parent.postMessage(JSON.stringify({success:true}), '*');
+	};*/
+	if({!shouldReload}) window.parent.postMessage(JSON.stringify({success:true}), '*');
+</script>
+</apex:page>

@@ -1,0 +1,402 @@
+<apex:page showHeader="true" sidebar="true" standardController="Account" lightningStylesheets="true" extensions="ProductUsageController">
+	<head>
+		<title>ProductLevel</title>
+	</head>
+    <apex:slds />
+    <apex:includeLightning />
+    <apex:includeScript value="{!$Resource.jquery}"/>
+    <apex:includeScript value="/support/console/43.0/integration.js"/>
+     <style>
+        .Table-Fixed {
+            table-layout: fixed;
+            width: 100%
+        }
+        .Table-Wrap {
+            word-wrap: break-word;
+        }
+
+        .Table-scroll {
+            overflow: scroll;
+        }
+
+        .headerTopic {
+            background-color: #F0F0F0;
+            height: 50px;
+            font-size: 13px;
+        }
+        .horizontal_large {
+            /* padding-right: 1.5rem; */
+            padding-left: 1.2rem;
+        }
+
+        .Breadcrumbs-Padding{
+            padding: 1rem
+        }
+        .Page-Padding{
+            padding: 10px;
+        }
+        .slds-scope .slds-icon_x-small{
+            fill:blue;
+        }
+        .slds-icon_x-small:hover{
+            fill:DarkTurquoise;
+        }
+        .border_Bottom{
+        	height: 20px;
+        }
+        .FixedLayout{
+            overflow:hidden;     
+        }
+        .errorMessage {
+            color: red;
+            display: none;
+        }
+        .slds-scope .slds-breadcrumb__item:first-child > span {
+            padding-left: 0px;
+        }
+        .slds-scope .slds-breadcrumb__item > a,
+        .slds-scope .slds-breadcrumb__item > span {
+            padding-left: 0.5rem;
+        }
+    </style>
+    <apex:pageMessages id="messageBlock"/>
+    <div class="errorMessage" id="productLevelErrorMsg"></div>
+    <div style="text-align: center;margin-top: 10px;">
+        <apex:actionStatus id="loadingStatus">
+            <apex:facet name="start">
+                <img src="/img/loading32.gif" width="25" height="25" />
+                <label>Loading...</label>
+            </apex:facet>
+        </apex:actionStatus>
+    </div>
+    <div style="padding: 0px" id="page-content">
+        <div class="demo-only Breadcrumbs-Padding">
+            <nav role="navigation" aria-label="Breadcrumbs">
+                <span id="breadcrumblevel"> 
+                </span>
+            </nav>
+        </div>
+        <div id="content" style=""></div>
+        <div id="contentIOS" class="Table-scroll" style="overflow:hidden;"></div>
+    </div>
+    <script type='text/javascript'>
+
+    	function formatDateDDMMYYYY(date) {
+            if(date == ''){
+                return '';
+            }     
+    	    var d = new Date(date),
+    	        month = '' + (d.getMonth() + 1),
+    	        day = '' + d.getDate(),
+    	        year = d.getFullYear();
+
+    	    if (month.length < 2) month = '0' + month;
+    	    if (day.length < 2) day = '0' + day;
+
+    	    return [day, month, year].join('-');
+	    }
+
+    	function formatDateMMMYY(date) {
+    		var dd = new Date(date);
+    		var m = dd.getMonth();
+    		var y = dd.getYear().toString();
+    		var arr = new Array( "Jan", "Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec");
+
+    		return arr[m] + "-" + y.substr(y.length-2);
+    	}
+        
+    	function formatNumber(num) {
+            var retNum = '';
+            if (num !== null && num !== '' && !isNaN(num)) {
+                retNum = parseFloat(num).toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
+            }
+    	    return retNum;
+
+            //return parseFloat(num).toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+    	}
+
+        function formatPercent(num) {
+            var retNum = '';
+            if (num !== null && num !== '' && !isNaN(num)) {
+                retNum = parseFloat(num).toFixed(2) + '%';
+            }
+            return retNum;
+        }
+  
+        function goToProductDetail(column, ColumnVisible, bodys, level, types){
+            /*if({!isMobile}){
+                var element = document.getElementById("content");
+                element.classList.remove("Table-scroll");
+            }*/
+            var arrayColumn = column.split('|');
+            var arrayColumnVisible = ColumnVisible.split('|');
+            var arrayBodys = bodys.split('|');
+            var arraytypes = types.split('|');
+            var productDetailList = [];
+            if(arrayColumn.length != arrayBodys.length){
+                arrayColumn.shift();
+                arrayColumnVisible.shift();
+                arraytypes.shift();
+            }
+            arrayColumn.forEach(function(element,index) {
+              console.log('Column : ' + element + ', Visible : ' + arrayColumnVisible[index] + ', Body : ' +arrayBodys[index]+', Types : ' +arraytypes[index]);
+              if(arrayColumnVisible[index] == 'true'){
+                productDetailList[index] = { "Column": element, "Body": arrayBodys[index], "Type": arraytypes[index] };
+              }
+            });
+            var dataProduct = productDetailList;
+
+            var text = "<div class='slds-grid slds-wrap'>";
+            for (var i = 0; i < Object.keys(dataProduct).length; i++) {
+                //console.log('LogProduct : '+Object.values(dataProduct)[i]);
+                // var columnText = Object.values(dataProduct)[i].Column;
+                // columnText = columnText.replace(new RegExp('\'', 'g'), '&#39;');
+                //console.log('columnText : '+columnText);
+                text += "<div class='slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium headerTopic'><div class='slds-item_label slds-text-color_weak'>" + Object.values(dataProduct)[i].Column + "</div></div>";
+                if(Object.values(dataProduct)[i].Type == 'currency'){
+                	text += "<div class='slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium'><div class='border_Bottom'>" + formatNumber(Object.values(dataProduct)[i].Body) + "</div></div>";
+                }else if(Object.values(dataProduct)[i].Type == 'percent'){
+                    text += "<div class='slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium'><div class='border_Bottom'>" + formatPercent(Object.values(dataProduct)[i].Body) + "</div></div>";
+                }else if(Object.values(dataProduct)[i].Type == 'date'){
+                	text += "<div class='slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium'><div class='border_Bottom'>" + formatDateDDMMYYYY(Object.values(dataProduct)[i].Body) + "</div></div>";
+                }else if(Object.values(dataProduct)[i].Type == 'ccexpiredate'){
+                	text += "<div class='slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium'><div class='border_Bottom'>" + formatDateMMMYY(Object.values(dataProduct)[i].Body) + "</div></div>";
+                }else{
+                	text += "<div class='slds-size_1-of-2 slds-medium-size_3-of-12 slds-large-size_2-of-12 horizontal_large  slds-p-top_medium'><div class='border_Bottom'>" + Object.values(dataProduct)[i].Body + "</div></div>";
+                }
+                
+            }
+            text += "</div>";
+            
+            if(isIOS){
+                document.getElementById("contentIOS").innerHTML = text;
+             }else{
+                document.getElementById("content").innerHTML = text;
+            }
+            //var name = Object.values(dataProduct)[0].Column + ' ' + Object.values(dataProduct)[0].Body;
+            var levelSub = parseFloat(level)+0.1;
+            var productSiteMap = searchSiteMap(levelSub);
+            var nameProduct = siteMapLabelValue(productSiteMap.label, productSiteMap.fieldIndex, dataProduct, true);
+            productBreadcrumb.push({ "Name": nameProduct, "Value": nameProduct, "isLink": false, "level": levelSub });
+            showBreadcrumb(productBreadcrumb);
+            //sessionStorage.setItem('productDetailArray', JSON.stringify(productDetailList));
+            //sforce.one.navigateToURL('/apex/ProductDetail_Page?index=' + index);
+            //window.location.href = '/apex/ProductDetail_Page';
+        }
+
+        function siteMapLabelValue(label, fieldIndex, dataProduct, detailPage){
+            var text = label;
+            var fieldIndex = fieldIndex.split(",");
+            for(i = 0; i < fieldIndex.length; i++){
+                var param = detailPage ? dataProduct[fieldIndex[i]].Body : dataProduct[fieldIndex[i]];
+                text = text.replace("{"+i+"}", param);
+            }
+            return text;
+        }
+
+        function searchProductDetail(tableKey, level){
+            if({!isMobile} && !isIOS){ //Android only 
+                var element = document.getElementById("content");
+                element.classList.add("Table-scroll");
+                element.style.height = (screen.height-200)+"px";
+            }
+            var text = "<table class='slds-table slds-table_bordered slds-table_cell-buffer'> <thead> <tr class='slds-text-title_caps' style='background-color:#f5f5f0'>";
+            //resp = resp.productUsageTables;
+            if(resp != null) {
+                for (var i = 0; i < Object.keys(resp).length; i++) {
+                    if(Object.keys(resp)[i] == tableKey){
+                        var columnHeader = Object.values(resp)[i].columnHeaders;
+                        var columnDetail = '';
+                        if(columnHeader != null){
+                            var indexColumn = 0;  
+                            for (const [key, value] of Object.entries(columnHeader)) {
+                                if(value.type == 'detail'){
+                                    columnDetail = value.text;
+                                    continue;
+                                }
+                                if(value.visible){
+                                    if(value.type == 'currency'){
+                                        text += "<th scope='col'><div class='slds-truncate' style=''>" + value.text + "</div> </th>";
+                                    }else{
+                                        text += "<th scope='col'><div class='slds-truncate'>" + value.text + "</div> </th>";
+                                    }
+                                        
+                                }
+                                if(indexColumn >= 9 && columnDetail != ''){
+                                    text += "<th scope='col'><div class='slds-truncate'>" + columnDetail + "</div> </th>";        
+                                    break;
+                                }
+                                indexColumn++; 
+                            }
+                        }
+                        text += "</tr> </thead> <tbody>";
+
+                        var bodys = Object.values(resp)[i].body;
+                        if(bodys != null){
+                            for (var i = 0; i < bodys.length; i++) {
+                                text += "<tr>";
+                                var index = 0;
+                                var lastindex = 10;
+                                if(columnDetail != ''){index = 1; }                                
+                                for (const [key, value] of Object.entries(bodys[i])) {
+                                    if(columnHeader[index].visible){
+                                        var nextLevelTextStart = "";
+                                        var nextLevelTextEnd = "";
+
+                                        if(columnHeader[index].nextLevelId) {
+                                            if(bodys[i][columnHeader[index].nextLevelId]) {
+                                                //Site map for next level is current level+1, not real next level
+                                                var nextLevel = parseInt(level)+1;
+                                                var nextLevelSiteMap = searchSiteMap(nextLevel);
+                                                var nextLevelSiteMapText = siteMapLabelValue(nextLevelSiteMap.label, nextLevelSiteMap.fieldIndex, bodys[i], false);
+                                                var nextLevelKey = bodys[i][columnHeader[index].nextLevelId];
+                                                var realNextLevel = getRealLevelByKey(nextLevelKey);
+                                                nextLevelTextStart = "<a href='javascript:void(0);' onclick=\"(goToProductLevel('" + nextLevelKey + "', '" + realNextLevel + "', '" + nextLevelSiteMapText + "'))\">";
+                                                nextLevelTextEnd = "</a>";
+                                            }
+                                        }
+
+                                        if(columnHeader[index].type == 'currency'){
+                                            text += "<td><div class='slds-truncate' style='text-align:right'>" + nextLevelTextStart + formatNumber(value) + nextLevelTextEnd + "</div></td>";
+                                        }else if(columnHeader[index].type == 'date'){
+                                            text += "<td><div class='slds-truncate'>" + nextLevelTextStart + formatDateDDMMYYYY(value) + nextLevelTextEnd + "</div></td>";
+                                        }else if(columnHeader[index].type == 'percent'){
+                                            text += "<td><div class='slds-truncate'>" + nextLevelTextStart + formatPercent(value) + nextLevelTextEnd + "</div></td>";
+                                        }else if(columnHeader[index].type == 'ccexpiredate'){
+                                            text += "<td><div class='slds-truncate'>" + nextLevelTextStart + formatDateMMMYY(value) + nextLevelTextEnd + "</div></td>";
+                                        }else if(columnHeader[index].type == 'integer'){
+                                            text += "<td><div class='slds-truncate' style='text-align:right'>" + nextLevelTextStart + value + nextLevelTextEnd + "</div></td>";
+                                        }else{
+                                            text += "<td><div class='slds-truncate'>" + nextLevelTextStart + value + nextLevelTextEnd + "</div></td>";
+                                        }
+                                        
+                                    }
+                                    if(index >= lastindex){
+                                        var arrayColumn = $.map(columnHeader, function(value, index) {
+                                                return [value.text.replace(new RegExp('\'', 'g'), '\\\'')];
+                                        });
+                                        var arrayColumnVisible = $.map(columnHeader, function(value, index) {
+                                                return [value.visible];
+                                        });
+                                        var arrayColumnType = $.map(columnHeader, function(value, index) {
+                                                return [value.type];
+                                        });
+
+                                        bodys[i] = bodys[i].map(item => {return item.replace(new RegExp('\'', 'g'), '\\\'');});
+                                        if(isIOS) {
+                                            text += "<th scope='row' ontouchstart=\"(goToProductDetail('" + arrayColumn.join("|") + "','" + arrayColumnVisible.join("|") + "','" + bodys[i].join("|") + "','" + level + "','" + arrayColumnType.join("|") + "'))\"><div class='slds-truncate' style='text-align:center'><a href='javascript:void(0);'><svg aria-hidden='true' class='slds-icon_x-small' title='when needed'><use xlink:href=\"{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#threedots')}\"></use></svg></a></div></th>";
+                                        } else {
+                                            text += "<th scope='row'><div class='slds-truncate' style='text-align:center'><a href='javascript:void(0);' onclick=\"(goToProductDetail('" + arrayColumn.join("|") + "','" + arrayColumnVisible.join("|") + "','" + bodys[i].join("|") + "','" + level + "','" + arrayColumnType.join("|") + "'))\"><svg aria-hidden='true' class='slds-icon_x-small' title='when needed'><use xlink:href=\"{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#threedots')}\"></use></svg></a></div></th>";
+                                        }
+                                        break;
+                                    } 
+                                    index++;                     
+                                };
+                                text += "</tr>";
+                            }
+                        }
+                        break;
+                    }
+                    
+                }
+            }
+            
+            text += "</tbody></table>";
+            if(isIOS){
+                document.getElementById("contentIOS").innerHTML = text;
+            }else{
+                document.getElementById("content").innerHTML = text;
+            }
+            clearBreadcrumb(level);
+        }
+
+        function clearBreadcrumb(levelProduct){
+            productBreadcrumb = productBreadcrumb.filter(function(el) {
+                return el.level <= levelProduct;
+            });
+            showBreadcrumb(productBreadcrumb);
+        }
+
+        function showBreadcrumb(productNameList){
+            var breadcrumb = "<nav role='navigation' aria-label='Breadcrumbs'> <ol class='slds-breadcrumb slds-list_horizontal slds-wrap'>";
+            for (var i = 0; i < Object.keys(productNameList).length; i++) {
+                if(Object.values(productNameList)[i].isLink && i < (Object.keys(productNameList).length - 1)){
+                    breadcrumb += "<li class='slds-breadcrumb__item slds-text-title_caps'><a href='javascript:void(0);' onclick=\"(searchProductDetail('" + Object.values(productNameList)[i].Value + "', '" + Object.values(productNameList)[i].level + "'))\">" + Object.values(productNameList)[i].Name + "</a></li>";
+                }else{
+                    breadcrumb += "<li class='slds-breadcrumb__item slds-text-title_caps'><span>" + Object.values(productNameList)[i].Name +"</span></li>";
+                }
+                
+            };
+
+            breadcrumb += "</ol></nav>";
+
+            document.getElementById("breadcrumblevel").innerHTML = breadcrumb;
+        }
+
+        function searchSiteMap(levelProduct){
+            if(productSiteMaps[levelProduct] && productSiteMaps[levelProduct].level == levelProduct) {
+                return productSiteMaps[levelProduct];
+            }
+        }
+
+        function goToProductLevel(productKey, level, siteMapName) {
+            searchProductDetail(productKey, level);
+            productBreadcrumb.push({ "Name": siteMapName, "Value": productKey, "isLink": true, "level": level });
+            showBreadcrumb(productBreadcrumb);
+        }
+
+        function getRootProductKey() {
+            if(resp != null) {
+                for(var i = 0; i < Object.keys(resp).length; i++){
+                    var productKey = Object.keys(resp)[i];
+                    var keySplit = productKey.split("_");
+                    if(keySplit.length == 2){
+                        return productKey;
+                    }
+                }
+            }
+        }
+
+        function getRealLevelByKey(key) {
+            var keySplit = key.split("_");
+            if(keySplit.length == 4) {
+                return parseInt(keySplit[2]);
+            } else {
+                return 1;
+            }
+        }
+
+        function renderPage(jsonResponseText) {
+            console.log('dataList : '+jsonResponseText);
+            var dataAll = JSON.parse(jsonResponseText);
+            resp = dataAll.productUsageTables;
+            productSiteMaps = dataAll.siteMap.siteMaps;
+            productBreadcrumb = [];
+            var productName = searchSiteMap(1);
+            document.title = productName.label;
+            sforce.console.setTabTitle(productName.label);
+            goToProductLevel(getRootProductKey(), 1, productName.label);
+        }
+
+        var isIOS = !!navigator.platform && /iPad|iPhone|iPod/.test(navigator.platform);
+        var resp;
+        var productBreadcrumb = [];
+        var productSiteMaps;
+        var productCodeLog = '{!productCode}';
+        var cisId = '{!cisId}';
+        document.title = 'Product Usage Detail';
+
+        $(function(){
+            if({!isVisible} || cisId == '8001') {
+                loadProductUsageData();
+            } else {
+                $("#page-content").hide();
+                $("#productLevelErrorMsg").css('color','rgb(112, 110, 107)');
+                $("#productLevelErrorMsg").html("<i><div>เฉพาะเจ้าของลูกค้าจึงสามารถเห็นข้อมูลนี้ได้ กรุณาติดต่อเจ้าของลูกค้า</div><div>Only the customer owner can view Product Usage.<br/>Please contact customer owner.</div></i>").show();
+            }
+        });
+    </script>
+    <apex:form >
+        <apex:actionFunction name="loadProductUsageData" action="{!loadProductUsageData}" onComplete="renderPage('{!productUsageData}')" status="loadingStatus" rerender="messageBlock"/>
+    </apex:form>
+</apex:page>

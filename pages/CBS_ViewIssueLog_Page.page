@@ -1,0 +1,167 @@
+<apex:page title="Issue Log" showHeader="true" sidebar="true" standardController="Issue_Log__c" extensions="CBS_ViewIssueLog_Controller">
+    <apex:includeScript value="{!$Resource.jquery_min_js}" />
+    <apex:includeScript value="{!$Resource.jquery_blockUI_js}"/>
+    <style type="text/css">
+        .customPopup {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 100%;
+            background-color: white;
+            border-style: solid;
+            border-color: #1797c0;
+            border-width: 2px;
+            border-radius: 5px;
+            padding: 20px;
+            /*position: fixed;*/
+            position:absolute;
+            z-index: 9998;
+
+           /* width: 25%;*/
+            top: 10px;
+            /*top:50%;*/
+            left:30%;
+            margin: 70px auto;
+        }
+
+        .disabledTextBox {
+            background-color: white;
+            border: 1px solid;
+            color: black;
+            cursor: default;
+            width: 90px;
+            display: table;
+            padding: 2px 1px;
+            text-align:right;
+        }
+    </style>
+
+    <script type="text/javascript">
+        var defaultRejectReason;
+        var defaultReAssignNote;
+        function togglePopUpModal(modalToToggle){
+            var ModalId = modalToToggle;
+            $("[id$='"+ModalId+"']").toggle(100, callbackFn);
+        }
+        function callbackFn() {};
+        
+        function doRecall(){
+            console.log('do recall');
+            if(confirm('Recall this Issue Log?') == true){
+                callRecallFunction();
+            }else{
+               
+            }
+        }
+        function doEscalate(){
+            console.log('do escalate');
+            if(confirm('Escalate this Issue Log?') == true){
+                escalateIssue();
+            }else{
+               
+            }
+        }
+    </script>
+
+    <apex:sectionHeader title="Issue Log" subtitle="Manage Issue Log" />
+    <apex:pageMessages id="errorMsg"></apex:pageMessages>
+    <apex:actionStatus id="loadingBar" onstart="showLoading();" onstop="hideLoading();" />
+    
+
+    <apex:form id="mainForm">
+    	<apex:actionFunction name="callRecallFunction" action="{!saveRecallAndRedirect}"/>
+        <apex:pageBlock title="Issue Log Detail" mode="edit" id="editPageBlockID">
+            <!-- Page Block Button -->
+            <apex:pageBlockButtons >
+                <apex:outputPanel >
+                    <apex:commandButton value="Save" action="{!save}"/>
+                    <apex:commandButton value="Cancel" action="{!cancel}"/>
+                    <!-- <apex:commandButton value="Escalate" onclick="doEscalate();$(this).toggleClass('btnDisabled', true).attr('disabled', 'disabled');" oncomplete="$(this).toggleClass('btnDisabled', false).attr('disabled', null);"/> -->
+                    <!-- <apex:actionFunction name="escalateIssue" action="{!escalateOwnerAndSave}"/> -->
+                    <apex:commandButton value="Recall" onclick="doRecall();$(this).toggleClass('btnDisabled', true).attr('disabled', 'disabled');" oncomplete="$(this).toggleClass('btnDisabled', false).attr('disabled', null);"/>
+                </apex:outputPanel>
+            </apex:pageBlockButtons>
+
+            <apex:pageBlockSection columns="2">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Subject" for="subject_id"/>
+                    <apex:outputField value="{!issueLog.Subject__c}" id="subject_id"/>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Issue Number" for="Name_id"/>
+                    <apex:outputField value="{!issueLog.Name}" id="Name_id"/>
+                </apex:pageBlockSectionItem>
+
+                <apex:outputField value="{!issueLog.Parent_Issue__c}" 
+                rendered="{!NOT(ISNULL(issueLog.Parent_Issue__c))}"/>
+                <apex:pageBlockSectionItem rendered="{!ISNULL(issueLog.Parent_Issue__c)}"/>
+                <apex:outputField value="{!issueLog.Date_Time_Opened__c}"/>
+
+                <apex:outputField value="{!issueLog.Status__c}"/>
+                <apex:outputField value="{!issueLog.Date_Time_Closed__c}"/>
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Need_Long_Term_Solution__c.Label}" />
+                    <apex:inputCheckbox value="{!issueLog.Need_Long_Term_Solution__c}" disabled="true"/>
+                </apex:pageBlockSectionItem>
+
+                <apex:outputField value="{!issueLog.Time_Used_Days__c}"/>
+
+           <!--      <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Need_Long_Term_Solution__c.Label}" />
+                    <apex:inputCheckbox value="{!issueLog.Need_Long_Term_Solution__c}" disabled="true"/>
+                </apex:pageBlockSectionItem> -->
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection title="Customer Information" columns="2">
+                <apex:outputField value="{!issueLog.CIS_ID_or_Prospect_Name__c}"/>
+                <apex:outputField value="{!issueLog.Group__c}"/>
+                <apex:outputField value="{!issueLog.CIS_ID_or_Prospect_Name__r.Name_TH__c}"/>
+                <apex:outputField value="{!issueLog.Sub_Group__c}"/>
+            </apex:pageBlockSection>
+
+            <!-- Read-only Information Section -->
+            <apex:pageBlockSection title="Issue Information" columns="2">
+                <apex:outputField value="{!issueLog.Assigned_Team_Person__c}"/>
+                <apex:pageBlockSectionItem />
+                <apex:outputField value="{!issueLog.IssueLog_Creator__c}"/>
+                <apex:outputField value="{!issueLog.Issue_Log_Creator_Phone__c}"/>
+                <apex:outputField value="{!issueLog.IssueLog_Creator_TL__c}"/>
+                <apex:outputField value="{!issueLog.Issue_Log_Creator_TL_Phone__c}"/>
+                <apex:outputField value="{!issueLog.IssueLog_Creator_FSVP__c}"/>
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+
+                <!-- Can Edit when status is Recalled -->
+                <apex:outputField value="{!issueLog.Division_Formula__c}"/>
+                <apex:pageBlockSectionItem />
+                <apex:outputField value="{!issueLog.Product_Formula__c}"/>
+                <apex:outputField value="{!issueLog.Product_Text__c}"/>
+                <apex:outputField value="{!issueLog.Category_Formula__c}"/>
+                <apex:outputField value="{!issueLog.Category_Specify__c}"/>
+                <apex:outputField value="{!issueLog.Sub_Category_Formula__c}"/>
+                <apex:outputField value="{!issueLog.Sub_Category_Specify__c}"/>
+
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <apex:outputField value="{!issueLog.Issue_Description__c}" style="width:95%;"/>
+
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <apex:outputField value="{!issueLog.Progress_Solution__c}" style="width:95%;"/>
+            </apex:pageBlockSection>
+            <!-- End of Read-only Information Section -->
+
+            <apex:pageBlockSection title="Related Issues Summary" columns="2" rendered="{!issueLog.IsParentIssue__c}">
+            </apex:pageBlockSection>
+
+
+            <apex:pageBlockSection id="additionalSection" title="Additional Notes Section" columns="2">
+                <apex:outputField value="{!issueLog.Re_Open_Reason__c}"/>
+                <apex:outputField value="{!issueLog.Reject_Reason__c}"/>
+            </apex:pageBlockSection>
+
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

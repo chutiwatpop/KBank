@@ -1,0 +1,1271 @@
+<apex:page showHeader="false" sidebar="false" applyBodyTag="false" standardStylesheets="false" standardController="Account" extensions="CustomerInformation_Controller" applyHtmlTag="false" docType="html-5.0">
+<html>
+    <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <apex:stylesheet value="{!URLFOR($Resource.foundation, '/css/foundation.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.c3, '/c3-master/c3.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.foundation_icon3, '/foundation-icons/foundation-icons.css')}"/>
+    
+    <apex:outputText escape="false" value="{!lt}!--[if lt IE 10]{!gt}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.foundation, '/js/excanvas.min.js')}"></script>
+    <apex:outputText escape="false" value="{!lt}![endif]--{!gt}"/>
+
+    <apex:includeScript value="{!URLFOR($Resource.jquery, '')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.foundation, '/js/foundation.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.d3, '/d3-master/d3.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.c3, '/c3-master/c3.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.flot, '/flot/jquery.flot.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.flot, '/flot/jquery.flot.pie.min.js')}"/>
+    <style type="text/css">
+        .row {min-width:100% !important;}
+        body {
+            background: #edf0f5;
+            font-family: Arial, Helvetica, sans-serif;
+            /*font-size: 12px;*/
+        }
+        .wrapper{
+            padding-top:20px;
+            padding-bottom:20px;
+        }
+        .hpanel {
+            background-color: none;
+            border: none;
+            box-shadow: none;
+            margin-bottom: 20px;
+        }
+        .hpanel .panel-body {
+            background: #fff;
+            border: 1px solid #e4e5e7;
+            border-radius: 2px;
+            padding: 10px;
+            position: relative;
+        }
+        .circle {
+            width: 20px;
+            height: 20px;
+            -moz-border-radius: 50px;
+            -webkit-border-radius: 50px;
+            border-radius: 50px;
+        }
+        .circle-h{
+            float:left;
+            margin-right:5px;
+            border: 1px solid #ddd;
+        }
+        .circle-sel{
+            background: #ddd;
+        }
+        .circle-nosel{
+            background: #fff;
+        }
+        .circle-good{
+            background: #41dd26;
+        }
+        .circle-bad{
+            background: #ffa300;
+        }
+        .circle-1{
+            background: #771800;
+        }
+        .circle-2{
+            background: #CE6725;
+        }
+        .circle-3{
+            background: #FD7A37;
+        }
+        .circle-4{
+            background: #F1F7EC;
+        }
+        .circle-5{
+            background: #E1EE7A;
+        }
+        .circle-6{
+            background: #DCCFBD;
+        }
+        tr {
+            line-height: 25px;
+        }
+        .full-width{
+            width:100%;
+        }
+        .no-spacing{
+            border-spacing: 0;
+            margin-bottom: 0px;
+        }
+        .table-layout{
+            border: solid 0px #ddd;
+        }
+        table.table-layout tr.even, table.table-layout tr.alt, table.table-layout tr:nth-of-type(even) {
+            background: #fff !important;
+        }
+        table.table-layout tr th, table.table-layout tr td {
+            padding:0;
+        }
+        table{
+            margin-bottom: 0;
+        }
+        .borderb{
+            border-bottom:1px solid #ddd;
+            margin-top:5px;
+            margin-bottom:5px;
+        }
+        .box{
+            height:45px;
+            width:45px;
+        }
+        .box-border{
+            border:1px solid #F1F7EC;
+        }
+        /*.box-color-1{background:#b7e200;}
+        .box-color-2{background:#ffa300;}
+        .box-color-3{background:#ea0000;}
+
+        .box-color-4{background:#ff3b3b;}
+        .box-color-5{background:#F6EFC4;}  
+        .box-color-6{background:#3E2C50;}  
+        .box-color-7{background:#8E8299;}  */
+        /*.box-color-1{background:#00ea00;}
+        .box-color-2{background:#75ea00;}
+        .box-color-3{background:#eaea00;}
+        .box-color-4{background:#ea7500;}
+        .box-color-5{background:#ea0000;}*/
+        .box-color-1{background:#ea0000;}
+        .box-color-2{background:#ffa300;}
+        .box-color-3{background:#f1db42;}
+        .box-color-4{background:#efff17;}
+        .box-color-5{background:#b7e200;}
+        .graph-head{
+            text-align:center;
+        }
+        .graph-body{
+            height:180px;
+            width:100%;
+            margin: 0 auto;
+        }
+        .graph-size{
+            width:100%;
+            height:100%;
+            margin:0 auto;
+        }
+        .number-table{
+            text-align:center;
+            color:#888;
+            font-size: 10px;
+            vertical-align: top;
+        }
+        .border-right{
+            border-right:1px solid #ddd;
+        }
+        .no-padding{
+            padding:0;
+        }
+        .font-14{
+            font-size: 14px;
+        }
+        .font-right{
+            text-align: right;
+            float: right;
+        }
+        .graph-hide{
+            display: none;
+            /*position:absolute !important;
+            left:-9999px !important;*/
+        }
+        .detail-view{
+            padding:6px !important;
+            width: 125px;
+        }
+        @media screen and (max-width: 700px) {
+            table tr th, table tr td {
+                font-size: 11px;
+            }
+            body{
+                font-size:11px;
+            }
+            .font-financial{
+                font-size: 11px;
+            }
+            .graph-head{
+                text-align:center;
+                font-size: 12px;
+            }
+            .box{
+                height:40px;
+                width:40px;
+            }
+            .circle {
+                width: 15px;
+                height: 15px;
+            }
+            h6 {
+                font-size: 0.9rem;
+            }
+            .detail-view{
+                padding:4px !important;
+                width: 125px;
+            }
+        }
+
+        #container-graph1 {
+            display: none;
+        }
+                        
+        #container-graph1 .domain {
+            visibility: hidden;
+        }
+                        
+        #container-graph1 g.tick line{
+            visibility: hidden;
+        }
+        .graph table tr th,.graph  table tr td {
+            padding: 0;
+        }
+        .graph table {
+          border-collapse: collapse;
+        }
+        .graph table td, .graph table th {
+          border: 1px solid black;
+        }
+        .graph table tr:first-child th {
+          border-top: 0;
+        }
+        .graph table tr:last-child td {
+          border-bottom: 0;
+        }
+        .graph table tr td:first-child,
+        .graph table tr th:first-child {
+          border-left: 0;
+        }
+        .graph table tr td:last-child,
+        .graph table tr th:last-child {
+          border-right: 0;
+        }
+        .graph-legend{
+            display:inline-block;
+        }
+        .graph-legend table tr td{
+            line-height: 0 !important;
+        }
+        h6{
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .detail-view i{
+            font-size: 1.50em;
+            vertical-align: middle;
+            line-height: 21px;
+            margin-right: 4px;
+        }
+        /*.button {
+            border-radius: 3px;
+            font-family: "Proxima Nova", "proxima-nova", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+            box-shadow: 0 -2px 0 rgba(0, 0, 0, 0.2) inset;
+            -moz-box-shadow: 0 -2px 0 rgba(0, 0, 0, 0.2) inset;
+            font-weight: bold; 
+        }*/
+
+        .boldText { 
+            font-weight: bold;
+        }
+        .alignRight {
+            text-align: right;
+        }
+        .alignCenter {
+            text-align: center;
+        }
+
+        #tableOfTotalDebt, #tableOfTotalDebt tr td {
+            font-size: 12px;
+        }
+        #headerTotalDebt {
+            background-color: #efefef;
+        }
+
+        .errorMsg {
+            display: none;
+            color: red;
+        }
+
+    </style>
+
+    <script>
+
+    var cis = {!obj.acc.CIS__c};
+    var totalDebt;
+    var testResponse;
+
+    function handleCustomerInformationResponse(responseMapJson) {
+        console.log('handleCustomerInformationResponse :' +responseMapJson);
+        var responseMap = jQuery.parseJSON(responseMapJson);
+        interactionHistoryResponse(responseMap['interactionHistory']);
+        totalDebtResponse(responseMap['totalDebt']);
+    }
+
+    function totalDebtResponse(result) {
+        console.log('totalDebtResponse result:' + result);
+        $("#totalDebtLoading").hide();
+        if(result == undefined || result["error"] != undefined)  {
+            $("#totalDebtErrorMsg").text(convertErrorMessage(result["error"])).show();
+
+        } else {
+            $("#container-graph1").show();
+            totalDebt = result;
+            if(result['total_limit'] != undefined) {
+                $("#totalOutstanding").text(result['total_outstanding'][0]);
+                $("#totalLimit").text(result['total_limit'][0]);
+                generateOverviewTotalDeptGraph(result['pn_limit'][0], result['od_limit'][0], result['tf_limit'][0], result['pn_outstanding'][0], result['od_outstanding'][0], result['tf_outstanding'][0]);
+            }
+        }
+    }
+
+    function interactionHistoryResponse(result) {
+        console.log('interactionHistoryResponse result:' + result);
+        $("#interactionHistoryLoading").hide();
+
+        if(result == undefined || result["error"] != undefined ) {
+            $("#interactionHistoryErrorMsg").text(convertErrorMessage(result["error"])).show();
+        } else {
+            $("#salesCredit").text(result["salesCredit"]);
+            $("#salesCash").text(result["salesCash"]);
+            $("#purchaseCredit").text(result["purchaseCredit"]);
+            $("#purchaseCash").text(result["purchaseCash"]);
+        }
+    }
+
+    function convertErrorMessage(errorMsg) {
+        console.log('convertErrorMessage :'+errorMsg);
+        if(errorMsg == undefined) return 'Unexpected error';
+        return errorMsg;
+    }
+
+    function getErrorMessage(event) {
+        console.log(event);
+        var errorMessage = 'Unexpected error';
+        if(event.message.indexOf("StatusCode:404") > -1) {
+            errorMessage  = 'Adapter is not available';
+        } else if(event.message.indexOf("Application Time Out") > -1) {
+            errorMessage = 'Host Connection Exception';
+        }
+        return errorMessage;
+    }
+
+    $(function() {
+        requestCustomerInformation(cis);
+    });
+    </script>
+
+
+    <script> 
+        /*(function(){try{var a=navigator.userAgent; 
+        if((a.indexOf('Salesforce')!=-1)&&(a.indexOf('iPhone')!=-1||a.indexOf('iPad')!=-1)&&(a.indexOf('OS/8')!=-1||a.indexOf('OS 8')!=-1)&&(a.indexOf('Safari')==-1)){ 
+        var s=document.createElement('style'); 
+        s.innerHTML="html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}"; 
+        document.getElementsByTagName('head')[0].appendChild(s);}}catch(e){}})();*/ 
+    </script> 
+    <script> 
+        var ua=navigator.userAgent; 
+        if((ua.indexOf('Salesforce')!=-1)&&(ua.indexOf('iPhone')!=-1||ua.indexOf('iPad')!=-1)&&(ua.indexOf('OS/8')!=-1||ua.indexOf('OS 8')!=-1)&&(ua.indexOf('Safari')==-1)){ 
+        function IOS_SCROLL_BOOTSTRAP() { 
+        var children = Array.prototype.slice.call(document.body.children), 
+        placeholder = document.createElement('section'), 
+        fragment = document.createDocumentFragment(), 
+        styles, 
+        width, 
+        height; 
+        children.forEach(function(c){fragment.appendChild(c);}); 
+        placeholder.appendChild(fragment); 
+        styles = [ 
+        'width:100%;', 
+        'height:', (window.screen.height - 42), 'px;', 
+        'position: absolute; overflow: auto; -webkit-overflow-scrolling: touch' 
+        ].join(''); 
+        placeholder.style.cssText = styles; 
+        document.body.appendChild(placeholder); 
+        } 
+        window.addEventListener('load', function (e) { 
+        IOS_SCROLL_BOOTSTRAP(); 
+        }); 
+        } 
+    </script>
+    <script>
+    Number.prototype.format = function(n, x) {
+        var re = '\\d(?=(\\d{' + (x || 3) + '})+' + (n > 0 ? '\\.' : '$') + ')';
+        return this.toFixed(Math.max(0, ~~n)).replace(new RegExp(re, 'g'), '$&,');
+    };
+    var gauge = function(container, configuration) {
+        var that = {};
+        var config = {
+            size                        : 200,
+            clipWidth                   : 200,
+            clipHeight                  : 110,
+            ringInset                   : 5,
+            ringWidth                   : 20,
+            
+            pointerWidth                : 1,
+            pointerTailLength           : 5,
+            pointerHeadLengthPercent    : 0.9,
+            
+            minValue                    : 0,
+            maxValue                    : 10,
+            
+            minAngle                    : -90,
+            maxAngle                    : 90,
+            
+            transitionMs                : 750,
+            
+            majorTicks                  : 4,
+            labelFormat                 : d3.format(',g'),
+            labelInset                  : 10,
+            
+            arcColorFn                  : d3.interpolateHsl(d3.rgb('#e8e2ca'), d3.rgb('#3e6c0a'))
+        };
+        var range = undefined;
+        var r = undefined;
+        var pointerHeadLength = undefined;
+        var value = 0;
+        
+        var svg = undefined;
+        var arc = undefined;
+        var scale = undefined;
+        var ticks = undefined;
+        var tickData = undefined;
+        var pointer = undefined;
+
+        var donut = d3.layout.pie();
+        
+        function deg2rad(deg) {
+            return deg * Math.PI / 180;
+        }
+        
+        function newAngle(d) {
+            var ratio = scale(d);
+            var newAngle = config.minAngle + (ratio * range);
+            return newAngle;
+        }
+        
+        function configure(configuration) {
+            var prop = undefined;
+            for ( prop in configuration ) {
+                config[prop] = configuration[prop];
+            }
+            
+            range = config.maxAngle - config.minAngle;
+            r = config.size  / 2;
+            pointerHeadLength = Math.round(r * config.pointerHeadLengthPercent);
+
+            // a linear scale that maps domain values to a percent from 0..1
+            scale = d3.scale.linear()
+                .range([0,1])
+                .domain([config.minValue, config.maxValue]);
+                
+            ticks = scale.ticks(config.majorTicks);
+            tickData = d3.range(config.majorTicks).map(function() {return 1/config.majorTicks;});
+            
+            arc = d3.svg.arc()
+                .innerRadius(r - config.ringWidth - config.ringInset)
+                .outerRadius(r - config.ringInset)
+                .startAngle(function(d, i) {
+                    var ratio = d * i;
+                    return deg2rad(config.minAngle + (ratio * range));
+                })
+                .endAngle(function(d, i) {
+                    var ratio = d * (i+1);
+                    return deg2rad(config.minAngle + (ratio * range));
+                });
+        }
+        that.configure = configure;
+        
+        function centerTranslation() {
+            return 'translate('+r +','+ r +')';
+        }
+        
+        function isRendered() {
+            return (svg !== undefined);
+        }
+        that.isRendered = isRendered;
+        
+        function render(newValue) {
+            svg = d3.select(container)
+                .append('svg:svg')
+                    .attr('class', 'gauge')
+                    //.attr('width',  config.clipWidth)
+                    .attr('width',  config.clipWidth)
+                    .attr('height', config.clipHeight)
+                    // .css('padding-top', '24px');
+            
+            var centerTx = centerTranslation();
+            
+            var arcs = svg.append('g')
+                    .attr('class', 'arc')
+                    .attr('transform', centerTx);
+            
+            arcs.selectAll('path')
+                    .data(tickData)
+                .enter().append('path')
+                    .attr('fill', function(d, i) {
+                        if(i<2)return "#b7e200";
+                        if(i==2)return "#ffa300";
+                        else return "#ea0000";
+                        //return config.arcColorFn(d * i);
+                    })
+                    .attr('d', arc);
+            var lg = svg.append('g')
+                    .attr('class', 'label')
+                    .attr('transform', centerTx);
+                    
+            lg.selectAll('text')
+                    //.data(ticks)
+                    .data([0,config.maxValue])
+                .enter().append('g')
+                    .attr('transform', function(d) {
+                        var ratio = scale(d);
+                        var newAngle = config.minAngle + (ratio * range);
+                        return 'rotate(' +newAngle +') translate(0,' +(config.labelInset - r) +')';
+                    }).append('text')
+                    .attr('transform', function(d) {
+                        var ratio = scale(d);
+                        var newAngle = config.minAngle + (ratio * range);
+                        return 'rotate(' +(newAngle*-1) +') translate(-3,0)';
+                    })
+                    .text(config.labelFormat);
+            
+            var lt = svg.append('g')
+                    .attr('class', 'label')
+                    .attr('transform', centerTx);
+
+            lt.selectAll('text')
+                    .data([newValue])
+                    .enter().append('text')
+                    .attr('transform', function(d) {
+                        var ratio = scale(d);
+                        var newAngle = config.minAngle + (ratio * range);
+                        return 'rotate(' +newAngle +') translate(0,'+(config.labelInset - r - 10)+')';
+                    })
+                    .text(config.labelFormat);
+
+            var lineData = [ [config.pointerWidth / 2, 0], 
+                            [0, -pointerHeadLength],
+                            [-(config.pointerWidth / 2), 0],
+                            [0, config.pointerTailLength],
+                            [config.pointerWidth / 2, 0] ];
+            var pointerLine = d3.svg.line().interpolate('monotone');
+            var pg = svg.append('g').data([lineData])
+                    .attr('class', 'pointer')
+                    .attr('transform', centerTx);
+            /*var labelTarget = svg.append('text')
+                    .attr('transform', centerTx)
+                    .text('test');*/
+            pointer = pg.append('path')
+                .attr('d', pointerLine/*function(d) { return pointerLine(d) +'Z';}*/ )
+                .attr('transform', 'rotate(' +config.minAngle +')');
+
+            $("svg.gauge")
+                    .css('padding-top', '32px')
+                    .css('padding-left', '32px')
+                    .css('margin-left', '-48px');
+            
+            update(newValue === undefined ? 0 : newValue);
+        }
+        that.render = render;
+        
+        function update(newValue, newConfiguration) {
+
+            if ( newConfiguration  !== undefined) {
+                configure(newConfiguration);
+            }
+            var ratio = scale(newValue);
+            var newAngle = config.minAngle + (ratio * range);
+
+            pointer.transition()
+                .duration(config.transitionMs)
+                .ease('elastic')
+                .attr('transform', 'rotate(' +newAngle +')');
+        }
+        that.update = update;
+
+        configure(configuration);
+        
+        return that;
+    };
+    </script>
+    <script type="text/javascript">
+        function generateLineGraphOfProduct(productName) {
+            var product = productName.toLowerCase();
+            var outStandingData = ['Outstanding'];
+            var limitData = ['Limit'];
+            for(var key in totalDebt[product+'_outstanding_value_list']) {
+                if (!totalDebt[product+'_outstanding_value_list'].hasOwnProperty(key)) continue;
+                outStandingData.push(totalDebt[product+'_outstanding_value_list'][key]);
+            }
+            for(var key in totalDebt[product+'_limit_value_list']) {
+                if (!totalDebt[product+'_limit_value_list'].hasOwnProperty(key)) continue;
+                limitData.push(totalDebt[product+'_limit_value_list'][key]);
+            }
+
+            var outstandingTrElem = $("tr#outstandingTotalDebt");
+            outstandingTrElem.empty();
+            outstandingTrElem.append("<td class='boldText alignRight'>Outstanding&nbsp;</td>");
+            for(var key in totalDebt[product+'_outstanding_list']) {
+                if(!totalDebt[product+'_outstanding_list'].hasOwnProperty(key)) continue;
+                outstandingTrElem.append("<td class='alignRight'>"+totalDebt[product+'_outstanding_list'][key]+"</td>")
+            }
+
+            var limitTrElem = $("tr#limitTotalDebt");
+            limitTrElem.empty();
+            limitTrElem.append("<td class='boldText alignRight'>Limit&nbsp;</td>");
+            for(var key in totalDebt[product+'_limit_list']) {
+                if(!totalDebt[product+'_limit_list'].hasOwnProperty(key)) continue;
+                limitTrElem.append("<td class='alignRight'>"+totalDebt[product+'_limit_list'][key]+"</td>")
+            }
+
+            var headerTrElem = $("#headerTotalDebt");
+            headerTrElem.empty();
+            headerTrElem.append("<td class='boldText alignRight'>"+productName+"&nbsp;</td>");
+            for(var key in totalDebt[product+'_header_list']) {
+                if(!totalDebt[product+'_header_list'].hasOwnProperty(key)) continue;
+                headerTrElem.append("<td class='boldText alignCenter'>"+totalDebt[product+'_header_list'][key]+"</td>");
+            }
+
+            var chart33 = c3.generate({
+                bindto:'#sowgraph33',
+                interaction: {
+                    enabled: false
+                },
+                data: {
+                    colors: {
+                        Outstanding: '#b7e200',
+                        Limit: '#ea0000'
+                    },
+                    columns: [
+                        outStandingData,
+                        limitData
+                    ],
+                },
+                grid: {
+                    y: {
+                        show: true
+                    },
+                    x: {
+                        show: true
+                    },
+
+                },
+                axis: {
+                    x: {
+                        type: 'category',
+                        categories: totalDebt[product+'_header_list'],
+                        tick: {
+                            culling: false,
+                            outer: false,
+                            multiline:false
+                        }
+                    },
+                    y: {
+                        tick: {
+                            culling: false,
+                            outer: false,
+                            multiline:false,
+                            // values: [10000, 20000, 30000, 40000],
+                            format: function (y) { return y.format(); }
+                            //count: 4
+                        }
+                    },
+                },
+                padding: {
+                    right: 15
+                }
+            });
+            $("g").removeAttr("clip-path");
+        }
+        function generateOverviewTotalDeptGraph(pnLimit, odLimit, tfLimit, pnOutstanding, odOutstanding, tfOutstanding) {
+            var pnPercent = ((pnOutstanding * 100) / pnLimit).toFixed(2);
+            var odPercent = ((odOutstanding * 100) / odLimit).toFixed(2);
+            var tfPercent = ((tfOutstanding * 100) / tfLimit).toFixed(2);
+            pnPercent = isNaN(pnPercent) ? '0.00' : pnPercent;
+            odPercent = isNaN(odPercent) ? '0.00' : odPercent;
+            tfPercent = isNaN(tfPercent) ? '0.00' : tfPercent;
+            var datacol = [pnPercent+'%', odPercent+'%', tfPercent+'%'];
+            var chart1 = c3.generate({
+                bindto: '#sowgraph31',
+                legend: {
+                    show: false
+                },
+                interaction: {
+                    enabled: true
+                },
+                tooltip: {
+                    show: false
+                },
+                data: {
+                    colors: {
+                        data1: '#ea0000',
+                        data2: '#b7e200'
+                    },
+                    columns: [
+                        ['data1', pnLimit, odLimit, tfLimit],//maxguage - data2
+                        ['data2', pnOutstanding, odOutstanding, tfOutstanding]
+                    ],
+                    onclick: function (d, i) { 
+                        var productList = ['PN', 'OD', 'TF'];
+                        generateLineGraphOfProduct(productList[d.x]);
+                        hiddenGraph();
+                        console.log('d.x '+d.x);
+
+                        var circleIndex = d.x + 2;
+                        $('.circle-h').removeClass('circle-sel').addClass('circle-nosel');
+                        $('.circle-graph-'+circleIndex).removeClass('circle-nosel').addClass('circle-sel');
+                        setTimeout(function(){
+                            $('#debt-container').click(function(e) {
+                                console.log('click again');
+                                hiddenGraph();
+                                $('.circle-h').removeClass('circle-sel').addClass('circle-nosel');
+                                $('.circle-graph-1').removeClass('circle-nosel').addClass('circle-sel');
+                                e.stopPropagation();
+                                $('#debt-container').unbind( "click" );
+                            });
+                        },500);
+                        
+                    },
+                    type: 'bar',
+                    groups: [
+                        ['data1', 'data2']
+                    ]
+                },
+                grid: {
+                    y: {
+                        //lines: [{value:0}]
+                        show: false
+                    },
+                    x: {
+                        //lines: [{value:0}]
+                        show: false
+                    },
+
+                },
+                axis: {
+                    x: {
+                        type:'category',
+                        categories: ['PN', 'OD', 'TF'],
+                        show: true,
+                        tick: {
+                            culling: false,
+                            outer: false,
+                            multiline:false
+                        }
+                    },
+                    y: {
+                        show: false
+                    }
+                },
+                line: {
+                    connectNull: false
+                },
+                oninit:function(){
+                    var svg = d3.select('#sowgraph31 svg');
+                    var x2 = svg.append('g')
+                        .attr('class', 'c3-axis c3-axis-x x2')
+                        .attr('transform', 'translate(0,-5)');
+                },
+                onrendered:function(){
+                    d3.select('.x2').html('');
+                    var svg = d3.select('.x2');
+                    $(d3.select('#sowgraph31 .c3-axis')[0]).children('g').each(function(index,ele){
+                        var jele = $(ele);
+                        var tele = $(jele.children('text'));
+                        var tsele = $(tele.children('tspan'));
+                        var trans = jele.attr('transform').split('(')[1].split(')')[0].split(',')
+                        svg.append('g')
+                        .attr('class', 'tick')
+                        //.attr('transform', 'translate('+ trans[0] +','+trans[1]+')')
+                        .attr('transform', jele.attr('transform'))
+                        .append('text')
+                        .attr('x', tele.attr('x'))
+                        .attr('y', tele.attr('y'))
+                        .attr('style', 'text-anchor: middle; display: block;')
+                        .append('tspan')
+                        .attr('x', tsele.attr('x'))
+                        .attr('dy', tsele.attr('dy'))
+                        .attr('dx', tsele.attr('dx'))
+                        .html(datacol[index]);
+                    });
+                    
+                    
+                }
+            });
+            $("g").removeAttr("clip-path");
+        }
+
+        var max_graph = 2;
+        $(function(){
+            $.plot('#sowgraph', [
+                { label: "KBank", data: {!obj.kBankSOWExposure}, color: "#b7e200"},
+                { label: "Other Banks", data: {!obj.otherSOWExposure}, color: "#ea0000"}
+            ], {
+                series: {
+                    pie: {
+                        show: true,
+                        label: {
+                            show: true,
+                            formatter: function(label,point) {
+                                return(point.percent.toFixed(0) + '%');
+                            }
+                        }
+                    }
+                },
+                legend: {
+                    show: true,
+                    noColumns: 2,
+                    container: $('#graph-legend1')
+                }
+            });
+            $.plot('#sowgraph2', [
+                { label: "KBank", data: {!obj.kBankSOWOutstanding}, color: "#b7e200"},
+                { label: "Other Banks", data: {!obj.otherSOWOutstanding}, color: "#ea0000"}
+            ], {
+                series: {
+                    pie: {
+                        show: true,
+                        label: {
+                            show: true,
+                            formatter: function(label,point){
+                                return(point.percent.toFixed(0) + '%');
+                            }
+                        }
+                    }
+                },
+                legend: {
+                    show: false
+                }
+            });
+            
+            var powerGauge = gauge('#sowgraph4', {
+                size: 220,
+                clipWidth: 350,
+                clipHeight: 160,
+                ringWidth: 25,
+                maxValue: {!obj.valueCollateral},
+                transitionMs: 4000,
+                labelInset: 0
+            });
+            powerGauge.render({!obj.amountCollateral});
+           
+            $.count = 0;
+            hiddenGraph();
+        });
+        function hiddenGraph(){
+            $('.container-graph').css('position','absolute').css('left','-5000px');
+            // $('.circle-h').removeClass('circle-sel').addClass('circle-nosel');
+            if($.count==2)$.count = 1;
+            else $.count++;
+            // console.log('select :'+('.circle-'+$.count));
+            // $('.circle-graph-'+$.count).removeClass('circle-nosel').addClass('circle-sel');
+            $('#container-graph'+$.count).css('position','').css('left','0');
+            // $('#container-graph2').css('position','').css('left','0');
+        };
+        $(document).click(function(e){
+            //console.log(e.target);
+            //window.location = '/{!accountId}';
+        });
+        function redirectPage(){
+            if( (typeof sforce != 'undefined') && (sforce != null) ) {
+                sforce.one.navigateToSObject('{!accountId}');
+            }else{
+                window.location = '/{!accountId}';
+            }
+            
+        };
+    </script>
+
+</head>
+<body>
+    <apex:form >
+        <apex:actionFunction name="requestCustomerInformation" action="{!requestCustomerInformation}" oncomplete="handleCustomerInformationResponse('{!responseMapJson}')" >
+            <apex:param name="cis" value=""/>
+        </apex:actionFunction>
+    </apex:form>
+    <div class="wrapper" style="display:{!IF(hasError,'','none')}">
+        <div class="row">
+            <div class="small-22 small-push-1 columns">
+                <div class="alert-box warning radius">{!errorMessage}</div>
+            </div>
+        </div>
+    </div>
+    <apex:outputPanel rendered="{!!hasError}">
+        <div class="wrapper">
+            <div class="row">
+                <div class="small-22 small-push-1 columns" style="padding:0;">
+                    <div class="hpanel">
+                        <div class="panel-body">
+                            <div><h6>Customer Information</h6>
+                            <div style="position: absolute;right: 0px;top: 0px;">
+                                <button class="button detail-view" onclick="redirectPage();">
+                                    <span style="font-size: 13px;line-height: 21px;display: inline;font-weight: 500 !important;">Detail View</span>
+                                    <i class="fi-results-demographics"></i>
+                                </button>
+                            </div>
+                            </div>
+                            <div class="row">
+                                <div class="small-12 columns">
+                                    <table class="table-layout full-width">
+                                        <tbody>
+                                            <tr>
+                                                <td>Customer</td>
+                                                <td style="text-align:center;"><apex:outputText value="{!obj.acc.Name_Surname_TH__c}" escape="false" /></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="small-12 columns">
+                                    <table class="table-layout full-width">
+                                        <tbody>
+                                            <tr>
+                                                <td>Main Bank</td>
+                                                <td style="text-align:center;">
+                                                <apex:outputText value="{!obj.acc.Main_Bank_Symbol__c}" escape="false" />
+                                                <!-- <image width="18" height="18" src="{!URLFOR($Resource.check, '')}" /> -->
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>MOB</td>
+                                                <td style="text-align:center;">
+                                                <apex:outputText value="{!obj.acc.MBB_Symbol__c}" escape="false" />
+                                                <!-- <image width="18" height="18" src="{!URLFOR($Resource.no, '')}" /> -->
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>MBB</td>
+                                                <td style="text-align:center;">
+                                                <apex:outputText value="{!obj.acc.MOB_Symbol__c}" escape="false" />
+                                                <!-- <image width="25" height="18" src="{!URLFOR($Resource.questionmark, '')}" /> -->
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!--div class="small-12 columns">
+                                    <button class="button small" onclick="redirectPage();" style="float:right">Detail View</button>
+                                    
+                                </div-->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hpanel">
+                        <div class="panel-body">
+                            <div><h6>Customer Quality</h6></div>
+                            <div class="row">
+                                <div class="small-12 columns">
+                                    <table class="table-layout full-width">
+                                        <tbody>
+                                            <tr>
+                                                <td>Credit Status</td>
+                                                <td>
+                                                <apex:outputText value="{!obj.acc.Credit_Status_Symbol__c}" escape="false" />
+                                                <!-- <div class="circle circle-{!obj.customerStatusClass}"></div> -->
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>NPL</td>
+                                                <td>
+                                                <apex:outputText value="{!obj.acc.NPL_Symbol__c}" escape="false" />
+                                                <!-- <div class="circle circle-{!obj.nplClass}"></div> -->
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>คดีฟ้องร้อง</td>
+                                                <td>
+                                                <apex:outputText value="{!obj.acc.Criminal_Offense_Symbol__c}" escape="false" />
+                                                <!-- <div class="circle circle-{!obj.criminalOffense}"></div> -->
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="small-12 columns">
+                                    <table class="table-layout full-width">
+                                        <tbody>
+                                            <tr>
+                                                <td>Industry Risk</td>
+                                                <td>
+                                                <apex:outputText value="{!obj.acc.Industry_Risk_Symbol__c}" escape="false" />
+                                                <!-- <div class="circle circle-{!obj.inustryRiskClass}"></div> -->
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>ปรับโครงสร้างหนี้</td>
+                                                <td>
+                                                <apex:outputText value="{!obj.acc.Debt_Restructuring_Symbol__c}" escape="false" />
+                                                <!-- <div class="circle circle-{!obj.debtRestructuring}"></div> -->
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Watch List</td>
+                                                <td>
+                                                <apex:outputText value="{!obj.acc.Watch_List_Symbol__c}" escape="false" />
+                                                <!-- <div class="circle circle-{!obj.watchList}"></div> -->
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="row" style="margin-top:15px;">
+                                <!--div class="borderb small-22 small-push-1 columns"></div-->
+                            </div>
+                            <div class="heading-color"><h6>Behavior Score</h6></div>
+                            <div class="row">
+                                <div class="small-24 columns">
+                                    <table class="table-layout full-width no-spacing">
+                                        <tbody>
+                                            <tr>
+                                                <td style="padding-left:10px;width:20%">SME</td>
+                                                <td>
+                                                    <table class="table-layout no-spacing">
+                                                        <tbody>
+                                                            <tr>
+                                                                <apex:repeat value="{!obj.bScoreMap['SME']}" var="bScore">
+                                                                <td><div class="box box-border box-color-{!bScore}"></div></td>
+                                                                </apex:repeat>
+                                                                <!--td><div class="box box-border box-color-1"></div></td-->
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td></td>
+                                                <td>
+                                                    <table class="table-layout no-spacing">
+                                                        <tbody>
+                                                            <tr>
+                                                                <apex:repeat value="{!obj.bScoreHeader}" var="headerText">
+                                                                <td class="box number-table">{!headerText}</td>
+                                                                </apex:repeat>
+                                                                <!--td class="box number-table">7</td-->
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    
+                                    <table class="table-layout full-width no-spacing">
+                                        <tbody>
+                                            <tr>
+                                                <td style="padding-left:10px;width:20%">HL</td>
+                                                <td>
+                                                    <table class="table-layout no-spacing">
+                                                        <tbody>
+                                                            <tr>
+                                                                <apex:repeat value="{!obj.bScoreMap['HL']}" var="bScore">
+                                                                <td><div class="box box-border box-color-{!bScore}"></div></td>
+                                                                </apex:repeat>
+                                                                <!--td><div class="box box-border box-color-2"></div></td-->
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td></td>
+                                                <td>
+                                                    <table class="table-layout no-spacing">
+                                                        <tbody>
+                                                            <tr>
+                                                                <apex:repeat value="{!obj.bScoreHeader}" var="headerText">
+                                                                <td class="box number-table">{!headerText}</td>
+                                                                </apex:repeat>
+                                                                <!--td class="box number-table">7</td-->
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <table class="table-layout full-width no-spacing">
+                                        <tbody>
+                                            <tr>
+                                                <td style="padding-left:10px;width:20%">CC</td>
+                                                <td>
+                                                    <table class="table-layout no-spacing">
+                                                        <tbody>
+                                                            <tr>
+                                                                <apex:repeat value="{!obj.bScoreMap['CC']}" var="bScore">
+                                                                <td><div class="box box-border box-color-{!bScore}"></div></td>
+                                                                </apex:repeat>
+                                                                <!--td><div class="box box-border box-color-1"></div></td-->
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td></td>
+                                                <td>
+                                                    <table class="table-layout no-spacing">
+                                                        <tbody>
+                                                            <tr>
+                                                                <apex:repeat value="{!obj.bScoreHeader}" var="headerText">
+                                                                <td class="box number-table">{!headerText}</td>
+                                                                </apex:repeat>
+                                                                <!--td class="box number-table">7</td-->
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+
+                                </div>  
+                            </div>
+                            
+
+
+                        </div>
+                    </div>
+
+                    <div class="hpanel">
+                        <div class="panel-body font-financial">
+                            <div><h6>Financial Ratios</h6></div>
+                            <div class="row">
+                                <div class="small-12 columns border-right">
+                                    <!-- <div>DSCR<span class="font-right">2</span></div> -->
+                                    <div>DE ratio
+                                        <span class="font-right">{!obj.deRatio}</span>
+                                    </div>
+                                    <div>ICR ratio<span class="font-right">{!obj.icrRatio}</span></div>
+                                    <div>Current ratio
+                                        <span class="font-right">{!obj.currentRatio}
+                                        </span>
+                                    </div>
+                                    <div>Stock Day on Hand (Days)<span class="font-right">{!obj.stockDayOnHand}</span></div>
+                                </div>
+                                <div id="interactionHistoryLoading" class="small-12 columns">
+                                    <span id="loading_status"></span>
+                                    <img src="/img/loading32.gif" width="16px" />
+                                </div>
+                                <div class="errorMsg" id="interactionHistoryErrorMsg"></div>
+                                <div id="interactionHistoryData" class="small-12 columns">
+                                    <div>%Credit's Purchases<span class="font-right" id="purchaseCredit"></span></div>
+                                    <div>%Cash's Purchases<span class="font-right" id="purchaseCash"></span></div>
+                                    <div>%Credit Sales<span class="font-right" id="salesCredit"></span></div>
+                                    <div>%Cash Sales<span class="font-right" id="salesCash"></span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hpanel">
+                        <div class="panel-body">
+                            <div><h6>Credit wallet size {!obj.acc.Wallet_Size_Limit__c}</h6></div>
+                            <div class="row" >
+                                <div class="small-12 columns" style="padding:0;overflow:hidden;">
+                                    <div class="graph-head">%SOW exposure</div>
+                                    <div class="graph-body">
+                                        <div id="sowgraph" class="graph-size"></div>
+                                    </div>
+                                </div>
+                                <div class="small-12 columns" style="padding:0;overflow:hidden;">
+                                    <div class="graph-head">%SOW outstanding</div>
+                                    <div class="graph-body">
+                                        <div id="sowgraph2" class="graph-size"></div>
+                                    </div>
+                                </div>
+                                <div class="small-24 columns" style="text-align:center">
+                                    <div id="graph-legend1" class="graph-legend"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hpanel">
+                        <div class="panel-body" id="debt-container">
+                            <div><h6>Total KBank Debt</h6></div>
+                            <!-- <div id="overviewTotalDebtLoading" class="small-12 columns">
+                                <span id="loading_status"></span>
+                                <img src="/img/loading32.gif" width="16px" />
+                            </div> -->
+
+                            <div id="totalDebtLoading" class="small-12 columns">
+                                <span id="loading_status"></span>
+                                <img src="/img/loading32.gif" width="16px" />
+                            </div>
+                            <div class="errorMsg" id="totalDebtErrorMsg"></div>
+                            <div class="row container-graph" id="container-graph1">
+                                <div class="small-12 columns" style="padding:0;overflow:hidden;">
+                                    <div class="graph-body">
+                                        <div id="sowgraph31" class="graph-size" ></div>
+                                    </div>
+                                </div>
+                                <div class="small-12 columns" style="font-size:14px;">
+                                    <div style="text-align: center;">
+                                    <div style="border:1px solid #ccc;padding:1px;display: inline-block;margin-right: 5px;"><div style="width:4px;height:0;border:5px solid #b7e200;overflow:hidden"></div></div>Total Outstanding</div>
+                                    <div style="text-align: center; width: 100%;margin-top:15px;margin-bottom:18px;">
+                                        <div id="totalOutstanding" style="margin:0 auto;  border: 1px solid #ddd;  padding: 7px;  display: inline;  border-radius: 2px;"></div>
+                                    </div>
+                                    <br/>
+                                    <div style="text-align: center;">
+                                    <div style="border:1px solid #ccc;padding:1px;display: inline-block;margin-right: 5px;"><div style="width:4px;height:0;border:5px solid #ea0000;overflow:hidden"></div></div>Total Limit</div>
+                                    <div style="text-align: center; width: 100%;margin-top:15px;margin-bottom:18px;">
+                                        <div id="totalLimit" style="margin:0 auto;  border: 1px solid #ddd;  padding: 7px;  display: inline;  border-radius: 2px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row container-graph" id="container-graph2">
+                                <div class="small-24 columns" style="padding:0;overflow-x:auto; overflow-y:hidden">
+                                    <div style="padding:5px;margin-bottom:10px;" class="graph">
+                                        <table id="tableOfTotalDebt" style="border:1px solid;display:table;width:100%">
+                                            <tbody>
+                                                <tr id="headerTotalDebt">
+                                                </tr>
+                                                <tr id="outstandingTotalDebt">
+                                                </tr>
+                                                <tr id="limitTotalDebt">
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="graph-body">
+                                        <div id="sowgraph33" class="graph-size"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="small-24 columns" style="text-align:center;">
+                                    <div style="display:inline-block">
+                                        <div class="circle circle-sel circle-h circle-graph-1"></div>
+                                        <div class="circle circle-nosel circle-h circle-graph-2"></div>
+                                        <div class="circle circle-nosel circle-h circle-graph-3"></div>
+                                        <div class="circle circle-nosel circle-h circle-graph-4"></div>
+                                        <!--div class="circle circle-nosel circle-h circle-33"></div-->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hpanel">
+                        <div class="panel-body">
+                            <div><h6>Remaining Collateral Value</h6></div>
+                            <div class="row">
+                                <div class="small-24 columns" style="padding:0;overflow:hidden;">
+                                    <div class="graph-body" style="height: 180px;">
+                                        <div id="sowgraph4" class="graph-size" style="text-align: center;  padding-left: 40px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>  
+    </apex:outputPanel>
+</body>
+</html>
+
+</apex:page>

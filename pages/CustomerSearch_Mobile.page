@@ -1,0 +1,285 @@
+<apex:page title="Customer Search" showHeader="true" sidebar="true" controller="CustomerSearch_Controller">
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <apex:includeScript value="{!$Resource.jquery}"/>
+    <apex:includeScript value="{!URLFOR($Resource.sfdc_bs3, 'dist/js/bootstrap.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.sfdc_bs3, 'dist/css/bootstrap-bs3.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bootstrap_icon, '')}"/>
+    <style>
+        body{
+            padding:5px;
+        }
+        .page-header {
+            border-bottom: 1px solid #696;
+            padding-left:5px;
+            padding-right:5px;
+        }
+        .inputPanel {
+            background: #f3f3ec;
+        }
+        .bs3 a {
+            text-decoration: underline !important;
+        }
+        .cmdSort {
+            text-decoration: none;
+            color: #000000;
+        }
+        .bs3 .glyphicon-refresh-animate {
+            -animation: spin .7s infinite linear;
+            -webkit-animation: spin2 .7s infinite linear;
+        }
+        .bs3 .glyphicon-refresh-animate-slow {
+            -animation: spin .9s infinite linear;
+            -webkit-animation: spin2 .9s infinite linear;
+        }
+        @-webkit-keyframes spin2 {
+            from { -webkit-transform: rotate(0deg);}
+            to { -webkit-transform: rotate(360deg);}
+        }
+
+        @keyframes spin {
+            from { transform: scale(1) rotate(0deg);}
+            to { transform: scale(1) rotate(360deg);}
+        }
+        .col-centered{
+            float: none;
+            margin: 0 auto;
+            text-align :center;
+        }
+    </style>
+<script type='text/javascript'>
+
+        function redirectRequest(accId){
+            if(accId.length > 0 && (typeof sforce != 'undefined') && (sforce != null) ) {
+                // do your SF1 mobile button stuff
+                sforce.one.navigateToURL('/'+accId+'/e?retURL=%2F'+accId+'&saveURL=%2F'+accId);
+            }
+        }
+
+    function setRequestOwnerShipValue(accId){
+        document.getElementById('{!$Component.mainForm.inputHidden}').value = accId;
+    };
+
+    function buttonRequestEnabled(enable) {
+        var buttonElem = $('.btn');
+        if (enable === false) {
+            $('.requestBTN').show();
+            $('.requestBTN-n').hide();
+            $('.request-button').click();
+            $('.request-button').attr('disabled','disabled');
+        } else {
+            $('.request-button').attr('disabled','');
+            $('.requestBTN').hide();
+            $('.requestBTN-n').show();
+        } 
+    };
+
+    function buttonsEnabled(enable) {
+        var buttonElem = $('.btn');
+        $("[id$=accountNoResult]").hide();
+        if (enable === false) {
+            $('.onsave').show();
+            $('.onsave-n').hide();
+            $('.save-button').click();
+            $('.save-button').attr('disabled','disabled');
+        } else {
+            $('.save-button').attr('disabled','');
+            $('.onsave').hide();
+            $('.onsave-n').show();
+        } 
+    };
+
+    function noenter(ev)  {
+        if (window.event && window.event.keyCode == 13 || ev.which == 13) {
+            buttonsEnabled(false);
+            return false;
+        } else {
+            return true;
+        }
+    };
+    (function(){
+        $.screen_size = $(window).width();
+    })();
+    
+</script>
+</head>
+<body>
+    <apex:form id="mainForm" >
+    <apex:inputHidden id="inputHidden" value="{!requestOwnershipValue}"/>
+    
+    <!-- Boot strap -->
+    <div class="bs3">
+        <div class="page-header">
+            <h4>Customer Search </h4>
+        </div>
+        
+        <div class="container-fluid">
+            <div id="inputPanel" class="row">
+                <!-- <apex:pageMessages id="errorMsg"></apex:pageMessages> -->
+
+                <apex:outputPanel id="error-panel">
+                    <div class="col-xs-12 alert alert-danger" style="display:{!IF(hasError,'','none')}" role="alert"><img alt="ERROR" class="msgIcon" src="/img/msg_icons/error24.png" width="24" height="24" title="ERROR"/>
+                        &nbsp;&nbsp;{!errorMessage}
+                    </div>
+                    <div class="col-xs-12 alert alert-info" style="display:{!IF(hasInfo,'','none')}" role="alert"><img alt="INFO" class="msgIcon" src="/img/msg_icons/info24.png" width="24" height="24"  title="INFO"/>
+                        &nbsp;&nbsp;{!errorMessage}
+                    </div>
+                </apex:outputPanel>
+
+                <div class="col-sm-6 col-xs-12 col-md-6 col-lg-6">
+                    <div class="form-group">
+                        <label class="control-label">CIS ID</label>
+                        <apex:inputText value="{!cis}" styleClass="form-control input-sm" onkeypress="return noenter(event);"/>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-xs-12 col-md-6 col-lg-6">
+                    <div class="form-group">
+                        <label class="control-label">Identification No. / Registration No.</label>
+                        <apex:inputText value="{!id}" styleClass="form-control input-sm" onkeypress="return noenter(event);"/>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-xs-12 col-md-6 col-lg-6">
+                    <div class="form-group">
+                        <label class="control-label">First Name / Company Name</label>
+                        <apex:inputText value="{!firstname}" styleClass="form-control input-sm" onkeypress="return noenter(event);"/>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-xs-12 col-md-6 col-lg-6">
+                    <div class="form-group">
+                        <label class="control-label">Last Name</label>
+                        <apex:inputText value="{!lastname}" styleClass="form-control input-sm" onkeypress="return noenter(event);"/>
+                    </div>
+                </div>
+                
+            </div>
+            <div class="row text-center">
+                <div class="col-xs-12">
+                    <button class="btn btn-info btn-sm" onclick="this.disabled = true;buttonsEnabled(false);return false;">
+                        <span class="onsave" style="display:none;"><span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Searching...</span>
+                        <span class="onsave-n">Search</span>
+                    </button>
+                    <apex:commandButton styleClass="btn btn-info btn-sm save-button" style="display:none;" action="{!searchDataSyncronous}" value="Search" />
+
+                    <button class="btn btn-info btn-sm" style="display:{!IF(showProspectButton,'','none')}" onclick="createProspect();return false;">
+                    Create Prospect
+                    </button>
+                </div>
+                
+            </div>
+
+            <br />
+
+            <div class="row">
+                <div class="page-header">
+                    <h4>Account</h4>
+                </div>
+                <div class="col-xs-12 col-md-12 " style="display:{!IF(finalCustomerList.size = 0,'','none')}" >
+                    <div class="well">No Result.</div>
+                </div>
+                <div id="panel-search" style="display:{!IF(finalCustomerList.size > 0,'','none')};padding:0;" class="col-xs-12 col-md-12">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Graph</th>
+                                    <th>CIS ID</th>
+                                    <th>
+                                    <apex:commandLink style="text-decoration:none !important;color:#000000;" action="{!sortData}" 
+                                    value="Name{!IF(sortExpression=='name',IF(sortDirection='ASC','▲','▼'),'')}" id="cmdSort">
+                                            <apex:param value="name" name="column" assignTo="{!sortExpression}" />
+                                    </apex:commandLink>
+                                    </th>
+                                    <th>Identification No.</th>
+                                    <th>Birthdate/Registraton Date</th>
+                                    <th>Segment</th>
+                                    <th>Dual Segment</th>
+                                    <th>District</th>
+                                    <th>Province</th>
+                                    <th>Customer Status</th>
+                                    <th>Credit Status</th>
+                                    <th>Owner</th>
+                                    <th>Port/Pool</th>
+                                    <th>Max Wealth Branch</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <apex:repeat value="{!finalCustomerList}" var="customer">
+                                    <tr>
+                                        <td>
+                                            <apex:outputText value="{!customer.accountObj.Customer_360__c}" escape="false" />
+                                        </td>
+                                        <td>
+                                            <apex:outputLink onclick="linkToAccount('{!customer.accountObj.Id}'); return false;">{!customer.accountObj.CIS__c}
+                                            </apex:outputLink>
+                                        </td>
+                                        <td>
+                                            <apex:image value="{!customer.fullName}" Rendered="{!customer.isMashup}" />
+                                             <apex:outputLink Rendered="{!!customer.isMashup}" onclick="linkToAccount('{!customer.accountObj.Id}'); return false;">{!customer.fullName}
+                                            </apex:outputLink>
+                                        </td>
+                                        <td>
+                                             <apex:image value="{!customer.identificationNo}" Rendered="{!customer.isMashup}"/>
+                                            <apex:outputText value="{!customer.identificationNo}" Rendered="{!!customer.isMashup}" escape="false" />
+                                        </td>
+                                        <td>{!customer.birthdateRegistrationDate}</td>
+                                        <td>{!customer.accountObj.Primary_Segment_Code__c}</td>
+                                        <td>{!customer.accountObj.Dual_Segment_Code__c}</td>
+                                        <td>{!customer.district}</td>
+                                        <td>{!customer.province}</td>
+                                        <td>{!customer.accountObj.Customer_Status__c}</td>
+                                        <td>{!customer.accountObj.Status__c}</td>
+                                        <td>{!customer.accountObj.Owner.Name}</td>
+                                        <td>{!customer.accountObj.Port_Pool__c}</td>
+                                        <td>{!customer.teamStructure}</td>
+                                    </tr>
+                                </apex:repeat>
+                            </tbody>
+                        </table>
+                        
+                    </div>
+                    <br/>
+                    <apex:outputPanel styleClass="col-xs-12 col-centered" style="margin-bottom:20px;" id="accountTotalRecords" rendered="{!finalCustomerList.size > 0}">
+                        <apex:commandLink style="text-decoration:underline;" action="{!doPrevious}" rendered="{!hasPrevious}" value="Previous" />
+                        &nbsp;&nbsp;&nbsp;
+                        <apex:outputLabel value=" (Page {!page} of {!totalPages}) | Showing {!startIdx} to {!endIdx} of {!totalRecords} " />    
+                        &nbsp;&nbsp;&nbsp;
+                        <apex:commandLink style="text-decoration:underline;" action="{!doNext}" rendered="{!hasNext}" value="Next" />
+                    </apex:outputPanel>
+                </div>
+            </div>
+                    
+        </div>
+    </div>
+    </apex:form>
+    <script type="text/javascript">
+        function createProspect() {
+            if( (typeof sforce != 'undefined') && (sforce != null) ) {
+                // do your SF1 mobile button stuff
+                sforce.one.navigateToURL("/apex/Override_NewAccount_Page?retURL=%2F001%2Fo&ent=Account");
+
+            } else {
+                // do your desktop stuff
+                window.location = 'apex/Override_NewAccount_Page?retURL=%2F001%2Fo&ent=Account';
+            }
+        };
+
+        function linkToAccount(link) {
+            if((typeof sforce != 'undefined') && (sforce != null) ) {
+                // do your SF1 mobile button stuff
+                sforce.one.navigateToURL("/" + link);
+            } else {
+                // do your desktop stuff
+                window.location = "/" + link;
+            }
+        };
+
+        (function(){
+            $('#panel-search').css('width',$.screen_size-40+'px');
+        })();
+    </script>
+    </body>
+    </html>
+</apex:page>

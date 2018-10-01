@@ -1,0 +1,125 @@
+<apex:page lightningStylesheets="true" standardController="Target_List__c" extensions="AnswerLeadController" recordSetVar="targetListSetVar"  showHeader="{!$User.UIThemeDisplayed != 'Theme4d'} != true" sidebar="{!$User.UIThemeDisplayed != 'Theme4d'} != true ">
+    <apex:slds />
+    <header>
+        <apex:includeScript value="{!URLFOR($Resource.jquery, '')}"/>
+        <style type="text/css">
+            h1{
+                font-size: 20px
+            }
+            body{
+                padding-top: 50px;
+            }
+        </style>
+    </header>
+    <body>
+        <style type="text/css">
+            h1{
+                font-size: 20px
+            }
+            body{
+                padding-top: 50px;
+            }
+        </style>
+        <script>
+        var currnetProfile =  '{!$Profile.Name}';
+        function validateOnload(targrtLists){
+            var errorMsg;
+            if(!targrtLists.length){
+                errorMsg = 'Please select at least one Lead.';
+            }else if(!["CBS-RM", "CBS-TM", "CBS-TL"].includes(currnetProfile)){
+                errorMsg = '{!$Label.CBSLead_OnlyCBScanAnswerLeadForFeedback}';
+            }else if(!targrtLists.every(checkLeadOwnershipOfThisUser)){
+                errorMsg = '{!$Label.CBSLead_Only_Owner_can_Update_Target_List_Status}';
+            }else if(!targrtLists.every(checkLeadSameSubtype)){
+                errorMsg = '{!$Label.CBSLead_OnlySameLeadForFeedBackSubType}';
+            }else if('{!hasOtherLeadType}' == 'true'){
+                errorMsg = 'Can Answer Only SubType Lead for Feedback.';
+            }
+            else if('{!hasExpireCampaign}' == 'true'){
+                errorMsg = 'Cannot Answer Expired Lead.';
+            }
+
+            if(errorMsg){
+                var r = confirm(errorMsg);
+                if(r){
+                    gotoRecentListView();
+                }else{
+                    gotoRecentListView();
+                }
+            }
+        }
+
+        function showResponseResult(responseResult){
+            if(!responseResult.isSuccess){
+                alert(responseResult.message);
+            }
+        }
+
+        function checkLeadOwnershipOfThisUser(eachtargetList){
+            return eachtargetList.isCurrentOwner__c == 1;
+        }
+
+        function checkLeadSameSubtype(eachtargetList){
+            return  String(eachtargetList.Lead_Subtype_CBS__c) == '{!leadSubType}'
+        } 
+
+        $(document).ready(function() {
+            validateOnload({!targetListsJSONString});
+        });
+            
+        </script>
+
+        <apex:form id="changeStatusForm" style="width: 50%;margin:auto;">
+                <apex:actionFunction action="{!gotoRecentListView}" name="gotoRecentListView" ></apex:actionFunction>
+                <apex:pageBlock >
+                <apex:pageBlockSection columns="1">
+    
+                    <div style="width: 100%;font-size: 20px;background: rgb(243, 242, 242);font-weight: bold;">
+                        <h1>Answer Lead</h1>
+                    </div>
+
+                    <br/>
+                    <apex:outputPanel id="divResponselevel1">
+                        <apex:outputPanel >
+                            <h2>Please Select</h2>
+                            <br/>
+                            
+                            <apex:selectList size="1" id="responseLevel1" value="{!responseModel.responseLv1}">
+                                <apex:selectOptions value="{!optionLevel1}"/>
+                                <apex:actionSupport event="onchange" action="{!onChangeResponseLevel1}" reRender="divtextArea,divResponselevel2" />
+                            </apex:selectList>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+
+
+                    <apex:outputPanel id="divResponselevel2">
+                        <apex:outputPanel rendered="{!NOT(ISNULL(responseModel.responseLv1)) && optionLevel2.size > 1}">
+                            <h2>Please Select</h2>
+                            <br/>
+                            <apex:selectList size="1" id="responseLevel2" value="{!responseModel.responseLv2}">
+                                <apex:selectOptions value="{!optionLevel2}"/>
+                                <apex:actionSupport event="onchange" action="{!onChangeResponseLevel2}" reRender="divtextArea" />
+                            </apex:selectList>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel id="divtextArea">
+                        <apex:outputPanel rendered="{!NOT(ISNULL(responseModel.responseLv1)) && responseModel.answerObj.isRequireMemo}" >
+                            <h2>Please fill in Memo</h2>
+                            <br/>
+                            <apex:inputTextarea id="MemoText" value="{!responseModel.memo}" rows="4" cols="50" />
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+
+                    
+                </apex:pageBlockSection>
+                    <apex:pageBlockButtons location="bottom">
+                        <apex:commandButton value="OK" id="save" action="{!submitResponse}" oncomplete="showResponseResult({!resultResponseJSONString});"/>
+                        <apex:commandButton value="Cancel" id="cancel" oncomplete="gotoRecentListView();"/>
+                    </apex:pageBlockButtons>
+                </apex:pageBlock>
+        </apex:form>
+
+    </body>
+    
+</apex:page>

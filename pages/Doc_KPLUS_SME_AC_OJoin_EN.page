@@ -1,0 +1,32 @@
+<apex:page standardController="Account" extensions="Doc_KPLUS_SME_AC_OJoin_EN_Controller"
+showHeader="false" sidebar="false" renderAs="html" applyHtmlTag="false" >
+<head>
+    <style>
+        @page {
+        size: 21.0cm 29.7cm;
+        margin-top: 0cm;
+        margin-left: 0cm;
+        margin-right: 0cm;
+        margin-bottom: 0cm;
+        }
+        .elementValue{
+        position:absolute;
+        white-space:nowrap;
+        text-align:center;
+        }
+        img {
+        width:21cm;
+        position:absolute;
+        }
+        .box:before {
+        content: "☐";
+        font-size:22px;
+        }
+        .boxCheck:before{
+        content: "☑";
+        font-size:22px;
+        }
+    </style>
+</head>
+<apex:outputText value="{!html}" escape="false"/>
+</apex:page>

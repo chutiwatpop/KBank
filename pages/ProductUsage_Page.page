@@ -1,0 +1,193 @@
+<apex:page showHeader="true" sidebar="true" lightningStylesheets="true" standardController="Account" extensions="ProductUsageSummaryController">
+    <apex:slds />
+    <apex:includeLightning />
+    <apex:includeScript value="{!$Resource.jquery}"/>
+    <style>
+        .Table-Fixed {
+            table-layout: fixed;
+            width: 100%
+        }
+        .Table-Wrap {
+            word-wrap: break-word;
+        }
+        .Table-scroll {
+             overflow: scroll;
+        }
+        .PaddingBottom {
+			padding-bottom: 20px;
+		}
+		.errorMessage {
+            color: red;
+            display: none;
+        }
+    </style>
+    <div class="errorMessage" id="productUsageErrorMsg"></div>
+	<div class="slds-page-header" id="header-domain1">
+		<div class="slds-media">
+				<div class="slds-media__figure">
+						<span class="slds-icon_container slds-icon-custom-custom40">
+							<svg class="slds-icon" aria-hidden="true">
+							<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/custom-sprite/svg/symbols.svg#custom40')}" />
+							</svg>
+						</span>
+				</div>
+		<div class="slds-media__body">
+				<h1 class="slds-page-header__title slds-align-middle">Domain 1 : OPERATION &amp; TRANSACTION</h1>
+		</div>
+		</div>
+	</div>
+    <div id="content" class="PaddingBottom"></div>
+
+    <div class="slds-page-header" id="header-domain2">
+		<div class="slds-media">
+				<div class="slds-media__figure">
+						<span class="slds-icon_container slds-icon-custom-custom40">
+							<svg class="slds-icon" aria-hidden="true">
+							<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/custom-sprite/svg/symbols.svg#custom17')}" />
+							</svg>
+						</span>
+				</div>
+		<div class="slds-media__body">
+				<h1 class="slds-page-header__title slds-align-middle">Domain 2 : SAVING &amp; INVESTING</h1>
+		</div>
+		</div>
+	</div>
+    <div id="content2" class="PaddingBottom"></div>
+
+    <div class="slds-page-header" id="header-domain3">
+		<div class="slds-media">
+				<div class="slds-media__figure">
+						<span class="slds-icon_container slds-icon-custom-custom40">
+							<svg class="slds-icon" aria-hidden="true">
+							<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/standard-sprite/svg/symbols.svg#investment_account')}" />
+							</svg>
+						</span>
+				</div>
+		<div class="slds-media__body">
+				<h1 class="slds-page-header__title slds-align-middle">Domain 3 : FUNDING &amp; BORROWING</h1>
+		</div>
+		</div>
+	</div>
+    <div id="content3" class="PaddingBottom"></div>
+
+    <div class="slds-page-header" id="header-domain4">
+		<div class="slds-media">
+				<div class="slds-media__figure">
+						<span class="slds-icon_container slds-icon-custom-custom40">
+							<svg class="slds-icon" aria-hidden="true">
+							<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/custom-sprite/svg/symbols.svg#custom60')}" />
+							</svg>
+						</span>
+				</div>
+		<div class="slds-media__body">
+				<h1 class="slds-page-header__title slds-align-middle">Domain 4 : PROTECTION &amp; INFORMATION</h1>
+		</div>
+		</div>
+	</div>
+    <div id="content4" class="PaddingBottom"></div>
+
+
+    <script type='text/javascript'>
+        function formatNumber(num) {
+	    	  return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
+		    }
+
+        function showProductDetail(productCode){
+			var cisId = '{!cisId}';
+            sforce.one.navigateToURL('/apex/ProductLevel_Page?productcode=' + productCode +'&cisId=' + cisId);
+            //sforce.one.navigateToURL('/apex/ProductLevel_Page');
+            //window.location.href = '/apex/vftest';
+        }
+
+        function showContent(body){
+			var text = "<table class='slds-table slds-table_bordered slds-table_cell-buffer'> <thead> <tr class='slds-text-title_caps' style='background-color:#f5f5f0'>";
+			//columnHeader.forEach(function(element) {
+			text += "<th scope='col' <div class='slds-truncate' style='width:50%;'>" + columnHeader[0] + "</div> </th>";
+            text += "<th scope='col' <div class='slds-truncate' style='width:10%;'>" + columnHeader[1] + "</div> </th>";
+            text += "<th scope='col' <div class='slds-truncate' style='width:20%;'>" + columnHeader[2] + "</div> </th>";
+            text += "<th scope='col' <div class='slds-truncate' style='width:20%;'>" + columnHeader[3] + "</div> </th>";
+			//});
+	       			text += "</tr> </thead> <tbody>";
+       				for (const [key, value] of Object.entries(body)) {
+       						console.log('Key Test : '+value);
+       						text += "<tr><td class='slds-truncate'><a id=\"" + value.ProductCode + "\" href='javascript:void(0);'onclick=\"showProductDetail('" + value.ProductCode + "')\">" + value.Name + "</a></td>";
+       						text += "<td class='slds-truncate'>" + value.QuantityUnit + "</td>";
+       						text += "<td class='slds-truncate' style='text-align:right'>" + formatNumber(value.TotalCreditLimit) + "</td>";
+       						text += "<td class='slds-truncate' style='text-align:right'>" + formatNumber(value.Balance) + "</td></tr>";
+       						/*for (const key of Object.keys(value)) {
+							    if(!str.includes(key)){
+							    	var Product_Code = 'Product_Code__c';
+							    		if(key == 'Name'){
+							    			text += "<td class='slds-truncate'><a id=\"" + value[Product_Code] + "\" href='javascript:void(0);'onclick=\"showProductDetail('" + value[Product_Code] + "')\">" + value[key] + "</a></td>";
+							    		}else if(key == 'FinServ__Balance__c' || key == 'FinServ__TotalCreditLimit__c'){
+							    			text += "<td class='slds-truncate' style='text-align:right'>" + formatNumber(value[key]) + "</td>";
+							    		}else if(key ==  'Quantity_Unit__c'){
+							    			text += "<td class='slds-truncate'>" + value[key] + "</td>";
+							    		}
+       							}	
+							};*/
+       					};	
+       				text += "</tbody></table>";
+       				return text;
+       				//document.getElementById("content").innerHTML = text;
+        }
+
+		function renderPage(jsonResponseText) {
+			var dataList = jsonResponseText;
+			console.log(dataList);
+			resp = JSON.parse(dataList);
+
+			columnHeader = Object.values(resp)[4];
+			for (var i = 0; i < Object.keys(resp).length; i++) {
+				if(Object.values(resp)[i].length > 0){
+					var body = Object.values(resp)[i];
+					switch(Object.keys(resp)[i]) {
+						case 'domainOperation':
+							document.getElementById("content").innerHTML = showContent(body);
+							break;
+						case 'domainSaving':
+							document.getElementById("content2").innerHTML = showContent(body);
+							break;
+						case 'domainFunding':
+							document.getElementById("content3").innerHTML = showContent(body);
+							break;
+						case 'domainProtection':
+							document.getElementById("content4").innerHTML = showContent(body);
+							break;
+						default:
+							//
+					}
+				}
+			}
+			
+			if({!isMobile}){
+				var element = document.getElementById("content");
+				element.classList.add("Table-scroll");
+				var element2 = document.getElementById("content2");
+				element2.classList.add("Table-scroll");
+				var element3 = document.getElementById("content3");
+				element3.classList.add("Table-scroll");
+				var element4 = document.getElementById("content4");
+				element4.classList.add("Table-scroll");
+			}
+		}
+
+       	var resp;
+       	var str = "attributes, Product_Code__c";
+       	var columnHeader;
+		if({!isVisible}) {
+			renderPage('{!productUsageSummary}');
+		} else {
+			$("#header-domain1").hide();
+			$("#content").hide();
+			$("#header-domain2").hide();
+			$("#content2").hide();
+			$("#header-domain3").hide();
+			$("#content3").hide();
+			$("#header-domain4").hide();
+			$("#content4").hide();
+            $("#productUsageErrorMsg").css('color','rgb(112, 110, 107)');
+            $("#productUsageErrorMsg").html("<i><div>เฉพาะเจ้าของลูกค้าจึงสามารถเห็นข้อมูลนี้ได้ กรุณาติดต่อเจ้าของลูกค้า</div><div>Only the customer owner can view Product Usage.<br/>Please contact customer owner.</div></i>").show();
+		}
+    </script>
+</apex:page>

@@ -1,0 +1,284 @@
+<apex:page title="Port Management" controller="SME_BulkAssignment_ListView_Controller" extensions="RemoterExtensions" standardStylesheets="false">
+    <c:ExtRemoteDependency />
+    <style type="text/css">
+        .customPopup {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 100%;
+            background-color: white;
+            border-style: solid;
+            border-color: #1797c0;
+            border-width: 2px;
+            border-radius: 5px;
+            left: 35%;
+            padding: 20px;
+            position: fixed;
+            z-index: 9998;
+            /* These are the 3 css properties you will need to tweak so the pop 
+                            up displays in the center of the screen. First set the width. Then set 
+                            margin-left to negative half of what the width is. You can also add 
+                            the height property for a fixed size pop up.*/
+            width: 25%;
+            top: 10px;
+            margin: 70px auto;
+        }
+        .popupBackground{
+            background-color:black;
+            opacity: 0.20;
+            filter: alpha(opacity = 20);
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 9998;
+        }
+
+        .customPopup-content {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 100%;
+            text-align: center;
+        }
+
+        .popupHeader {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 100%;
+            padding: 10px;
+        }
+
+    </style>
+    <script>
+        Visualforce.remoting.timeout = 120000;
+        var controllers = [SME_BulkAssignment_ListView_Controller];
+        
+
+        for(var i=0;i<controllers.length;i++){
+            for(var method in controllers[i]){
+                
+                if(controllers[i].hasOwnProperty(method)){
+                    controllers[i][method].directCfg.method.getArgs = Ext.direct.RemotingMethod.prototype.getArgs;
+
+                }
+            }
+        }
+
+        
+    </script>
+
+            <apex:form id="bulkForm">
+                <apex:pageMessages id="msg" />
+                <apex:outputPanel id="assignPanel" layout="block"/>
+            </apex:form>
+    
+        
+            <apex:form id="theForm">
+                <apex:outputPanel id="tstpopup">
+                    <apex:outputPanel rendered="{!CheckNHTL && !selectedNHTLChoice}">
+                        <apex:outputPanel styleClass="popupBackground" layout="block"/>
+                        <apex:outputPanel styleClass="customPopup" layout="block">
+                            <div class="customPopup-content"><h3><apex:outputText value="Please Select Your Profile"/></h3></div>
+                            <br>
+                                <div class="customPopup-content">
+                                    <apex:outputPanel >
+                                        <button type="button" value="CBS-TL">
+                                            CBS-TL
+                                            <apex:actionSupport action="{!setNHActAsTLTrue}" event="onclick" reRender="bulkExtjs,tstpopup,theForm"/>
+                                        </button>
+                                    </apex:outputPanel>
+
+                                    <apex:outputPanel >
+                                        <button type="button" value="SME-NH">
+                                            SME-NH
+                                            <apex:actionSupport action="{!setNHActAsTLFalse}" event="onclick" reRender="bulkExtjs,tstpopup,theForm"/>
+                                        </button>
+                                    </apex:outputPanel>
+                                </div>
+                            </br>
+                            
+                        </apex:outputPanel>
+
+                        
+                    </apex:outputPanel>
+                </apex:outputPanel>
+                
+                
+                <apex:outputPanel id="bulkExtjs">
+                    <apex:outputPanel rendered="{!run}">
+                        
+                        <apex:includeScript value="{!$Resource.reassign_util}"/>
+                        <apex:includeScript value="{!$Resource[selectedResource]}"/>
+                        <script>
+                            Ext.onReady(function(){
+                            Visualforce.remoting.timeout = 120000;
+                            (function(){
+                                
+                                // SME BulkAssignment
+                                var reAssignPermanencefieldlist = getFieldList('{!ReAssignPermanenceFieldsForDes}');
+                                console.log(reAssignPermanencefieldlist);
+                                var reAssignTemporaryfieldlist = getFieldList('{!ReAssignTemporaryFieldsForDes}');
+                                var reAssignOwnedByOtherfieldlist = getFieldList('{!ReAssignOwnedByOtherFieldsForDes}');
+
+                                var reAssignPermanenceAsync = getFieldMapPicklistDescription('Account',reAssignPermanencefieldlist);
+                                var reAssignTemporaryAsync = getFieldMapPicklistDescription('Account',reAssignTemporaryfieldlist);
+                                var reAssignOwnedByOtherAsync = getFieldMapPicklistDescription('Account',reAssignOwnedByOtherfieldlist);
+                                
+                                ////////////////////////////////////////////////////////////////
+                                // CBS BulkAssignment
+
+                                var reAssignPermanencefieldlistForCBS = getFieldList('{!ReAssignPermanenceFieldsDesForCBS}');
+                                var reAssignPermanenceAsyncForCBS = getFieldMapPicklistDescription('Account',reAssignPermanencefieldlistForCBS);
+
+                                var approvalProcessBulkAssignfieldlistForCBS = getFieldList('{!ApprovalBulkAssignFieldsDesForCBS}');
+                                var approvalProcessBulkAssignAsyncForCBS = getFieldMapPicklistDescription('Bulk_Assignment__c',approvalProcessBulkAssignfieldlistForCBS);
+
+                                var salesTargetfieldlistForCBS = getFieldList('{!SalesTargetFieldsDesForCBS}');
+                                var salesTargetAsyncForCBS = getFieldMapPicklistDescription('Sales_Target__c',salesTargetfieldlistForCBS);
+
+                                var bulkSalesTargetfieldlistForCBS = getFieldList('{!BulkSalesTargetFieldsDesForCBS}');
+                                var bulkSalesTargetAsyncForCBS = getFieldMapPicklistDescription('Bulk_Assignment_Sale_Target__c',bulkSalesTargetfieldlistForCBS);
+                                
+                                /////////////////////////////////////////////////////
+
+                                // AF BulkAssignment
+                                var reAssignPermanencefieldlistForAF = getFieldList('{!BulkAssignFieldsDescForAF}');
+                                var reAssignTemporaryfieldlistForAF = getFieldList('{!BulkAssignFieldsDescForAF}');
+                                var reAssignOwnedByOtherfieldlistForAF = getFieldList('{!BulkAssignFieldsDescForAF}');
+
+                                var reAssignPermanenceAsyncForAF = getFieldMapPicklistDescription('Account',reAssignPermanencefieldlistForAF);
+                                var reAssignTemporaryAsyncForAF = getFieldMapPicklistDescription('Account',reAssignTemporaryfieldlistForAF);
+                                var reAssignOwnedByOtherAsyncForAF = getFieldMapPicklistDescription('Account',reAssignOwnedByOtherfieldlistForAF);
+                                
+                                ////////////////////////////////////////////////////////////////
+
+                                var final_grid = Ext.create('Ext.container.Container', {
+                                    renderTo: '{!$Component.bulkForm.assignPanel}',
+                                    id: 'bulk-container'
+                                });
+
+                                final_grid.setLoading('Processing Element...');
+
+                                Ext.Deferred
+                                .all([reAssignPermanenceAsync,reAssignTemporaryAsync,reAssignOwnedByOtherAsync,reAssignPermanenceAsyncForCBS,approvalProcessBulkAssignAsyncForCBS,salesTargetAsyncForCBS,bulkSalesTargetAsyncForCBS,reAssignPermanenceAsyncForAF,reAssignTemporaryAsyncForAF,reAssignOwnedByOtherAsyncForAF])
+                                .then(function (results) {
+                                    var config = {
+                                        pagesize : parseInt('{!rows}'),
+                                        reAssignPermanenceForMap : results[0],
+                                        reAssignTemporaryForMap : results[1],
+                                        reAssignOwnedByOtherForMap : results[2],
+                                        reAssignPermanenceMapForCBS : results[3],
+                                        approvalProcessBulkAssignMapForCBS : results[4],
+                                        salesTargetMapForCBS : results[5],
+                                        bulkSalesTargetMapForCBS : results[6],
+                                        reAssignAFPortMap : results[7],
+                                        reAssignTemporaryAsyncForAFMap : results[8],
+                                        reAssignOwnedByOtherAsyncForAFMap : results[9],
+
+                                        reAssignPermanencefieldlist : getFieldList('{!ReAssignPermanenceFields}'),
+                                        reAssignTemporaryfieldlist : getFieldList('{!ReAssignTemporaryFields}'),
+                                        reAssignOwnedByOtherfieldlist : getFieldList('{!ReAssignOwnedByOtherFields}'),
+
+                                        reAssignPermanencefieldlistForCBS : getFieldList('{!ReAssignPermanenceFieldsForCBS}'),
+                                        approvalProcessBulkAssignfieldlistForCBS : getFieldList('{!ApprovalBulkAssignFieldsForCBS}'),
+
+                                        salesTargetfieldlistForCBS : getFieldList('{!SalesTargetFieldsForCBS}'),
+                                        bulkSalesTargetfieldlistForCBS : getFieldList('{!BulkSalesTargetFieldsForCBS}'),
+
+                                        reAssignAFPortfieldlist : getFieldList('{!BulkAssignFieldsForAF}'),
+                                        reAssignAFPoolfieldlist : getFieldList('{!BulkAssignFieldsForAF}'),
+                                        reAssignAFPort2fieldlist : getFieldList('{!BulkAssignFieldsForAF}'),
+
+                                        panel_items : [],
+                                        container_items : [],
+                                        user_id : '{!$User.Id}',
+                                        user_rc_code : '{!rcCode}',
+                                        rc_codes: '{!rcCodes}',
+                                        year: '{!year}',
+                                        user_empid : '{!empId}',
+                                        lowerLevelSet : {!userLowerSet},
+                                        
+                                        map_label : {
+                                            BulkAssign_ShowAll: '{!$Label.YearEnd_ShowAll}',
+                                            BulkAssign_Invalid_Fields: '{!$Label.BulkAssign_Invalid_Fields}',
+                                            BulkAssign_CustomerList: '{!$Label.BulkAssign_CustomerList}',
+                                            BulkAssign_TempOwnerList: '{!$Label.BulkAssign_TempOwnerList}',
+                                            BulkAssign_OwnerByOtherList: '{!$Label.BulkAssign_OwnerByOtherList}',
+                                            BulkAssign_Submitted: '{!$Label.BulkAssign_Submit}',
+                                            BulkAssign_Thefollowingfieldsareinvalid: '{!$Label.BulkAssign_Thefollowingfieldsareinvalid}',
+                                            BulkAssign_NHLevelName: '{!$Label.BulkAssign_NHLevelName}',
+                                            BulkAssign_AHLevelName: '{!$Label.BulkAssign_AHLevelName}',
+                                            BulkAssign_TMLevelName: '{!$Label.BulkAssign_TMLevelName}',
+                                            BulkAssign_RMLevelName: '{!$Label.BulkAssign_RMLevelName}',
+                                            BulkAssign_Servererror: '{!$Label.BulkAssign_Servererror}',
+                                            BulkAssign_SelectRM_TM: '{!$Label.BulkAssign_SelectRM_TM}',
+                                            BulkAssign_NoAssignmentSelected: '{!$Label.BulkAssign_NoAssignmentSelected}',
+                                            BulkAssign_NoRM_TM_UserAssignment: '{!$Label.BulkAssign_NoRM_TM_UserAssignment}',
+                                            BulkAssign_PleaseConfirmtoRefreshList: '{!$Label.YearEnd_PleaseConfirmtoRefreshList}',
+                                            BulkAssign_Port: '{!$Label.YearEnd_Port}',
+                                            BulkAssign_Pool: '{!$Label.YearEnd_Pool}',
+
+                                            
+                                            BulkAssign_CBS_Admin: '{!$Label.CBS_Admin}',
+                                            BulkAssign_To_Approve: '{!$Label.To_Approve}',
+                                            BulkAssign_Approval_History: '{!$Label.Approval_History}',
+                                            BulkAssign_Team_Level_Name: '{!$Label.Bulk_Assign_Team_Name}',
+                                            BulkAssign_User_Level_Name: '{!$Label.Bulk_Assign_Owner_Name}',
+                                            BulkAssign_User_Status : '{!$Label.Bulk_Assign_User_Status}',
+                                            BulkAssign_Request_Reason : '{!$Label.Bulk_Assign_Request_Reason}',
+                                            BulkAssign_Request_Reason_Text : '{!$Label.Bulk_Assign_Request_Reason_Text}',
+                                            BulkAssign_Reject_Reason : '{!$Label.Bulk_Assign_Reject_Reason}',
+                                            BulkAssign_Reject_Reason_Text : '{!$Label.Bulk_Assign_Reject_Reason_Text}',
+                                            BulkAssign_Approval_Status : '{!$Label.Bulk_Assign_Approval_Status}',
+                                            BulkAssign_Approval_Confirmation : '{!$Label.Bulk_Assign_Approval_Confirmation}',
+                                            BulkAssign_Approval_Confirmation_Display : '{!$Label.Bulk_Assign_Approval_Confirmation_Display}',
+                                            BulkAssign_Reject_Confirmation : '{!$Label.Bulk_Assign_Reject_Confirmation}',
+                                            BulkAssign_Recall_Confirmation : '{!$Label.Bulk_Assign_Recall_Confirmation}',
+                                            BulkAssign_Recall_Confirmation_Display : '{!$Label.Bulk_Assign_Recall_Confirmation_Display}',
+                                            BulkAssign_Confirm: '{!$Label.Bulk_Assign_Confirm}',
+                                            BulkAssign_Bulk_Sales_Target : '{!$Label.Bulk_Assign_Bulk_Sales_Target}',
+                                            BulkAssign_Approve : '{!$Label.Bulk_Assign_Approve}',
+                                            BulkAssign_Reject : '{!$Label.Bulk_Assign_Reject}',
+                                            BulkAssign_Recall: '{!$Label.Bulk_Assign_Recall}',
+                                            BulkAssign_Approval_History: '{!$Label.Bulk_Assign_Approval_History}',
+                                            BulkAssign_No_User_Assignment: '{!$Label.No_User_Assignment}',
+                                            BulkAssignment_AFPort2: '{!$Label.Bulk_Assignment_AFPort2}',
+                                            BulkAssignment_AFPort: '{!$Label.Bulk_Assignment_AFPort}',
+                                            BulkAssignment_AFPool: '{!$Label.Bulk_Assignment_AF_Pool}'
+
+                                        },
+                                    };
+                                    
+
+                                    init(config);
+                                    
+                                    var w = Ext.getCmp('bulk-container');
+                                    w.setLoading(false);
+                                    var tabpanel = Ext.create('Ext.tab.Panel', {
+                                        id: 'main-tab',
+                                        plain: true,
+                                        items: config.panel_items,
+
+                                        defaults: {
+                                            listeners: {
+                                                beforeclose: function(panel) {
+                                                    var closeAction = this.ownerCt.closeAction
+                                                    if (closeAction === 'hide') {
+                                                        panel.hide();
+                                                        Ext.get(panel.tabEl).setVisible(false);
+                                                        return false;
+                                                    }
+                                                    return true;
+                                                }
+                                            }
+                                        },
+                                    });
+                                    final_grid.add([tabpanel].concat(config.container_items));               
+                                },function(errors){
+                                    return;
+                                });
+                            })();
+                        });
+                        </script>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+
+            </apex:form>
+</apex:page>

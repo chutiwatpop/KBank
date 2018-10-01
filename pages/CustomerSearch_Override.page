@@ -1,0 +1,13 @@
+<apex:page showHeader="false" sidebar="false">
+    <script type="text/javascript">
+        (function(){
+            if( (typeof sforce != 'undefined') && (sforce != null) ) {
+                // do your SF1 mobile button stuff
+                sforce.one.navigateToURL("/apex/CustomerSearch_Mobile");
+            } else {
+                // do your desktop stuff
+                window.location = '/apex/CustomerSearch';
+            }
+        })();
+    </script>
+</apex:page>

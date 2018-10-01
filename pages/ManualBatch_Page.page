@@ -1,0 +1,175 @@
+<!--
+@author chutiwat.s@beryl8.com
+@11/09/2015 createddate
+@28/01/2016 fixed bug one time schedule / batch max size
+-->
+<apex:page showHeader="true" sidebar="true" controller="BatchListView_Controller">
+    <apex:form id="mainForm" >
+    <apex:inputHidden id="inputHidden" value="{!oneTimeValue}"/>
+    <apex:inputHidden id="batchSizeHidden" value="{!batchSize}"/>
+
+    <apex:pageBlock title="Manual Batch">
+        <apex:pageMessages id="errorMsg" />
+        <apex:selectRadio id="runType" value="{!runType}" onchange="showRunType(this.value);" >
+            <apex:selectOptions value="{!TypeValue}" />
+        </apex:selectRadio>
+
+        <span style="border-top:1px solid rgb(204,204,204); padding-top:10px;">
+            Batch Name:&nbsp;
+            <apex:selectList value="{!batchName}" multiselect="false" size="1" label="Batch Name">
+                <apex:selectOptions value="{!FieldValue}" />
+            </apex:selectList>
+
+            &nbsp;&nbsp;
+            Size: <input style="margin-top:5px" type="number" min="1" max="2000" value="{!batchSize}" id="inputSize" name="inputSize" />
+
+            &nbsp;&nbsp;
+            <apex:commandButton styleClass="manualBlock" onclick="getSize();" action="{!runBatch}" value="Run" reRender="pbTable,errorMsg"/>
+        </span>
+
+        <apex:outputPanel id="pbRunSchedule" styleClass="scheduleBlock" style="display:none;margin-top:8px;">
+            <apex:outputPanel >
+                <div style="border:1px solid rgb(204,204,204);padding:8px;margin-top:5px;width:25%">
+                    Frequency:&nbsp;
+                    <apex:selectRadio id="freqType" value="{!scheduleType}" onchange="showBlock(this.value);" >
+                        <apex:selectOptions value="{!scheduleTypeValue}" />
+                    </apex:selectRadio>
+                        
+                    <div style="margin-top:5px;">
+                        <apex:outputPanel id="freqOutput">
+                            <apex:outputPanel styleClass="oneTimeBlock" style="display:none;padding:5px;border:1px solid rgb(204,204,204);background-color: rgb(255,255,255);">
+                                 Select date to run:&nbsp;
+                                 <!-- <input type="text" placeholder="Select date" id="inputDate" readonly="true" onfocus="DatePicker.pickDate(false,  'inputDate', false);" name="inputDate" /> -->
+                                 <input type="date" id="inputDate" name="inputDate" />
+                            </apex:outputPanel>
+                            <apex:outputPanel styleClass="dailyBlock" style="display:none;">
+                                <apex:selectRadio style="border:1px solid rgb(204,204,204);background-color: rgb(255,255,255);" value="{!dailyType}" layout="pageDirection">
+                                    <apex:selectOptions value="{!DailyTypeValue}" />
+                                </apex:selectRadio>
+                            </apex:outputPanel>
+                            <apex:outputPanel styleClass="weeklyBlock" style="display:none;">
+                                 <apex:selectCheckboxes style="border:1px solid rgb(204,204,204);background-color: rgb(255,255,255);" value="{!weeklyType}" layout="pageDirection">
+                                    Recurs every week on
+                                    <apex:selectOptions value="{!WeeklyValue}" />
+                                </apex:selectCheckboxes>
+                            </apex:outputPanel>
+                            <apex:outputPanel styleClass="monthlyBlock"  style="display:none;padding:5px;border:1px solid rgb(204,204,204);background-color: rgb(255,255,255);" >
+                                On day &nbsp;
+                                <apex:selectList value="{!monthlyType}" multiselect="false" size="1" label="day">
+                                    <apex:selectOptions value="{!dayList}" />
+                                </apex:selectList>
+                                &nbsp; of every month
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                    </div>
+
+                    <div style="margin-top:5px;">
+                        Time:&nbsp;
+                        <apex:selectList required="true" value="{!hoursInput}" multiselect="false" size="1" label="Hours">
+                            <apex:selectOptions value="{!hourList}" />
+                        </apex:selectList>
+
+                        &nbsp;:&nbsp;
+                        <apex:selectList value="{!minInput}" multiselect="false" size="1" label="Minutes">
+                            <apex:selectOptions value="{!minuteList}" />
+                        </apex:selectList>
+                    </div>
+                </div>
+
+                <apex:commandButton id="btnRunSchedule" onclick="getInputDate();getSize();" action="{!runSchedule}" value="Schedule Run" reRender="sjTable,errorMsg" style="margin-top:8px;"/>
+
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+    </apex:pageBlock>
+
+    <apex:actionRegion >
+    <apex:actionPoller action="{!refreshBatchJob}" reRender="pbTable" interval="5"/>
+
+    <apex:pageBlock id="pbStatus"  title="Batch Status">
+        <apex:pageBlockTable value="{!batchJobs}" var="b" id="pbTable">
+            <apex:column headerValue="Apex Class" value="{!b.batchName}"/>
+            <apex:column headerValue="Status" value="{!b.jobStatus}"/>
+            <apex:column headerValue="Total Job Items" value="{!b.jobTotal}"/>
+            <apex:column headerValue="Job Items Processed" value="{!b.jobItemsProcessed}"/>
+            <apex:column headerValue="Number Of Errors" value="{!b.jobErrors}"/>
+            <apex:column headerValue="Created Date" value="{!b.createdDate}"/>
+            <apex:column headerValue="Completed Date" value="{!b.completedDate}"/>
+        </apex:pageBlockTable>
+    </apex:pageBlock>
+
+    <apex:pageBlock id="sjStatus"  title="Schedule Job Status">
+        <apex:pageBlockTable value="{!scheduleJobs}" var="sj" id="sjTable">
+            <apex:column headerValue="Job" value="{!sj.jobName}"/>
+            <apex:column headerValue="Status" value="{!sj.jobStatus}"/>
+            <apex:column headerValue="Created Date" value="{!sj.createdTime}"/>
+            <apex:column headerValue="Next Fire Time" value="{!sj.nextFireTime}"/>
+            <apex:column headerValue="Previous Fire Time" value="{!sj.previousFireTime}"/>
+            <apex:column headerValue="End Time" value="{!sj.endTime}"/>
+            <apex:column >
+                <apex:commandButton action="{!deleteSchedule}" value="Delete" onclick="this.disabled = true;" reRender="sjStatus">
+                    <apex:param name="deleteSchedule" value="{!sj.jobId}" assignTo="{!deleteJobId}"/>
+                </apex:commandButton>
+            </apex:column>
+        </apex:pageBlockTable>
+    </apex:pageBlock>
+
+    </apex:actionRegion>
+    
+    </apex:form>
+
+    <script>
+        function showRunType(type) {
+            var blockManual = document.querySelector(".manualBlock");
+            var blockSchedule = document.querySelector(".scheduleBlock");
+            if (type == 'Manual') {
+                blockManual.style.display = 'inline';
+                blockSchedule.style.display = 'none';
+            } else if (type == 'Schedule') {
+                blockSchedule.style.display = 'block';
+                blockManual.style.display = 'none';
+            } 
+        }
+
+        function showBlock(freqType) {
+            var blockOneTime = document.querySelector(".oneTimeBlock");
+            var blockDaily = document.querySelector(".dailyBlock");
+            var blockWeekly = document.querySelector(".weeklyBlock");
+            var blockMonthly = document.querySelector(".monthlyBlock");
+            if (freqType == 'Daily') {
+                blockDaily.style.display = 'block';
+                blockWeekly.style.display = 'none';
+                blockMonthly.style.display = 'none';
+                blockOneTime.style.display = 'none';
+            } else if (freqType == 'Monthly') {
+                blockMonthly.style.display = 'block';
+                blockWeekly.style.display = 'none';
+                blockDaily.style.display = 'none';
+                blockOneTime.style.display = 'none';
+            } else if (freqType == 'Weekly') {
+                blockWeekly.style.display = 'block';
+                blockDaily.style.display = 'none';
+                blockMonthly.style.display = 'none';
+                blockOneTime.style.display = 'none';
+            } else if (freqType == 'One Time') {
+                blockOneTime.style.display = 'block';
+                blockWeekly.style.display = 'none';
+                blockDaily.style.display = 'none';
+                blockMonthly.style.display = 'none';
+            }
+            
+        }
+
+         function getInputDate(){
+            document.getElementById('{!$Component.mainForm.inputHidden}').value = document.getElementById("inputDate").value;
+        };
+        function getSize(){
+            document.getElementById('{!$Component.mainForm.batchSizeHidden}').value = document.getElementById("inputSize").value;  
+        }
+
+        (function() {
+            showBlock('Daily');
+            showRunType('Manual');
+        })();
+    </script>
+</apex:page>

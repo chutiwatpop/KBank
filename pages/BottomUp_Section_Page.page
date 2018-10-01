@@ -1,0 +1,93 @@
+<apex:page showHeader="false" sidebar="false" standardController="Account" extensions="BottomUp_Section_Controller" tabStyle="Account">
+	<style type="text/css">
+	.sub-table{
+		margin-top: -4px;
+		margin-left:-1px;
+	}
+	.column{
+		width:10%;
+	}
+	</style>
+	<apex:form >
+		<div style="overflow-x: scroll;display:inline-table">
+			<apex:pageBlock rendered="{!!errorRender}">
+				<table >
+					<!-- <tr>
+						<td> -->
+							<!-- <tr>
+								<td colspan="3" style="text-align: center;"><apex:outputText value="{!$Label.Bottom_Up}"/></td>
+							</tr> -->
+							<tr>
+								<td style="text-align: center;font-weight: bold;border: 1px solid #e0e3e5;width: 35%"><apex:outputText value="{!$Label.TransactionFee}"/></td>
+								<td style="text-align: center;font-weight: bold;border: 1px solid #e0e3e5;width: 28%"><apex:outputText value="{!$Label.MainOperatingBank}"/></td> 
+								<td style="text-align: center;font-weight: bold;border: 1px solid #e0e3e5;width: 47%"><apex:outputText value="{!$Label.DealBaseFee}"/></td>
+							</tr>
+							<tr>
+								<td>
+									<apex:pageBlockTable value="{!bottomUpWrapperList}" var="bottomUpWrapper" styleClass="sub-table" style="width:100.85%">
+										<apex:column headerValue="{!$Label.TransactionFee_TF}" style="min-width: 70px">
+						            		<apex:outputField value="{!bottomUpWrapper.bottomUpRecord.BottomUp_TF__c}"/>
+					                  	</apex:column>
+					                	<apex:column headerValue="{!$Label.TransactionFee_FX}" style="min-width: 70px">	
+					                		<apex:outputField value="{!bottomUpWrapper.bottomUpRecord.BottomUp_FX__c}"/>
+					            		</apex:column>
+					            		<apex:column headerValue="{!$Label.TransactionFee_LI}" style="min-width: 70px">
+					                		<apex:outputField value="{!bottomUpWrapper.bottomUpRecord.BottomUp_LI__c}"/>
+					            		</apex:column>
+					            		<apex:column headerValue="{!$Label.TransactionFee_SS}" style="min-width: 70px">
+					                		<apex:outputField value="{!bottomUpWrapper.bottomUpRecord.BottomUp_SS__c}"/>
+					            		</apex:column>
+					            		<apex:column headerValue="{!$Label.TransactionFee_Total}" style="min-width: 70px">
+					                		<apex:outputField value="{!bottomUpWrapper.bottomUpRecord.Total_Transaction_Fee_Bottom_Up__c}"/>
+					            		</apex:column>
+									</apex:pageBlockTable>
+								</td>
+								<td> 
+									<apex:pageBlockTable value="{!bottomUpWrapperList}" var="bottomUpWrapper" styleClass="sub-table" style="width:100.85%">
+										<apex:column headerValue="{!$Label.MainOperatingBank_Float}" style="min-width: 70px">
+					                   		<apex:outputField value="{!bottomUpWrapper.bottomUpRecord.BottomUp_Float__c}"/>
+					                  	</apex:column>
+					                	<apex:column headerValue="{!$Label.MainOperatingBank_Cash}" style="min-width: 70px">
+					                		<apex:outputField value="{!bottomUpWrapper.bottomUpRecord.BottomUp_Cash__c}"/>
+					            		</apex:column>
+					            		<apex:column headerValue="{!$Label.MainOperatingBank_KA}" style="min-width: 70px">
+					                		<apex:outputField value="{!bottomUpWrapper.bottomUpRecord.BottomUp_KA__c}"/>
+					            		</apex:column>
+					            		<apex:column headerValue="{!$Label.MainOperatingBank_Total}" style="min-width: 70px">
+					                		<apex:outputField value="{!bottomUpWrapper.bottomUpRecord.Total_Main_Operating_Bank_Bottom_Up__c}"/>
+					            		</apex:column>
+									</apex:pageBlockTable>
+								</td>
+								<td> 
+									<apex:pageBlockTable value="{!bottomUpWrapperList}" var="bottomUpWrapper" styleClass="sub-table" style="width:100.4%">
+										<apex:column headerValue="{!$Label.DealBaseFee_FrontEnd}" style="min-width: 70px">
+					                   		<apex:outputField value="{!bottomUpWrapper.bottomUpRecord.BottomUp_Front_End__c}"/>
+					                  	</apex:column>
+					                	<apex:column headerValue="{!$Label.DealBaseFee_Derivative}" style="min-width: 70px">
+					                		<apex:outputField value="{!bottomUpWrapper.bottomUpRecord.BottomUp_Derivative__c}"/>
+					            		</apex:column>
+					            		<apex:column headerValue="{!$Label.DealBaseFee_IBB}" style="min-width: 70px">
+					                		<apex:outputField value="{!bottomUpWrapper.bottomUpRecord.BottomUp_IBB__c}"/>
+					            		</apex:column>
+					            		<apex:column headerValue="{!$Label.DealBaseFee_InvestmentFee}" style="min-width: 100px">
+					                   		<apex:outputField value="{!bottomUpWrapper.bottomUpRecord.BottomUp_Investment_Fee__c}"/>
+					                  	</apex:column>
+					                	<apex:column headerValue="{!$Label.DealBaseFee_BA}" style="min-width: 70px">
+					                		<apex:outputField value="{!bottomUpWrapper.bottomUpRecord.BottomUp_BA__c}"/>
+					            		</apex:column>
+					            		<apex:column headerValue="{!$Label.DealBaseFee_Total}" style="min-width: 70px">
+					                		<apex:outputField value="{!bottomUpWrapper.bottomUpRecord.Total_Deal_Base_Fee_Bottom_Up__c}"/>
+					            		</apex:column>
+									</apex:pageBlockTable>
+								</td>
+							</tr>
+					<!-- 	</td>
+					</tr> -->
+				</table>
+			</apex:pageBlock>
+		</div>
+		<apex:pageBlock rendered="{!errorRender}">
+			<apex:outputText value="{!errorMessage}" />
+		</apex:pageBlock>
+	</apex:form>
+</apex:page>

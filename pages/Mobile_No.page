@@ -1,0 +1,4 @@
+<!-- ISCR097  2017/02/27    Nareerat W.     Add new Block Section "Voucher Remark"    -->
+<!-- ISCR103  2017/04/04    Nareerat W.     Add logic check before show checkbox "SendByRM"    -->
+<apex:page standardController="Target_List__c">
+</apex:page>

@@ -1,0 +1,768 @@
+<apex:page title="Address" showHeader="true" sidebar="false" standardController="Address__c" extensions="Address_OverrideEdit_Controller">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <apex:stylesheet value="{!URLFOR($Resource.sfdc_bs3, 'dist/css/bootstrap-bs3.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.bootstrap_icon, '')}"/>
+        <apex:includeScript value="{!$Resource.jquery}"/>
+        <apex:includeScript value="{!URLFOR($Resource.sfdc_bs3, 'dist/js/bootstrap.js')}"/>
+        <apex:includeScript value="/support/console/42.0/integration.js"/>
+        <script src="https://maps.googleapis.com/maps/api/js?key={!$Setup.Around_Pin_Config__c.API_KEY__c}&libraries=geometry"></script>
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+
+        <style type="text/css">
+            body{
+                padding: 0px !important;
+            }
+            .mapArea {
+                width: auto;
+            }
+            #map-canvas {
+                margin: 0px;
+                padding: 0;
+                /*height: calc(75vh);*/
+                min-height: 380px;
+            }
+            .padding-0 {
+                padding-left: 0px !important;
+                padding-right: 0px !important;
+            }
+            .padding-xs {
+                padding-left: 2px !important;
+                padding-right: 2px !important;
+            }
+            .margin-row {
+                margin-top: 4px !important;
+            }
+            .margin-top-xs {
+                margin-top: 2px !important;
+            }
+            .margin-bottom-xs {
+                margin-bottom: 2px !important;
+            }
+            .material-icons.blue001 {color: #4285f4;}
+            .bs3 .input-group {
+                min-width: 120px;
+                width: 100%;
+            }
+            .bs3 .input-group-button {
+                width: 100%;
+            }
+            .input-group .glyphicon {
+                top: 0px;
+            }
+            .bs3 .form-control-input {
+                display: inline-block !important;
+                height: 30px !important;
+            }
+            .form-control-web {
+                width: 55% !important;
+            }
+            .bs3 .control-label {
+                width: 25%;
+                margin-right: 24px;
+            }
+            .bs3 .control-label-detail {
+                vertical-align:top;
+                display: inline-block !important;
+                height: 100% !important;
+                width: 40%;
+                margin-right: 24px;
+            }
+            .bs3 .label-detail {
+                display: inline-block !important;
+                width: 40%;
+            }
+            .bs3 .form-control-disable {
+                background-color: #eee !important;
+                opacity: 1 !important;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 4px;
+                height: auto;
+                font-size: 14px;
+                box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+                display: inline-block !important;
+                width: auto;
+            }
+            .bs3 .btn-group-justified {
+                border-spacing: 2px;
+            }
+            .imgclass:hover{ 
+                background-image: url(/img/help/helpOrbs.gif); 
+                background-repeat: no-repeat; 
+                width: 16px;
+                height: 15px;
+                opacity: 1.0;
+                filter: alpha(opacity=100);
+            }
+            .imgclass{ 
+                background-image: url(/img/help/helpOrbs.gif); 
+                background-repeat: no-repeat;
+                width: 16px;
+                height: 15px;
+                opacity: 0.5;
+                background-position: right;
+                filter: alpha(opacity=50);
+            }
+            .bs3 .btn-form-sf {
+                outline:none !important;
+                color: #fff;
+                background-color: #31b0d5;
+                border-color: #269abc;
+                border-radius: 4px;
+                width: 50%;
+                padding:8px;
+                margin-top: 4px;
+                margin-left: 16px;
+                margin-right: 16px;
+                cursor : pointer;
+            }
+            .bs3 .btn-form-sf:active {
+                outline:none !important;
+                color: #fff;
+                background-color: #3071a9;
+                border-color: #285e8e;
+            }
+            .bs3 .btn-form-sf:hover {
+                color: #fff;
+                outline:none !important;
+                background-color: #428bca;
+                border-color: #357ebd;
+            }
+            .bs3 .btn-form-sf:focus {
+                color: #fff;
+                outline:none !important;
+                background-color: #31b0d5;
+                border-color: #269abc;
+            }
+
+            #map-canvas .center-Marker {
+                position: absolute;
+                /*url of the marker*/
+                background: url(http://maps.gstatic.com/mapfiles/markers2/marker.png) no-repeat;
+                /*center the marker*/
+                top: 50%;
+                left: 50%;
+                z-index: 1;
+                /*fix offset when needed*/
+                margin-left: -10px;
+                margin-top: -34px;
+                /*size of the image*/
+                height: 34px;
+                width: 20px;
+                /*cursor: pointer;*/
+            }
+        </style>
+        <!-- Include this jQuery library in your HTML somewhere: -->
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.0/jquery.min.js"></script>
+        <script type="text/javascript">
+            var GOOGLE_API_KEY = '{!$Setup.Around_Pin_Config__c.API_KEY__c}';
+            console.log('GOOGLE_API_KEY',GOOGLE_API_KEY);
+            var isSaving = false;
+            var isSF1;
+            function checkIsSF1() {
+                if(isSF1 === null || isSF1 == null || (typeof isSF1 == undefined)) {
+                    isSF1 = ("{!$User.UIThemeDisplayed}" == 'Theme4t');
+                }
+                return isSF1;
+            }
+            // Read URL parameter
+            var urlParams = window.location.search
+                .substring(1)
+                .split("&")
+                .map(v => v.split("="))
+                .reduce((map, [key, value]) => map.set(key, decodeURIComponent(value)), new Map());
+
+            var zoomLevel = 5;
+            var map, centerMarker, currentAddress = {},googleRetriveAddress = {};
+            var currentPosition = {lat:13.756683,lng:100.501841}, focusMarkerPosition;
+            var editMode = false, isChangeType=false;
+            var retURL, isEditPin, filter, searchString, mZoomLevel;
+
+            function initializeMap(position, zoomLv) {
+                var mapOptions = {
+                    zoom: parseInt(zoomLv),
+                    center: position,
+                    clickableIcons: false,
+                    fullscreenControl: false,
+                };
+                map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+                $('<div/>').addClass('center-Marker').appendTo(map.getDiv());
+            }
+
+            function getCurrentLocation() {
+                if(navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        function(result) {
+                            currentLocation = new google.maps.LatLng(result.coords.latitude, result.coords.longitude);
+                            currentPosition.lat = currentLocation.lat();
+                            currentPosition.lng = currentLocation.lng();
+                            initializeMap(currentPosition, zoomLevel);
+                            updateMapCenterCoord(currentPosition);
+                        },function (error) {
+                            initializeMap(currentPosition, zoomLevel);
+                            updateMapCenterCoord(currentPosition);
+                        }
+                    );
+                } else {
+                    console.log('navigator geolocation error!');
+                }
+            }
+
+            function setUILabel() {
+                if(checkIsSF1()) {
+                    $(".control-label").css("width", "auto");
+                } else {
+                    $(".control-label").css("width", "25%");
+                    $(".control-label").addClass("text-right");
+                    $(".control-label").removeClass("text-left");
+                    $(".control-label-detail").addClass("text-right");
+                    $(".control-label-detail").removeClass("text-left");
+
+                    $(".form-control-input").addClass("form-control-web");
+                }
+            }
+
+            function toggleDisplay(mElement, isShow) {
+                if(isShow == true) {
+                    mElement.removeClass('hidden');
+                } else if(isShow == false) {
+                    mElement.addClass('hidden');
+                } else { //toggle it
+                    mElement.toggleClass('hidden');
+                }
+            }
+
+            function displayWarning(errMessage) {
+                toggleDisplay($("#errorPanel"), true);
+                $("#errorPanel").html('<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true" style="margin-right:4px;"/>'+errMessage);
+            }
+
+            function parseUndefinedtoBlank(mObject) {
+                if(mObject == undefined || mObject == null) mObject = '';
+                return mObject;
+            }
+
+            function beforeSave() {
+                if(isSaving == true) return false;
+                isSaving = true;
+                var lat = parseFloat(jQuery('[id$=hiddenPinLat]').val());
+                var lng = parseFloat(jQuery('[id$=hiddenPinLng]').val());
+                if(editMode == true) {
+                    if(jQuery('[id$=Street__c]').val() == parseUndefinedtoBlank(googleRetriveAddress['street'])
+                        && jQuery('[id$=Postcode__c]').val() == parseUndefinedtoBlank(googleRetriveAddress['postal_code'])
+                        && jQuery('[id$=District__c]').val() == parseUndefinedtoBlank(googleRetriveAddress['district'])
+                        && jQuery('[id$=Sub_D__c]').val() == parseUndefinedtoBlank(googleRetriveAddress['subdistrict'])
+                        && jQuery('[id$=Province__c]').val() == parseUndefinedtoBlank(googleRetriveAddress['province'])
+                        && jQuery('[id$=Alley__c]').val() == parseUndefinedtoBlank(googleRetriveAddress['alley'])
+                        && jQuery('[id$=House_Number_Encrypt__c]').val() == ''
+                        && jQuery('[id$=Village_Number__c]').val() == ''
+                        && jQuery('[id$=Village__c]').val() == ''
+                        && jQuery('[id$=Building__c]').val() == ''
+                        && jQuery('[id$=Floor__c]').val() == ''
+                        ) {
+                        jQuery.noConflict(); 
+                        $('#myModal').modal('show');
+                    } else {
+                        save();
+                    }
+                } else if(currentPosition.lat == lat && currentPosition.lng == lng && isChangeType == false) {
+                    afterSave();
+                    displayWarning('{!$Label.PLEASE_CLICK_SHOW_PIN_LOCATION}');
+                    return false;
+                } else {
+                    save();    
+                }
+            }
+
+            function setSaving() {
+                isSaving = true;
+                save();
+            }
+
+            function redirectToPrevPage() {
+                afterSave();
+                // if(isEditPin == true || isEditPin == 1) {
+                //     var passURLParam;
+                //     var lat = jQuery('[id$=hiddenPinLat]').val();
+                //     var lng = jQuery('[id$=hiddenPinLng]').val();
+                //     if(searchString) passURLParam = 'filter='+filter+'&searchString='+searchString;
+                //     else passURLParam = 'filter='+filter+'&lat='+lat+'&lng='+lng+'&zoomLevel='+map.getZoom();
+                //     // if(checkIsSF1()) {
+                //         sforce.one.navigateToURL('/apex/SME_MapAroundPin?' + passURLParam);
+                //     // } else {
+                //     //     window.location.href = '/apex/SME_MapAroundPin?' + passURLParam;
+                //     // }
+                // } else {
+                    if(checkIsSF1()) {
+                        sforce.one.back(true);
+                    } else {
+                        // window.location.href = urlParams.get('retURL');
+                        closeTab();
+                    }
+                    return false;
+                // }
+            }
+
+            var callCloseTab = function callCloseTab(result) {
+                sforce.console.closeTab(result.id);
+            }
+
+            function closeTab() {
+                sforce.console.getEnclosingTabId(callCloseTab);
+            }
+
+            function cancelToPrev() {
+                if(checkIsSF1()) {
+                    sforce.one.back(true);
+                } else {
+                    closeTab();
+                }
+                return false;
+                //     var passURLParam = '';
+                //     if(isEditPin == true || isEditPin == 1) {
+                //         if(searchString) passURLParam = 'filter='+filter+'&searchString='+searchString;
+                //         else passURLParam = 'filter='+filter;
+                //         window.location.href = '/apex/SME_MapAroundPin?' + passURLParam;
+                //     } else {
+                //         window.location.href = urlParams.get('retURL');    
+                //     }
+                // }
+            }
+
+            function afterSave() {isSaving = false;}
+
+            function callGoogleGeocoding(mode) {
+                var geocodingURL = 'https://maps.googleapis.com/maps/api/geocode/json';
+
+                var requestData = {'key':GOOGLE_API_KEY,'language':'th'};
+                if(mode == 'text') {
+                    requestData['address'] = jQuery('[id$=custom-search-input]').val();
+                } else if (mode == 'coord' || mode == 'address') {
+                    var requestString = map.getCenter().lat()+','+map.getCenter().lng();
+                    requestData['latlng'] = requestString;
+                }
+                console.log('requestData:',requestData);
+                
+                $.get(geocodingURL,requestData,function(response,status){
+                    console.log('results',response.results);
+                    // response.status = INVALID_REQUEST,OK,ZERO_RESULTS,OVER_QUERY_LIMIT,UNKNOWN_ERROR
+                    if(response.status == 'OK') {
+                        var addressObj = {};
+                        var respObj = response.results[0]; // focus on first results
+                        if(respObj.hasOwnProperty('address_components')){
+                            for(var eachAddress in respObj['address_components']) {
+                                var addrComp = respObj['address_components'][eachAddress];
+                                if(addrComp.hasOwnProperty('types')) {
+                                    for(var eachTypeKey in addrComp['types']) {
+                                        var sfdcKey = '';
+                                        if(addrComp['types'][eachTypeKey] == 'route') {
+                                            sfdcKey = 'street';
+                                        } else if (addrComp['types'][eachTypeKey] == 'postal_code') {
+                                            sfdcKey = 'postal_code';
+                                        } else if (addrComp['types'][eachTypeKey] == 'administrative_area_level_2' || addrComp['types'][eachTypeKey] == 'sublocality_level_1') {
+                                            sfdcKey = 'district';
+                                        } else if (addrComp['types'][eachTypeKey] == 'locality' || addrComp['types'][eachTypeKey] == 'sublocality_level_2') {
+                                            sfdcKey = 'subdistrict';
+                                            if(addressObj[sfdcKey] && addrComp['types'][eachTypeKey] == 'locality') sfdcKey = '';
+                                        } else if (addrComp['types'][eachTypeKey] == 'administrative_area_level_1') {
+                                            sfdcKey = 'province';
+                                        } 
+                                        // else if (addrComp['types'][eachTypeKey] == 'street_number') {
+                                        //     sfdcKey = 'alley';
+                                        // }
+                                        var ignoreValue = 'Unnamed Road';
+                                        if(sfdcKey != '' && addrComp['long_name'].toLowerCase() != ignoreValue.toLowerCase()) {
+                                            if(sfdcKey == 'street') { // case ซอย in street
+                                                var checkValue = addrComp['long_name'];
+                                                if(checkValue.startsWith('ซอย ') == true || checkValue.startsWith('Soi ') == true) {
+                                                    sfdcKey = 'alley';
+                                                    addressObj[sfdcKey] = addrComp['long_name']; //override old value
+                                                }
+                                            }
+                                            if(addressObj[sfdcKey] == null) addressObj[sfdcKey] = addrComp['long_name']; // dont override old value
+                                        }
+                                    }
+                                }
+                            }
+                            
+                        }
+                        if(respObj.hasOwnProperty('geometry')) {
+                            addressObj['lat'] = respObj.geometry.location.lat;
+                            addressObj['lng'] = respObj.geometry.location.lng;
+                        }
+                        console.log('addressObj',addressObj);
+                        if(mode == 'address') setAddressResult(addressObj);
+                        // else if (mode == 'coord') updateMapCenterCoord(addressObj);
+                        else if (mode == 'text') {
+                            for (var mapKey in addressObj) currentAddress[mapKey] = addressObj[mapKey];// clone map
+                            var newMapPostion = {lat:addressObj.lat , lng:addressObj.lng};
+                            map.setCenter(newMapPostion);
+                        }
+                    } else if(response.status == 'OVER_QUERY_LIMIT') {
+                        displayWarning("Daily limit has been reached");
+                    }
+                });
+            }
+            function changeType() {
+                console.log('isChangeType');
+                jQuery('[id$=Address_Type_SalesSmart__c]').val(jQuery('[id$=editAddressInput]').val())
+                isChangeType = true;
+            }
+
+            function changeTypeEdit() {
+                console.log('changeTypeEdit');
+                jQuery('[id$=editAddressInput]').val(jQuery('[id$=Address_Type_SalesSmart__c]').val())
+            }
+
+            function searchText() {
+                toggleDisplay($("#errorPanel"), false);
+                callGoogleGeocoding('text');
+            }
+
+            jQuery('[id$=custom-search-input]').keypress(
+                function(event){
+                    if(event.keyCode == 13){
+                        searchText();
+                    }
+                }
+            );
+
+            function showAddressInfo() {
+                toggleDisplay($("#errorPanel"), false);
+                if(currentAddress.lat && currentAddress.lng) {
+                    console.log('currentAddress',currentAddress);
+                    setAddressResult(currentAddress);
+                }
+                else callGoogleGeocoding('address');
+            }
+
+            function showPinLocation() {
+                toggleDisplay($("#errorPanel"), false);
+                // callGoogleGeocoding('coord');
+                updateCoordFromMapCenter();
+            }
+
+            function setAddressResult(addressObj) {
+                // googleRetriveAddress = {};
+                for (var mapKey in addressObj) {
+                    googleRetriveAddress[mapKey] = addressObj[mapKey];
+                }
+                console.log('addressObj',addressObj);
+                jQuery('[id$=House_Number_Encrypt__c]').val('');
+                jQuery('[id$=Village_Number__c]').val('');
+                jQuery('[id$=Village__c]').val('');
+                jQuery('[id$=Building__c]').val('');
+                jQuery('[id$=Floor__c]').val('');
+
+                jQuery('[id$=Street__c]').val(addressObj['street']);
+                jQuery('[id$=Postcode__c]').val(addressObj['postal_code']);
+                jQuery('[id$=District__c]').val(addressObj['district']);
+                jQuery('[id$=Sub_D__c]').val(addressObj['subdistrict']);
+                jQuery('[id$=Province__c]').val(addressObj['province']);
+                jQuery('[id$=Alley__c]').val(addressObj['alley']);
+                // updateMapCenterCoord(addressObj);
+                updateCoordFromMapCenter();
+            }
+
+            function updateCoordFromMapCenter() {
+                var newCoord = {lat:map.getCenter().lat() , lng:map.getCenter().lng()};
+                setPinLatLng(newCoord.lat, newCoord.lng);
+            }
+
+            function updateMapCenterCoord(addressObj) {
+                var newMapPostion = {lat:addressObj.lat , lng:addressObj.lng};
+                map.setCenter(newMapPostion);
+                setPinLatLng(addressObj.lat, addressObj.lng);
+            }
+
+            function setPinLatLng(lat, lng) {
+                jQuery('[id$=pinLat]').val(lat);
+                jQuery('[id$=editPinLat]').val(lat);
+                jQuery('[id$=hiddenPinLat]').val(lat);
+                jQuery('[id$=pinLng]').val(lng);
+                jQuery('[id$=editPinLng]').val(lng);
+                jQuery('[id$=hiddenPinLng]').val(lng);
+
+                jQuery('[id$=pinLat]').text(lat);
+                jQuery('[id$=editPinLat]').text(lat);
+                jQuery('[id$=pinLng]').text(lng);
+                jQuery('[id$=editPinLng]').text(lng);
+            }
+
+            $(document).ready(function() { 
+                mZoomLevel = urlParams.get('zoomLevel');
+                isEditPin = urlParams.has('isEditPin');
+                filter = urlParams.get('filter');
+                searchString = urlParams.get('searchString');
+                if(mZoomLevel) {
+                    zoomLevel = mZoomLevel;
+                } else if('{!$Setup.Around_Pin_Config__c.Zoom_Level__c}' != '') {
+                    zoomLevel = {!$Setup.Around_Pin_Config__c.Zoom_Level__c};
+                }
+
+                var isSFDCAddress = jQuery('[id$=hiddenIsSFDC]').val();
+                if(urlParams.has('lat') && urlParams.has('lng')) {
+                    currentPosition.lat = parseFloat(urlParams.get('lat'));
+                    currentPosition.lng = parseFloat(urlParams.get('lng'));
+                    initializeMap(currentPosition, zoomLevel);
+                } else {
+                    var lat = parseFloat(jQuery('[id$=hiddenPinLat]').val());
+                    var lng = parseFloat(jQuery('[id$=hiddenPinLng]').val());
+                    if(lat && lng) {
+                        currentPosition.lat = lat;    
+                        currentPosition.lng = lng;
+                        initializeMap(currentPosition, zoomLevel);
+                    } else {
+                        getCurrentLocation();
+                    }
+                }
+                
+                if(isSFDCAddress == 'false' || isSFDCAddress == false || (
+                    urlParams.has('isEditPin') && 
+                    (urlParams.get('isEditPin') == 1 || urlParams.get('isEditPin') == '1')
+                )) {
+                    toggleDisplay($("#editPinBlock"), true);
+                    toggleDisplay($("#editPinAddressDetail"), true);
+                    if(urlParams.get('isEditPin') == 1 || urlParams.get('isEditPin') == '1') {
+                        $('[id$="editAddressInput"]').attr('disabled','disabled');
+                        toggleDisplay($("#editAddressType"), false);
+                        console.log('editAddressType false');
+                    } else {
+                        toggleDisplay($("#viewAddressType"), false);
+                        // $('[id$="Address_Type_SalesSmart__c"]').attr('disabled','disabled');
+                        console.log('viewAddressType false');
+                    }
+                    
+                } else {
+                    console.log('else editMode');
+                    editMode = true;
+                    toggleDisplay($("#newAddressBlock"), true);
+                    toggleDisplay($("#newEditAddressDetail"), true);
+                }
+                setUILabel();
+            });
+        </script>
+    </head>
+    <apex:form id="mainForm">
+        <apex:actionFunction name="save"  action="{!save}" reRender="error-panel" oncomplete="redirectToPrevPage()"/>
+        <apex:inputHidden id="hiddenPinLat" value="{!Address__c.Pin_Location__Latitude__s}"/>
+        <apex:inputHidden id="hiddenPinLng" value="{!Address__c.Pin_Location__Longitude__s}"/>
+        <apex:inputHidden id="hiddenIsSFDC" value="{!isSFDCAddress}"/>
+        <div class="bs3">
+            <div class="container-fluid">
+                <div class="row">
+                    <div id="errorPanel" class="col-md-12 col-xs-12 hidden alert alert-danger" role="alert">
+                    Message
+                    </div>
+                    <apex:outputPanel id="error-panel">
+                        <apex:pageMessages />
+                    </apex:outputPanel>
+                </div>
+                <div class="modal fade" id="myModal" role="dialog">
+                    <div class="modal-dialog">
+                        <!-- Modal content-->
+                        <div class="modal-content">
+                            <div class="modal-body">
+                            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true" style="margin-right:4px;"/>
+                                {!$Label.REVIEW_ADDRESS_BEFORE_SAVING}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" style="font-size: 12px" data-dismiss="modal" onclick="setSaving();">{!$Label.Save_Button}</button>
+                                <button type="button" class="btn btn-default" style="font-size: 12px" data-dismiss="modal" onclick="afterSave();">{!$Label.Cancel_Button}</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div id="newAddressBlock" class="row margin-row hidden">
+                    <div class="col-md-4 col-xs-7 padding-xs margin-top-xs">
+                        <div id="inputSearch" class="input-group">
+                            <input type="text" id="custom-search-input" class=" form-control" placeholder="Search" />
+                            <span class="input-group-addon btn glyphicon glyphicon-search" onclick="searchText()" >
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-xs-12 padding-xs pull-right">
+                        <div class="btn-group-justified">
+                            <div class="btn-group btn btn-info" onclick="showAddressInfo(); return false;">
+                                {!$Label.SHOW_ADDRESS_INFO}
+                            </div>
+                            <div class="btn-group btn btn-info" onclick="showPinLocation(); return false;">
+                                {!$Label.SHOW_PIN_LOCATION}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="editPinBlock" class="row margin-top-xs margin-bottom-xs hidden">
+                     <div class="col-md-2 col-xs-6 padding-xs pull-right">
+                        <div class="btn btn-info" style="width:100%;" onclick="showPinLocation(); return false;">
+                            {!$Label.SHOW_PIN_LOCATION}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="mapArea col-12">
+                        <div id="map-canvas"></div>
+                    </div>
+                </div>
+                <div id="newEditAddressDetail" class="row margin-row hidden">
+                    <div class="col-md-6 col-xs-12"><div class="row">
+                        <div class="form-group col-md-12 col-xs-12">
+                            <label class="control-label text-left" for="Address_Type_SalesSmart__c">{!$ObjectType.Address__c.fields.Address_Type_SalesSmart__c.Label}
+                            <img src="/s.gif"  class = "imgclass"  title = "{!$ObjectType.Address__c.fields.Address_Type_SalesSmart__c.inlineHelpText}"/></label>
+                            <apex:inputField id="Address_Type_SalesSmart__c" styleClass="form-control form-control-input" onchange="changeTypeEdit()" value="{!Address__c.Address_Type_SalesSmart__c}"/>
+                        </div>
+                        <div class="form-group col-md-12 col-xs-12">
+                            <label class="control-label text-left" for="Place__c">{!$ObjectType.Address__c.fields.Place__c.Label}</label>
+                            <apex:inputField id="Place__c" styleClass="form-control form-control-input" value="{!Address__c.Place__c}"/>
+                        </div>
+                        <div class="form-group col-md-12 col-xs-12">
+                            <label class="control-label text-left" for="House_Number_Encrypt__c">{!$ObjectType.Address__c.fields.House_Number_Encrypt__c.Label}</label>
+                            <apex:inputField id="House_Number_Encrypt__c" styleClass="form-control form-control-input" value="{!Address__c.House_Number_Encrypt__c}"/>
+                        </div>
+                        <div class="form-group col-md-12 col-xs-12">
+                            <label class="control-label text-left" for="Village_Number__c">{!$ObjectType.Address__c.fields.Village_Number__c.Label}</label>
+                            <apex:inputField id="Village_Number__c" styleClass="form-control form-control-input" value="{!Address__c.Village_Number__c}"/>
+                        </div>
+                        <div class="form-group col-md-12 col-xs-12">
+                            <label class="control-label text-left" for="Village__c">{!$ObjectType.Address__c.fields.Village__c.Label}</label>
+                            <apex:inputField id="Village__c" styleClass="form-control form-control-input" value="{!Address__c.Village__c}"/>
+                        </div>
+                        <div class="form-group col-md-12 col-xs-12">
+                            <label class="control-label text-left" for="Building__c">{!$ObjectType.Address__c.fields.Building__c.Label}</label>
+                            <apex:inputField id="Building__c" styleClass="form-control form-control-input" value="{!Address__c.Building__c}"/>
+                        </div>
+                        <div class="form-group col-md-12 col-xs-12">
+                            <label class="control-label text-left" for="Floor__c">{!$ObjectType.Address__c.fields.Floor__c.Label}</label>
+                            <apex:inputField id="Floor__c" styleClass="form-control form-control-input" value="{!Address__c.Floor__c}"/>
+                        </div>
+                    </div></div>
+
+                    <div class="col-md-6 col-xs-12"><div class="row">
+                        <div class="form-group col-md-12 col-xs-12">
+                            <label class="control-label text-left" for="Street__c">{!$ObjectType.Address__c.fields.Street__c.Label}</label>
+                            <apex:inputField id="Street__c" styleClass="form-control form-control-input" value="{!Address__c.Street__c}"/>
+                        </div>
+                        <div class="form-group col-md-12 col-xs-12">
+                            <label class="control-label text-left" for="Alley__c">{!$ObjectType.Address__c.fields.Alley__c.Label}</label>
+                            <apex:inputField id="Alley__c" styleClass="form-control form-control-input" value="{!Address__c.Alley__c}"/>
+                        </div>
+                        <div class="form-group col-md-12 col-xs-12">
+                            <label class="control-label text-left" for="Sub_D__c">{!$ObjectType.Address__c.fields.Sub_District__c.Label}</label>
+                            <apex:inputField id="Sub_D__c" styleClass="form-control form-control-input" value="{!Address__c.Sub_District__c}"/>
+                        </div>
+                        <div class="form-group col-md-12 col-xs-12">
+                            <label class="control-label text-left" for="District__c">{!$ObjectType.Address__c.fields.District__c.Label}</label>
+                            <apex:inputField id="District__c" styleClass="form-control form-control-input" value="{!Address__c.District__c}"/>
+                        </div>
+                        <div class="form-group col-md-12 col-xs-12">
+                            <label class="control-label text-left" for="Province__c">{!$ObjectType.Address__c.fields.Province__c.Label}</label>
+                            <apex:inputField id="Province__c" styleClass="form-control form-control-input" value="{!Address__c.Province__c}"/>
+                        </div>
+                        <div class="form-group col-md-12 col-xs-12">
+                            <label class="control-label text-left" for="Postcode__c">{!$ObjectType.Address__c.fields.Postcode__c.Label}</label>
+                            <apex:inputField id="Postcode__c" styleClass="form-control form-control-input" value="{!Address__c.Postcode__c}"/>
+                        </div>
+                        <div class="col-md-12 col-xs-12">
+                            <label class="control-label text-left">{!$ObjectType.Address__c.fields.Pin_Location__c.Label}</label>
+                            <div class="form-control-disable">
+                                <span id="pinLat" >{!Address__c.Pin_Location__Latitude__s}</span>
+                                <b>&#44;</b>
+                                <span id="pinLng" >{!Address__c.Pin_Location__Longitude__s}</span>
+                            </div>
+                        </div>
+                    </div></div>
+                </div>
+                <!-- Edit Pin -->
+                <div id="editPinAddressDetail" class="row margin-row hidden">
+                    <div class="col-md-6 col-xs-12"><div class="row">
+                        <div id="viewAddressType" class="col-md-12 col-xs-12">
+                            <label class="control-label-detail text-left">{!$ObjectType.Address__c.fields.Address_Type_SalesSmart__c.Label}</label>
+                            <div class="label-detail"> {!Address__c.Address_Type_SalesSmart__c}</div>
+                        </div>
+                        <div id="editAddressType" class="form-group col-md-12 col-xs-12">
+                            <label class="control-label-detail text-left">{!$ObjectType.Address__c.fields.Address_Type_SalesSmart__c.Label}
+                            <img src="/s.gif"  class = "imgclass"  title = "{!$ObjectType.Address__c.fields.Address_Type_SalesSmart__c.inlineHelpText}"/></label>
+                            <apex:inputField id="editAddressInput" styleClass="form-control form-control-input" value="{!Address__c.Address_Type_SalesSmart__c}" onchange="changeType()"/>
+                        </div>
+                        <div class="col-md-12 col-xs-12">
+                            <label class="control-label-detail text-left">{!$ObjectType.Address__c.fields.Place__c.Label}</label>
+                            <div class="label-detail"> {!Address__c.Place__c}</div>
+                        </div>
+                        <div class="col-md-12 col-xs-12">
+                            <label class="control-label-detail text-left">{!$ObjectType.Address__c.fields.House_Number_Encrypt__c.Label}</label>
+                            <div class="label-detail"> {!Address__c.House_Number_Encrypt__c}</div>
+                        </div>
+                        <div class="col-md-12 col-xs-12">
+                            <label class="control-label-detail text-left">{!$ObjectType.Address__c.fields.Village_Number__c.Label}</label>
+                            <div class="label-detail"> {!Address__c.Village_Number__c}</div>
+                        </div>
+                        <div class="col-md-12 col-xs-12">
+                            <label class="control-label-detail text-left">{!$ObjectType.Address__c.fields.Village__c.Label}</label>
+                            <div class="label-detail"> {!Address__c.Village__c}</div>
+                        </div>
+                        <div class="col-md-12 col-xs-12">
+                            <label class="control-label-detail text-left">{!$ObjectType.Address__c.fields.Building__c.Label}</label>
+                            <div class="label-detail"> {!Address__c.Building__c}</div>
+                        </div>
+                        <div class="col-md-12 col-xs-12">
+                            <label class="control-label-detail text-left">{!$ObjectType.Address__c.fields.Floor__c.Label}</label>
+                            <div class="label-detail"> {!Address__c.Floor__c}</div>
+                        </div>
+                    </div></div>
+                    <div class="col-md-6 col-xs-12"><div class="row">
+                        <div class="col-md-12 col-xs-12">
+                            <label class="control-label-detail text-left">{!$ObjectType.Address__c.fields.Street__c.Label}</label>
+                            <div class="label-detail"> {!Address__c.Street__c}</div>
+                        </div>
+                            
+                        <div class="col-md-12 col-xs-12">
+                            <label class="control-label-detail text-left">{!$ObjectType.Address__c.fields.Alley__c.Label}</label>
+                            <div class="label-detail"> {!Address__c.Alley__c}</div>
+                        </div>
+                            
+                        <div class="col-md-12 col-xs-12">
+                            <label class="control-label-detail text-left">{!$ObjectType.Address__c.fields.Sub_District__c.Label}</label>
+                            <div class="label-detail"> {!Address__c.Sub_District__c}</div>
+                        </div>
+                            
+                        <div class="col-md-12 col-xs-12">
+                            <label class="control-label-detail text-left">{!$ObjectType.Address__c.fields.District__c.Label}</label>
+                            <div class="label-detail"> {!Address__c.District__c}</div>
+                        </div>
+                            
+                        <div class="col-md-12 col-xs-12">
+                            <label class="control-label-detail text-left">{!$ObjectType.Address__c.fields.Province__c.Label}</label>
+                            <div class="label-detail"> {!Address__c.Province__c}</div>
+                        </div>
+                            
+                        <div class="col-md-12 col-xs-12">
+                            <label class="control-label-detail text-left">{!$ObjectType.Address__c.fields.Postcode__c.Label}</label>
+                            <div class="label-detail"> {!Address__c.Postcode__c}</div>
+                        </div>
+                            
+                        <div class="col-md-12 col-xs-12">
+                            <label class="control-label-detail text-left">{!$ObjectType.Address__c.fields.Pin_Location__c.Label}</label>
+                            <div class="form-control-disable">
+                                <span id="editPinLat" >{!Address__c.Pin_Location__Latitude__s}</span>
+                                <b>&#44;</b>
+                                <span id="editPinLng" >{!Address__c.Pin_Location__Longitude__s}</span>
+                            </div>
+                        </div>
+                    </div></div>
+                </div>
+
+                <div class="form-group row margin-row">
+                    <div class="col-md-6 col-xs-6">
+                        <div class="btn-form-sf pull-right text-center" onclick="beforeSave()">{!$Label.Save_Button}</div>
+                    </div>
+                    <div class="col-md-6 col-xs-6">
+                        <div class="btn-form-sf pull-left text-center" onclick="cancelToPrev()">{!$Label.Cancel_Button}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </apex:form>
+    
+</apex:page>

@@ -1,0 +1,4 @@
+<apex:page showHeader="true" sidebar="true">
+<p style="font-size: 20px;">Error</p>
+<p style="font-size: 15px;">{!$Label.CBSBottomUp_Cannot_access_Bottom_Up_page}</p>
+</apex:page>

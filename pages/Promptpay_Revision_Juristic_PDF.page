@@ -1,0 +1,321 @@
+<!-- CR026 Generate Form Promptpay Registration & Promptpay Revision -->
+<!-- CR027  Edit Email Form 09/03/2017-->
+<apex:page showHeader="false" sidebar="false" standardController="Account" extensions="Promptpay_Registration_PDF_Controller">
+    <script type="text/javascript">
+        function savePDF() {
+            window.print();
+        }
+    </script>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+        <style type="text/css">
+            @page{
+                size:A4 portrait;
+            }
+            #imgName span img{
+                height:20px; 
+                width:auto;
+            }
+            #imgIdent span img{
+                height:15px; 
+                width:auto;
+            }
+            #imgNameEng span img{
+                height:16px; 
+                width:auto;
+            }
+            head {
+                font-family: 'FreesiaUPC';
+            }
+            body { 
+                font-family: 'FreesiaUPC';
+                font-size: 18px;
+                -webkit-print-color-adjust: exact;
+                margin : 8px;
+            }
+            body table{ 
+                font-family: 'FreesiaUPC';
+                font-size: 18px;
+            }
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+            th {
+                text-align: center;
+            }
+            td{
+                border: 1px solid;
+                text-align: left;
+                padding:10px 5px 10px 8px;
+            }
+            tr{
+                border: 1px solid;
+                text-align: left;
+                padding:2px 1px 2px 1px;
+            }
+            div{
+                padding-top:9px;
+                padding-bottom:9px;
+            }
+            @media print {
+                .no-print
+                {
+                    display: none !important;
+                    height: 0;
+                }
+
+                .page-break{ 
+                    page-break-before: always;
+                }
+            }
+        </style>
+        <title>{!$Label.GenerateFormTab}: {!Account.CIS__c}</title>
+    </head>
+    <div class="no-print" style="text-align: center;">
+        <input type="button" value="{!$Label.GenerateFormPrintButton}" onclick="savePDF();" style="font-size:24px" />
+    </div>
+    <form>
+    <table style="border:black 1px solid; padding:8px 8px 8px 8px;margin-top:10px;">
+        <tr>
+            <th style="width:100%;padding:2px 1px 2px 1px">
+                <div style="font-size: 26px;padding:0px;">ใบคำขอเปลี่ยนแปลง/ยกเลิกการลงทะเบียนผูกบัญชีเงินฝากกับเลขประจำตัวผู้เสียภาษีอากร</div>
+                <div style="font-size: 26px;padding:0px;">สำหรับลูกค้านิติบุคคล</div>
+                <div style="font-size: 26px;padding:0px;"><b>(PromptPay Registration Revision Form for Juristic Person Customer)</b></div>
+            </th>
+            <td style="width:100%;padding:2px 1px 2px 1px;">
+                <div style="text-align: right; padding-left:8px; padding-right:8px;"><apex:image id="theImage" value="{!$Resource.KbankLogo}" width="273" height="70"/></div>
+            </td>
+        </tr>
+    </table>
+
+    <div style="text-align: right;font-size: 20px;padding:5px 1px 0px 0px;margin-top:10px;">วันที่ (วัน/เดือน/ปีพ.ศ.) _________/__________/____________</div>
+    <div style="text-align: right;font-size: 20px;padding:0px">สำหรับธนาคาร</div>
+
+
+    <table style="border:black 1px solid; padding:0px 8px 8px 8px;">
+        <tr>
+            <th style="font-size: 28px;background-color:gray;color:white">ส่วนที่ 1: ข้อมูลทั่วไป</th>
+        </tr>
+        <tr>
+            <td><span><input type="checkbox" name="chk1" value="Yes" />บมจ.</span>
+                <span><input type="checkbox" name="chk1" value="Yes" />บจก.</span>
+                <span><input type="checkbox" name="chk1" value="Yes" />หจก.</span>
+                <span><input type="checkbox" name="chk1" value="Yes" />อื่นๆ โปรดระบุ ....................</span>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div>
+                    <span style="margin-right:8px">ชื่อนิติบุคคล (ไทย):</span>    
+                    <span id="imgName"><apex:outputField value="{!Account.Name_Surname_TH__c}"/></span>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div>
+                    <span style="margin-right:8px">ชื่อนิติบุคคล (อังกฤษ):</span>    
+                    <span id="imgNameEng"><apex:outputField value="{!Account.Name_Surname_EN__c}"/></span>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span style="display:{!if(isShowMashUpID,"none","block")};">เลขประจำตัวผู้เสียภาษีอากร (13 หลัก):
+                    <span><apex:image width="400" height="13" value="{!$Resource.id_half_box}"/></span>
+
+                    <!-- <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>&nbsp;&nbsp;
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>&nbsp;&nbsp;
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>&nbsp;&nbsp;
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>&nbsp;&nbsp;
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span> -->
+                </span>
+                <span style="padding-right:5px;display:{!if(isShowMashUpID,"block","none")};">
+                    เลขประจำตัวผู้เสียภาษีอากร (13 หลัก):
+                    <span id="imgIdent"><apex:outputField value="{!Account.Encrypt_Identification_No__c}"/></span>
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div>
+                    <span><b>รายละเอียดการเปลี่ยนแปลง/ยกเลิก</b></span> <span style="font-size:13px;">*บัญชีที่ใช้รับเงินจากบริการรับชำระเงินค่าสินค้าและบริการ (Bill Payment) ไม่สามารถลงทะเบียนบริการนี้ได้</span>
+                </div>
+                <div>
+                    <input type="checkbox" name="chk1" value="Yes" />เปลี่ยนแปลง
+                </div>
+                <div>ยกเลิกเลขที่บัญชีออมทรัพย์/กระแสรายวันที่ผูกพร้อมเพย์ปัจจุบัน
+                    <span style="padding-right:30px"></span>
+                    <span style="padding-left:5px">
+                        <apex:image width="300" height="13" value="{!$Resource.account_half_box}"/>
+                    </span>
+                    <!-- <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>&nbsp;&nbsp;
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>&nbsp;&nbsp;
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>&nbsp;&nbsp;
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span> -->
+                </div>
+                <div>ชื่อบัญชี.......................................................................................... สาขา ................................................. และเปลี่ยนแปลงเป็น</div>
+                <div>เลขที่บัญชีออมทรัพย์/กระแสรายวันที่ผูกพร้อมเพย์ใหม่
+                    <span style="padding-right:30px"></span>
+                    <span style="padding-bottom: 5px;">
+                        <apex:image width="300" height="14" value="{!$Resource.account_half_box}" style="margin-top:5px;"/>
+                    </span>
+                    <!-- <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>&nbsp;&nbsp;
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>&nbsp;&nbsp;
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>&nbsp;&nbsp;
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span> -->
+                </div>
+                <div>ชื่อบัญชี.......................................................................................... สาขา .................................................</div>
+                <div><input type="checkbox" name="chk1" value="Yes" />ยกเลิก</div>
+                <div>เลขที่บัญชีออมทรัพย์/กระแสรายวันที่ต้องการยกเลิกการผูกพร้อมเพย์
+                    <span style="padding-right:30px"></span>
+                    <apex:image width="300" height="13" value="{!$Resource.account_half_box}"/>
+                    <!-- <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>&nbsp;&nbsp;
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>&nbsp;&nbsp;
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>&nbsp;&nbsp;
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span> -->
+                </div>
+                <div>ชื่อบัญชี.......................................................................................... สาขา .................................................</div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div><b>รายละเอียดผู้ประสานงานของผู้ใช้บริการ</b></div>
+                <div>ชื่อ-นามสกุล ............................................................................................ ตำแหน่ง .................................................</div>
+                <div><b><i>*ผู้ใช้บริการตกลงยินยอมให้ผู้ประสานงานมีอำนาจในการให้และจัดส่ง ข้อมูลและ/หรือเอกสารใดๆ ของผู้ใช้บริการให้แก่ธนาคาร รวมทั้งการรับและรับแจ้ง ข้อมูลและ/หรือเอกสารใดๆ ที่ธนาคารแจ้งและ/หรือนำส่งให้แก่ผู้ใช้บริการ โดยให้ถือว่ามีผลผูกพันผู้ใช้บริการทุกประการ</i></b></div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div><b>รายละเอียดการรับแจ้งผลการเปลี่ยนแปลง/ยกเลิก</b></div>
+                <div>โทรศัพท์เคลื่อนที่ที่ใช้รับแจ้งผล * 
+                    <span style="padding-right:20px"></span>
+                    <apex:image width="288" height="13" value="{!$Resource.phone_half_box}"/>
+                    <!-- <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>&nbsp;&nbsp;
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span>
+                    <span><apex:image value="{!$Resource.half_box}" width="20" height="10"/></span> -->
+                </div>
+                <div>E-mail ที่ใช้รับแจ้งผลการลงทะเบียน * .....................................................................................................................................</div>
+                <div><b><i>*ธนาคารจะแจ้งผลการเปลี่ยนแปลง/ยกเลิกผ่านทาง E-mail และ SMS ตามรายละเอียดที่ระบุไว้เท่านน</i></b></div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div><u>เอกสารประกอบการสมัคร</u></div>
+                <div><input type="checkbox" name="chk1" value="Yes" />สำเนาหนังสือรับรองจดทะเบียนนิติบุคคล (อายุไม่เกิน 3 เดือน) หรือสำเนาหนังสือจัดตั้งนิติบุคคล พร้อมรับรองสำเนาถูกต้อง</div>
+                <div><input type="checkbox" name="chk1" value="Yes" />สำเนาบัตรประชาชน หรือหนังสือเดินทาง ของผู้มีอำนาจลงนาม พร้อมรับรองสำเนาถูกต้อง จำนวน _____ ฉบับ</div>
+                <div><input type="checkbox" name="chk1" value="Yes" />บัตรประจำตัวผู้เสียภาษี กรณีใช้สำเนาหนังสือจัดตั้งนิติบุคคลในการสมัคร</div>
+            </td>
+        </tr>
+    </table>
+    <div style="position: relative; bottom: 0px; text-align:left;padding-top: 2px;padding-bottom: 2px;height: 15px;font-size:20px;">หน้า 1/2 <span style="position:absolute; right:10%">/ข้าพเจ้าในฐานะผู้ใช้บริการขอรับรองว่า...</span></div>
+    <div style="position: relative; bottom: 0px; text-align:left;padding-top: 2px;padding-bottom: 2px;height: 15px;font-size:20px;">CHPMP002</div>
+    <div style="position: relative; bottom: 0px; text-align:left;padding-top: 2px;padding-bottom: 2px;height: 15px;font-size:20px;">15/02/2560</div>
+    <footer class="no-print" style="text-align: center;"><br/>------------------------------------------------------------------------------------------</footer>
+    <div class="page-break"/>
+    <div style="border:1px solid;padding:2px 5px 2px 8px;font-size:18px;font-family:'';">ข้าพเจ้าในฐานะผู้ใช้บริการขอรับรองว่า ข้อมูลและรายละเอียดที่ข้าพเจ้าได้ให้ไว้ในใบคำขอฉบับนี้ ทั้งหมดถูกต้องตรงตามความเป็ นจริงทุกประการ และให้ถือว่าใบคำขอเปลี่ยนแปลง/ยกเลิกฉบับนี้เป็ นส่วนหนึ่งของใบคำขอลงทะเบียนผูกบัญชีเงินฝากกับเลขประจำตัวผู้เสียภาษีอากรสำหรับลูกค้านิติบุคคลที่ข้าพเจ้าได้ทำไว้ให้แก่ธนาคารแล้วด้วย โดยข้าพเจ้าตกลงให้ข้อตกลงและเงื่อนไข และความยินยอมต่างๆ ที่ข้าพเจ้าให้ไว้ในใบคำขอลงทะเบียนผูกบัญชีเงินฝากกับเลขประจำตัวผู้เสียภาษีอากรสำหรับลูกค้านิติบุคคล ยังคงมีผลใช้บังคับกับการเปลี่ยนแปลง/ยกเลิกตามใบคำขอเปลี่ยนแปลง/ยกเลิก ฉบับนี้ทุกประการ เพื่อเป็นหลักฐานข้าพเจ้าจึงขอลงลายมือชื่อและประทับตราสำคัญ (ถ้ามี) ไว้ข้างท้ายนี้</div>
+
+    <div style="text-align: right;">
+    <table style="padding:8px 8px 8px 8px;margin-top:10px;">
+        <tr align="right" style="border: none">
+            <td style="width:15%;border:none"></td>
+            <td style="width:15%;border:none">
+                <div style="height:50%;border: dotted 1px;align:right">
+                    <div style="text-align: center;">ประทับตรา</div>
+                    <div style="text-align: center;">(ถ้ามี)</div>
+                </div>
+            </td>
+            <td style="border: none">
+                <div style="text-align: center;">ผู้ใช้บริการลงชื่อ  x………………………………………………………………………………</div>
+                <div style="text-align: center;padding-left:100px;">(……………………………………………………………………………………)</div>
+                <div style="text-align: center;padding-left:100px;">ผู้มีอำนาจลงนาม</div>
+            </td>
+        </tr>
+    </table>
+    </div>
+
+    <table style="padding:8px 8px 8px 8px;margin-top:20px;">
+        <tr>
+            <td>
+                <div><b>สำหรับเจ้าหน้าที่ธนาคาร - ผู้รับใบคำขอ และรับเอกสารประกอบการเปลี่ยนแปลง/ยกเลิกการลงทะเบียนจากผู้ใช้บริการ</b></div>
+                <div><input type="checkbox" name="chk1" value="Yes" />ผู้มีอำนาจมาแสดงตนครบถ้วน</div>
+                <div><input type="checkbox" name="chk1" value="Yes" />ผู้สมัครใช้บริการยื่นเอกสารประกอบครบถ้วน</div>
+                <div>ชื่อ-นามสกุล ...........................................................................................  รหัสพนักงาน ..........................................  </div>
+                <div>หมายเลขโทรศัพท์ติดต่อ .........................................................................</div>
+                <div>ลายมือชื่อเจ้าหน้าที่พร้อมประทับตรา</div>
+                <div style="text-align: right;">
+                <table style="padding:8px 8px 8px 8px;margin-top:10px;">
+                    <tr style="border: none;">
+                        <td style="width:17%;border:none"></td>
+                        <td style="width:15%;border:none">
+                            <div style="height:50%;border: dotted 1px;align:right">
+                                <div style="text-align: center;">ประทับตราสาขา</div>
+                                <div style="text-align: center;">(ถ้ามี)</div>
+                            </div>
+                        </td>
+                        <td style="border: none;">
+                            <div style="text-align: left;padding-left:20px;">ลงชื่อ  x……………………………………………………………………………</div>
+                            <div style="text-align: left;padding-left:70px;">(……………………………………………………………………………)</div>
+                        </td>
+                    </tr>
+                </table>
+                </div>
+                <div>กรุณานำส่งเอกสารให้</div>
+                <div>ฝ่ายการจัดการคำขอใช้บริการ (คช.)</div>
+                <div>ธนาคารกสิกรไทย อาคารแจ้งวัฒนะ1 ชั้น 7  47/7 หมู่ที่ 3 ถนนป๊อปปูล่า ตำบลบ้านใหม่ อำเภอปากเกร็ด นนทบุรี 11120</div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div><b>สำหรับเจ้าหน้าที่ธนาคาร – ผู้ตรวจสอบข้อมูล และเอกสารประกอบการเปลี่ยนแปลง/ยกเลิกการลงทะเบียน</b></div>
+                <div><b>ผลการตรวจสอบ</b></div>
+                <div><input type="checkbox" name="chk1" value="Yes" />ถูกต้อง</div>
+                <div><input type="checkbox" name="chk1" value="Yes" />ไม่ถูกต้อง เหตุผล : ................................................................................................</div>
+                <div>ลายมือชื่อเจ้าหน้าที่พร้อมประทับตรา</div>
+                <div style="float: right; margin-right: 5.5%">
+                    <div style="text-align: left;padding-left:20px;">ลงชื่อ  x……………………………………………………………………………</div>
+                    <div style="text-align: left;padding-left:70px;">(……………………………………………………………………………)</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <br/><br/><br/><br/><br/><br/><br/>
+    <div style="position: relative; bottom: 0px; text-align:left;padding-top: 2px;padding-bottom: 2px;height: 15px;font-size:20px;">หน้า 2/2</div>
+    <div style="position: relative; bottom: 0px; text-align:left;padding-top: 2px;padding-bottom: 2px;height: 15px;font-size:20px;">CHPMP002</div>
+    <div style="position: relative; bottom: 0px; text-align:left;padding-top: 2px;padding-bottom: 2px;height: 15px;font-size:20px;">15/02/2560</div>
+    </form>
+</apex:page>

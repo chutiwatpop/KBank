@@ -1,0 +1,861 @@
+<apex:page title="{!$Label.Map}" showHeader="true" sidebar="false" controller="SME_MapAroundPin_Controller">
+    <apex:includeLightning />
+    <head>
+        <title>Map</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <apex:stylesheet value="{!URLFOR($Resource.sfdc_bs3, 'dist/css/bootstrap-bs3.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.bootstrap_icon, '')}"/>
+        <apex:includeScript value="{!$Resource.jquery}"/>
+        <apex:includeScript value="{!URLFOR($Resource.sfdc_bs3, 'dist/js/bootstrap.js')}"/>
+        <script src="https://maps.googleapis.com/maps/api/js?key={!$Setup.Around_Pin_Config__c.API_KEY__c}&libraries=geometry"></script>
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+
+        <style type="text/css">
+            body{
+                padding: 0px !important;
+            }
+            .padding-0 {
+                padding-left: 0px !important;
+                padding-right: 0px !important;
+            }
+            .padding-xs {
+                padding-left: 2px !important;
+                padding-right: 2px !important;
+            }
+            .margin-row {
+                margin-top: 2px !important;
+            }
+            .margin-top-mobile {
+                margin-top: 16px !important;
+            }
+            .mapArea {
+                width: auto;
+            }
+            #map-canvas {
+                margin: 0px;
+                padding: 0;
+                height: calc(100vh - 4em - 44px - 48px);
+            }
+            .material-icons.blue001 {color: #4285f4;}
+            .btn-myLocation {
+                background-color : #fff;
+                border : 0px solid #fff;
+                border-radius : 3px;
+                cursor : pointer;
+                margin-right : 8px;
+                margin-bottom : 8px;
+                text-align : center;
+            }
+            .btn-myLocation:hover {
+                box-shadow: 0px 0px 5px 1px rgba(0,0,0,0.4);
+            }
+            .btn-myLocation:active {
+                background-color : #e5e5e5;
+                box-shadow: 0px 0px 5px 1px rgba(0,0,0,0.4);
+            }
+            .bs3 a {
+                text-decoration: underline !important;
+            }
+            .bs3 .btn-default {
+                text-align: center;
+                width: 100%;
+                height: 30px;
+                padding-bottom: 4px;
+            }
+            .bs3 .btn-default:active {outline:none !important;}
+            .bs3 .btn-default:focus {
+                outline:none !important;
+                background-color: #fff !important;
+                border-color: #ccc !important;
+            }
+            .bs3 .btn-default:hover {
+                outline:none !important;
+                background-color: #fff !important;
+                border-color: #ccc !important;
+            }
+            .bs3 .btn-info {
+                height: 30px;
+                font-size: 12px;
+                width: 120px;
+            }
+            .bs3 .input-group {
+                min-width: 120px;
+                width: 100%;
+            }
+            .bs3 .input-group-button {
+                width: 100%;
+            }
+            /* Nav Bar UI */
+            .bs-glyphicons {
+                overflow: hidden;
+            }
+            .bs-glyphicons-list {
+                width: 100%;
+                padding-left: 0;
+                list-style: none;
+            }
+            .bs-glyphicons li {
+                margin: 0px;
+                float: left;
+                width: 20%;
+                color: white;
+                height: 56px;
+                padding: 8px;
+                font-size: 8px;
+                line-height: 1.4;
+                text-align: center;
+                background-color: #5bc0de;
+                border: 1px solid #46b8da;
+            }
+            .bs-glyphicons li:active {
+                color: #fff;
+                background-color: #31b0d5;
+                border: 1px solid #269abc;
+                border-color: #269abc;
+            }
+            .noselectable {
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+            .bs-glyphicons .glyphicon {
+                margin-top: 4px;
+                margin-bottom: 4px;
+                font-size: 24px;
+            }
+            .bs-glyphicons .glyphicon-class {
+                display: block; 
+                text-align: center;
+                word-wrap: break-word;
+            }
+            .bs3 .form-control {
+                height: 30px;
+            }
+            .input-group .glyphicon {
+                top: 0px;
+            }
+            .input-group .btn:active {
+                border-color: #66afe9;
+            }
+            #browser-bar {
+                margin-bottom: 2px;
+            }
+            #loading-box {
+                display: block;
+                left: 50%;
+                top:30%;
+                position: fixed;
+                width: 32px;
+                height: 32px;
+                scroll no-repeat 0 0;
+                background: url('/img/loading32.gif');
+            }
+            #overlay-bg {
+                position: fixed;
+                z-index:70000;
+                top: 0px;
+                left: 0px;
+                height:100%;
+                width:100%;
+                background: #000;
+                opacity: 0.5;
+            }
+        </style>
+        <script>
+            // JavaScript bridging component
+            window.$Label = window.$Label || {};
+            $Label.Default_Job_CloseDate = '{!JSENCODE($Label.Default_Job_CloseDate)}';
+            $Label.SEARCH_THIS_AREA = '{!JSENCODE($Label.SEARCH_THIS_AREA)}';
+            $Label.EDIT_PIN_LOCATION = '{!JSENCODE($Label.EDIT_PIN_LOCATION)}';
+            $Label.DIRECTION = '{!JSENCODE($Label.DIRECTION)}';
+            $Label.CANNOT_EDIT_SIS_ADDRESS = '{!JSENCODE($Label.CANNOT_EDIT_SIS_ADDRESS)}';
+            $Label.PLEASE_SELECT_PIN = '{!JSENCODE($Label.PLEASE_SELECT_PIN)}';
+            $Label.CBSCallReport_Require_Same_Owner = '{!JSENCODE($Label.CBSCallReport_Require_Same_Owner)}';
+            $Label.CurrentLanguage = '{!JSENCODE($Label.CurrentLanguage)}';
+            $Label.PIN_LEGEND_GREEN = '{!JSENCODE($Label.PIN_LEGEND_GREEN)}';
+            $Label.PIN_LEGEND_YELLOW = '{!JSENCODE($Label.PIN_LEGEND_YELLOW)}';
+            $Label.PIN_LEGEND_RED = '{!JSENCODE($Label.PIN_LEGEND_RED)}';
+            // "{!$Label.EDIT_PIN_LOCATION}";
+        </script>
+        <script type="text/javascript">
+            Visualforce.remoting.timeout = 120000;
+            var isSF1, isShowInfoFirst = false;
+            var limitRadius = "{!$Setup.Around_Pin_Config__c.Search_Distance__c}";
+            var map, mapCircle, infowindow;
+            var markers=[];
+            // Default = Democracy Monument 13.7566339, 100.5015474
+            var currentPosition = {lat:13.756683,lng:100.501841}, focusMarkerPosition;
+            var markerDict = {};
+            var focusAddress;
+            var filterValue = 'Port', searchString='';
+            var bounds = new google.maps.LatLngBounds ();
+
+            // Read URL parameter
+            var urlParams = window.location.search
+                .substring(1)
+                .split("&")
+                .map(v => v.split("="))
+                .reduce((map, [key, value]) => map.set(key, decodeURIComponent(value)), new Map());
+
+            function checkIsSF1() {
+                if(isSF1 === null || isSF1 == null || (typeof isSF1 == undefined)) {
+                    isSF1 = ("{!$User.UIThemeDisplayed}" == 'Theme4t');
+                }
+                return isSF1;
+            }
+
+            function initializeMap(position, zoomLevel) {
+                var mapOptions = {
+                    zoom: zoomLevel,
+                    center: position,
+                    clickableIcons: false,
+                    fullscreenControl: false,
+                };
+                map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+                // geocoder = new google.maps.Geocoder();
+                initializeMapRadius(); //optional
+                initializeMyLocationButton(); //optional
+                toggleDisplay($('#lean-overlay'), false); // hide overlay
+                $('#loading-box').css('display', 'none');
+            }
+
+            function initializeMyLocationButton() {
+                var centerControlDiv = document.createElement('div');
+                centerControlDiv.className = 'btn-myLocation';
+                var centerControl = new CenterControl(centerControlDiv, map);
+
+                centerControlDiv.index = 1;
+                map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(centerControlDiv);
+            }
+
+            function initializeMyLocationIcon(currentPosition) {
+                var iconRadius1 = new google.maps.Marker({
+                    position: currentPosition,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 10,
+                        fillColor:'#4285f4',
+                        fillOpacity: 0.3,
+                        strokeWeight: 0
+                    },
+                    draggable: false,
+                    map: map
+                });
+
+                var iconRadius2 = new google.maps.Marker({
+                    position: currentPosition,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 5,
+                        fillColor:'#4285f4',
+                        fillOpacity: 1,
+                        strokeColor: 'white',
+                        strokeWeight: 1
+                    },
+                    draggable: false,
+                    map: map
+                });
+            }
+
+            function initializeMapRadius() {
+                mapCircle = new google.maps.Circle({
+                    radius: limitRadius*1000, 
+                    center: map.getCenter(),
+                    map: map,
+                    fillColor:'#4285f4',
+                    fillOpacity: 0.1,
+                    strokeColor: '#4285f4',
+                    strokeWeight: 1
+                });
+            }
+
+            function addAccountMarker(addressObj) {
+                if(addressObj.lat && addressObj.lng) {
+                    var point = {lat:addressObj.lat,lng:addressObj.lng};
+                    var iconMarker = 'https://maps.gstatic.com/mapfiles/ms2/micons/';
+                    if(addressObj.iconColor == 'yellow') {
+                        iconMarker = iconMarker + 'yellow-dot.png';
+                    } else if(addressObj.iconColor == 'green') {
+                        iconMarker = iconMarker + 'green-dot.png';
+                    } else {
+                         iconMarker = iconMarker + 'red-dot.png';
+                    }
+                    var marker = new google.maps.Marker({
+                        addressId: addressObj.addressId,
+                        position: point,
+                        icon: iconMarker,
+                        map: map
+                    });
+                    markers.push(marker);
+                    markerDict[addressObj.addressId] = addressObj;
+                    if(addressObj) {     
+                        google.maps.event.addListener(marker, 'click', function() {
+                            var keyId = marker.get('addressId');
+                            focusAddress = markerDict[keyId];
+                            console.log('focusAddress',focusAddress);
+
+                            if(infowindow) infowindow.close();
+                            focusMarkerPosition = marker.getPosition();
+                            showInfoContent(focusAddress, marker);
+                        });
+                    }
+                    if(isShowInfoFirst == false && urlParams.has('addressId')) { // trigger show info
+                        if((addressObj.addressId).indexOf(urlParams.get('addressId'))!== -1) {
+                            google.maps.event.trigger(marker, 'click');
+                            isShowInfoFirst = true;
+                        }
+                    }
+                }
+            }
+
+            function searchAddress(centerOfSearch, searchMode) {
+                var searchLat = 0;
+                var searchLng = 0;
+                var limitDistance = -1;
+                if(searchMode=='Nearby') {
+                    limitDistance = limitRadius;
+                    searchLat = centerOfSearch.lat();
+                    searchLng = centerOfSearch.lng();
+                } else if(searchMode=='cisId'){
+                    filterValue='cisId';
+                }
+                searchString = $("#custom-search-input").val();
+                
+                toggleDisplay($('#lean-overlay'), true);
+                $('#loading-box').css('display', 'block');
+                
+                Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.SME_MapAroundPin_Controller.getAllAddress}',searchLat,searchLng,limitDistance,filterValue,searchString,
+                    function(result, event) {
+                        var recordType;
+                        if (event.status && event.result) {
+                            console.log('searchAddress Result:',event.result);
+                            for(var key in event.result) {
+                                if(event.result.hasOwnProperty(key)) {
+                                    addAccountMarker(event.result[key]);
+                                }
+                            }
+                        } else {
+                            displayWarning(event.message);
+                        }
+                        if(searchMode=='cisName') {
+                            if(markers.length > 0 ) {
+                                map.setCenter(markers[0].position);
+                                mapCircle.setCenter(markers[0].position);
+                                setMarkerMap(map,'AllMap');
+                                if(markers.length > 1) map.fitBounds(bounds); // zoom to fit many markers
+                            }
+                        } else if(searchMode=='cisId') {
+                            $("#dropdownFilter option[value='CIS']").prop('selected', true);
+                            filterValue='CIS';
+                            if(focusAddress.customerName) {
+                                $("#custom-search-input").val(focusAddress.customerName);    
+                            } else {
+                                $("#custom-search-input").val(''); // set name    
+                            }
+                            toggleDisplay($("#inputSearch"), true);
+                            setMarkerMap(map,'AllMap');
+                            if(markers.length > 1) map.fitBounds(bounds); // zoom to fit many markers
+                        } else if(searchMode=='Nearby') {
+                            setMarkerMap(map,'Nearby');
+                        }
+                        toggleDisplay($('#lean-overlay'), false);
+                        $('#loading-box').css('display', 'none');
+                    }
+                );
+            }
+
+            function getCurrentLocation() {
+                if(navigator.geolocation) {
+                    var zoomLevel = 5;
+                    navigator.geolocation.getCurrentPosition(
+                        function(result) {
+                            currentLocation = new google.maps.LatLng(result.coords.latitude, result.coords.longitude);
+                            currentPosition.lat = currentLocation.lat();
+                            currentPosition.lng = currentLocation.lng();
+                            if(urlParams.has('zoomLevel'))
+                                zoomLevel = parseInt(urlParams.get('zoomLevel'));
+                            else if('{!$Setup.Around_Pin_Config__c.Zoom_Level__c}' != '')
+                                zoomLevel = {!$Setup.Around_Pin_Config__c.Zoom_Level__c};
+                            checkURLParam(currentPosition, zoomLevel);
+                            initializeMyLocationIcon(currentPosition); //optional
+                        },
+                        function (error) {
+                            if(urlParams.has('zoomLevel'))
+                                zoomLevel = parseInt(urlParams.get('zoomLevel'));
+                            else if('{!$Setup.Around_Pin_Config__c.Default_Zoom_Level__c}' != '')
+                                zoomLevel = {!$Setup.Around_Pin_Config__c.Default_Zoom_Level__c};
+                            checkURLParam(currentPosition, zoomLevel);
+                            initializeMyLocationIcon(currentPosition); //optional
+                        }
+                    );
+                }
+            }
+
+            function showInfoContent(addressObj, marker) {
+                // load address detail
+                Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.SME_MapAroundPin_Controller.getAddressDetail}',addressObj.addressId,
+                    function(result, event) {
+                        if (event.status && event.result) {
+                            console.log('addressDetail:',event.result);
+                            addressObj = event.result;
+                            focusAddress = addressObj;
+                        } else {
+                            displayWarning(event.message);
+                        }
+                        showInfoContentDetail(addressObj, marker);
+                    }
+                );
+            }
+
+            // INC000000910860
+            function showInfoContentDetail(addressObj, marker) {
+                var contentString = '<div id="content"><table><tbody>';
+                if(addressObj.recordType == 'RECORDTYPE_CUSTOMER') {
+                    // contentString = contentString + 
+                    // '<tr><td><b>CIS ID</b> <span id=\"markerCisId\" class=\"hidden\">'+addressObj.customerId+'</span> <span style=\"color:blue;text-decoration:underline;cursor:pointer;\" onclick=\"clickCISName()\">'+ addressObj.customerName+'</span></td></tr>' + 
+                    // '<tr><td><b>ชื่อลูกค้า</b><img src=\"'+addressObj.customerImage+'\"\/></td></tr>';
+                    contentString = contentString + '<tr><td><b>Customer Name</b><span id=\"markerCisId\" class=\"hidden\">'+addressObj.customerId+'</span> <span style=\"color:blue;text-decoration:underline;cursor:pointer;\" onclick=\"clickCISName()\">'+ addressObj.customerName+'</span></td></tr>';  
+                } else {
+                    contentString = contentString + '<tr><td><b>Prospect Name</b><span id=\"markerCisId\" class=\"hidden\">'+addressObj.customerId+'</span> <span style=\"color:blue;text-decoration:underline;cursor:pointer;\" onclick=\"clickCISName()\">'+ addressObj.customerName+'</span></td></tr>';  
+                }
+                contentString = contentString + 
+                                '<tr><td><b>ประเภทที่อยู่</b> '+addressObj.addressType+'</td></tr>' +
+                                '<tr><td><b>ชื่อสถานที่</b> '+addressObj.addressName+'</td></tr>' +
+                                '<tr><td><b>ที่อยู่</b> '+addressObj.addressLong+'</td></tr>';
+                // load contact
+                var currentIndex = 1;
+                Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.SME_MapAroundPin_Controller.getContacts}',addressObj.customerId,
+                    function(result, event) {
+                        if (event.status && event.result) {
+                            console.log('getContacts Result:',event.result);
+                            for(var key in event.result) {
+                                if(event.result.hasOwnProperty(key)) {
+                                    if(key=='0') contentString=contentString+'<tr><td><br></td></tr><tr><td><b>บุคคลผู้ติดต่อ</b></td></tr>';
+                                    if(event.result[key].Name) {
+                                        contentString=contentString+'<tr><td>'+currentIndex+'. '+event.result[key].Name+' <b>Tel.</b> '+event.result[key].Phone_Number__c;
+                                        if(event.result[key].Ext_CBS__c) {
+                                            contentString=contentString+' <b>Ext.</b> '+event.result[key].Ext_CBS__c+'</td></tr>';
+                                        } else {
+                                            contentString=contentString+'</td></tr>';
+                                        }
+                                        currentIndex++;
+                                    }
+                                    
+                                }
+                            }
+                        }
+                        contentString=contentString+'</tbody></table></div>';
+                        infowindow = new google.maps.InfoWindow({ 
+                            content: contentString,
+                            maxWidth: 240
+                        });
+                        google.maps.event.addListener(infowindow,'closeclick',function(){
+                            focusMarkerPosition = null;
+                            focusAddress = null;
+                        });
+                        infowindow.open(map,marker);
+                    }
+                );
+            }
+
+            function toggleDisplay(mElement, isShow) {
+                if(isShow == true) {
+                    mElement.removeClass('hidden');
+                } else if(isShow == false) {
+                    mElement.addClass('hidden');
+                } else {
+                    mElement.toggleClass('hidden');
+                }
+            }
+
+            function getDistanceBetween(mapCenterPosition, markerPosition) {
+                var distance = google.maps.geometry.spherical.computeDistanceBetween(mapCenterPosition, markerPosition);
+                return distance;
+            }
+
+            function clearMarker(){
+                bounds = new google.maps.LatLngBounds ();
+                setMarkerMap(null,null);
+                markerDict = {};
+                markers = [];
+            }
+
+            function clearSearch() {
+                searchString = '';
+                $("#custom-search-input").val(searchString);
+            }
+
+            function setMarkerMap(map,mode) {
+                for (var i = 0;i < markers.length;i++) {
+                    if(map==null) markers[i].setMap(null);
+                    else if(mode=='Nearby'){
+                        if(getDistanceBetween(mapCircle.getCenter(), markers[i].getPosition()) <= mapCircle.getRadius()) {
+                            markers[i].setMap(map);
+                        } else {
+                            markers[i].setMap(null);
+                        }
+                    } else {
+                        bounds.extend(markers[i].getPosition());
+                        markers[i].setMap(map);
+                    }
+                }
+            }
+
+            function CenterControl(controlDiv, map) {
+                var controlUI = document.createElement('div');
+                controlDiv.appendChild(controlUI);
+
+                var controlText = document.createElement('div');
+                controlText.style.padding = '4px';
+                controlText.innerHTML = '<i class="material-icons blue001">my_location</i>';
+                controlUI.appendChild(controlText);
+
+                controlUI.addEventListener('click', function() {
+                    map.setCenter(currentPosition);
+                });
+            }
+
+            function displayWarning(errMessage) {
+                toggleDisplay($("#errorPanel"), true);
+                $("#errorPanel").html('<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true" style="margin-right:4px;"/>'+errMessage);
+            }
+
+            function hasFocusPin() {
+                if(!focusMarkerPosition || focusMarkerPosition == undefined || focusMarkerPosition == null) {
+                    displayWarning($Label.PLEASE_SELECT_PIN);
+                    return false;
+                }
+                toggleDisplay($("#errorPanel"), false);
+                return true;
+            }
+
+            // User Function
+            function onChangeFilter() {
+                filterValue = $("#dropdownFilter").val();
+                if(filterValue == 'Port' || filterValue == 'Pool' || filterValue == 'Temporary') {
+                    focusMarkerPosition = null;
+                    toggleDisplay($("#inputSearch"), false);
+                    searchNearBy();
+                } else if(filterValue == 'CIS') {
+                    toggleDisplay($("#inputSearch"), true);
+                    toggleDisplay($("#errorPanel"), false);
+                }
+                clearSearch();
+            }
+
+            function clickCISName() {
+                var cisId = $("#markerCisId").text();
+                console.log('cisId:' + cisId);
+                if(checkIsSF1()) {
+                    sforce.one.navigateToURL('/' + cisId);
+                    return false;
+                } else {
+                    window.open('/'+cisId);
+                }
+            }
+
+            function searchCustomer() {
+                toggleDisplay($("#errorPanel"), false);
+                clearMarker();
+                searchAddress(map.getCenter(), 'cisName');
+            }
+
+            function searchNearBy() {
+                toggleDisplay($("#errorPanel"), false);
+                mapCircle.setCenter(map.getCenter());
+                clearMarker();
+                searchAddress(map.getCenter(), 'Nearby');
+            }
+
+            function navigateGoogle() {
+                if(hasFocusPin() == false) return;
+
+                if(currentPosition && currentPosition != undefined && focusMarkerPosition && focusMarkerPosition != undefined) {
+                    if(checkIsSF1()) {
+                        sforce.one.navigateToURL("https://maps.google.com/maps?daddr=" + focusMarkerPosition.lat() +","+focusMarkerPosition.lng()+"&hl=th-TH&mapclient=apiv3");
+                    } else {
+                        window.open("https://maps.google.com/maps?daddr=" + focusMarkerPosition.lat() +","+focusMarkerPosition.lng()+"&hl=th-TH&mapclient=apiv3");
+                    }
+                }
+            }
+
+            function editPin() {
+                var pageURL = '&retURL='+ encodeURI('apex/SME_MapAroundPin') + '&filter=' + filterValue;
+                if(filterValue == 'CIS') {
+                    pageURL = pageURL + '&searchString=' + searchString;
+                }
+                if(hasFocusPin() == false) return;
+                var editPinURL = 'Address_OverrideEdit?id='+focusAddress.addressId+'&lat='+focusAddress.lat+'&lng='+focusAddress.lng+'&isEditPin=1'+pageURL+'&zoomLevel='+map.getZoom();
+                // if(checkIsSF1()) {
+                    sforce.one.navigateToURL('/apex/' + editPinURL);
+                    return false;
+                // } else {
+                //     window.location.href=editPinURL;
+                // }
+            }
+
+            function newJob() {
+                if(hasFocusPin() == false) return;
+                if(focusAddress.recordType == 'RECORDTYPE_PROSPECT') {
+                    checkConditionJob();
+                } else {
+                    checkFraud();
+                }
+            }
+
+            function checkURLParam(mPosition, zoomLevel) {
+                var focusPosition = {lat:mPosition.lat,lng:mPosition.lng};
+                if(urlParams.has('lat') && urlParams.has('lng')) {
+                    focusPosition.lat = parseFloat(urlParams.get('lat'));
+                    focusPosition.lng = parseFloat(urlParams.get('lng'));
+                    initializeMap(focusPosition, zoomLevel);
+                    if(urlParams.has('filter')) { // From Edit Pin
+                        var previousFilter = urlParams.get('filter');
+                        $("#dropdownFilter option[value='"+previousFilter+"']").prop('selected', true);
+                        onChangeFilter();
+                    } else if(urlParams.has('CIS')) { // From Magnify Icon
+                        $("#custom-search-input").val(urlParams.get('CIS'));
+                        searchAddress(null, 'cisId');
+                    }
+                } else {
+                    initializeMap(focusPosition, zoomLevel);
+                    if(urlParams.has('filter')) { // From Edit Pin
+                        var previousFilter = urlParams.get('filter');
+                        $("#dropdownFilter option[value='"+previousFilter+"']").prop('selected', true);
+                        onChangeFilter();
+                        if(previousFilter == 'CIS' && urlParams.has('searchString')) {
+                            searchString = urlParams.get('searchString');
+                            $("#custom-search-input").val(searchString);
+                            searchCustomer();
+                        }
+                    } else {
+                        searchNearBy();
+                    }
+                }
+            }
+
+            // Fraud
+            function checkFraud() {
+                toggleDisplay($('#lean-overlay'), true);
+                $('#loading-box').css('display', 'block');
+                var customerID = focusAddress.customerId;
+                Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.SME_MapAroundPin_Controller.getFraudStatus}',customerID,
+                    function(result, event) {
+                        $('#loading-box').css('display', 'none');
+                        if (event.status && event.result) {
+                            console.log('getFraudStatus Result:',event.result);
+                            var resp = event.result;
+
+                            $('#fraudModal').css('display', 'none');
+                            if(resp.isShowFraud && resp.isShowFraud == true) {
+                                $('#fraudModal').css('display', 'block');
+                                if(resp.isShowFraudColor && resp.isShowFraudColor == true) {
+                                    $('#fraudTitle').css('display', 'inline-block');
+                                    $('#fraudColor').css('display', 'inline-block');
+                                    $('#fraudMessage').css('display', 'none');
+                                    $('#fraudColor').css('background-color', resp.colorCode);
+                                } else {
+                                    $('#fraudTitle').css('display', 'none');
+                                    $('#fraudColor').css('display', 'none');
+                                    $('#fraudMessage').css('display', 'inline-block');
+                                    $('#fraudMessage').text(resp.fraudMessage);
+                                }
+                            } else {
+                                toggleDisplay($('#lean-overlay'), false);
+                                checkConditionJob();
+                            }
+                        } else {
+                            toggleDisplay($('#lean-overlay'), false);
+                            displayWarning(event.message);
+                        }
+                    }
+                );
+            }
+
+            function parseUndefinedtoBlank(mObject) {
+                if(mObject == undefined || mObject == null) mObject = '';
+                return mObject;
+            }
+
+            function onClickYesFraudModal() {
+                checkConditionJob();
+            }
+
+            function checkConditionJob() {
+                var customerID = focusAddress.customerId;
+                Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.SME_MapAroundPin_Controller.getAccountFromId}',customerID,
+                    function(result, event) {
+                        if (event.status && event.result) {
+                            var accountObj = event.result;
+                            var today = new Date();
+                            var jobName = formatDate(today)+'_'+accountObj.Name;
+                            today.setDate(today.getDate()+parseInt($Label.Default_Job_CloseDate));
+                            var expectedDate = today.getFullYear() + "-" + today.getMonth() + "-" + today.getDate();
+                            console.log('jobName:' + jobName);
+                            console.log('expectedDate:' + expectedDate);
+                            sforce.one.createRecord("Opportunity", '012O00000006IWmIAM', {"AccountId":accountObj.Id,"Name":jobName, "StageName":"Open","CloseDate":expectedDate});
+                            return false;
+                        } else {
+                            displayWarning(event.message);
+                        }
+                    }
+                );
+            }
+
+            function formatDate(dateToFormat) {
+                var currentYear = dateToFormat.getFullYear();
+                if(currentYear < 2500) currentYear += 543;
+                var currentDate = '0', currentMonth = '0';
+                if(dateToFormat.getDate() < 10) {
+                    currentDate = currentDate + dateToFormat.getDate();
+                } else {
+                    currentDate = dateToFormat.getDate();
+                }
+                if(dateToFormat.getMonth() < 10) {
+                    currentMonth = currentMonth + dateToFormat.getMonth();
+                } else {
+                    currentMonth = dateToFormat.getMonth();
+                }
+                return currentYear + "/" + currentMonth + "/" + currentDate;
+            }
+
+            // Page Ready
+            $(document).ready(function() {  
+                var dayString = '';
+                if($Label.CurrentLanguage == 'en') {
+                    dayString = ' days';
+                } else {
+                     dayString = ' วัน';
+                }
+                
+                var greenStr = "<div style=\"display:inline-block\"><img src=\"https://maps.gstatic.com/mapfiles/ms2/micons/green-dot.png\" style=\"height:16px;width:auto;\"/>" + $Label.PIN_LEGEND_GREEN + " " + (parseInt("{!$Setup.Around_Pin_Config__c.Yellow_Pin__c}")-1) + dayString + " </div>";
+                var yellowStr = "<div style=\"display:inline-block\"><img src=\"https://maps.gstatic.com/mapfiles/ms2/micons/yellow-dot.png\" style=\"height:16px;width:auto;\"/>" + $Label.PIN_LEGEND_YELLOW + " " + (parseInt("{!$Setup.Around_Pin_Config__c.Red_Pin__c}")-1) + dayString + " </div>";
+                var redStr = "<div style=\"display:inline-block\"><img src=\"https://maps.gstatic.com/mapfiles/ms2/micons/red-dot.png\" style=\"height:16px;width:auto;\"/>" + $Label.PIN_LEGEND_RED + " " + (parseInt("{!$Setup.Around_Pin_Config__c.Red_Pin__c}")-1) + dayString + " </div>";
+                jQuery('[id$=pinColorNote]').html(greenStr+yellowStr+redStr);
+
+                getCurrentLocation();
+                if(checkIsSF1()) {
+                    $("#filtered-bar").addClass("margin-top-mobile");
+                    toggleDisplay($("#mobile-bar"), true);
+                } else {
+                    toggleDisplay($("#manual-image-pc"), true);
+                    $("#filtered-bar").addClass("margin-row");
+                    toggleDisplay($("#browser-bar"), true);
+                }
+                jQuery('[id$=custom-search-input]').keypress(
+                    function(event){
+                        if(event.keyCode == 13){
+                            searchCustomer();
+                        }
+                    }
+                );
+            });
+        </script>
+    </head>
+    <div id="newJob"></div>
+    <body>
+        <apex:form id="mainForm">
+            <div id="lean-overlay" style="position: fixed;z-index:11000;left:40%;top:30%">
+                <div id="overlay-bg"/>
+                <div id="loading-box"/>
+                <div id="fraudModal" style="background:none 0px 0px repeat scroll rgb(255, 255, 255); border-radius: 5px; box-shadow: rgba(0, 0, 0, 0.7) 0px 0px 4px; display: none; padding: 30px; opacity: 1; z-index: 80000; position: fixed; left: 42%; top: 100px;">
+                    <span id="fraudTitle" style="margin-right: 16px;">ลูกค้าอยู่ใน Color Group&nbsp;&nbsp;</span>
+                    <canvas id="fraudColor" width="24" height="12">Your browser does not support the HTML5 canvas tag.
+                    </canvas>
+                    <span id="fraudMessage"></span>
+                    <div style="margin-top: 16px;">
+                        <input type="button" value="Yes" style="margin: 4px;" onclick="onClickYesFraudModal();toggleDisplay($('#lean-overlay'), false);" />
+                        <input type="button" value="No" style="margin: 4px;" onclick="toggleDisplay($('#lean-overlay'), false);$('#fraudModal').css('display', 'none');"/>
+                    </div>
+                </div>
+            </div>
+        </apex:form>
+            <!-- Boot strap -->
+            <div class="bs3">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div id="errorPanel" class="col-md-12 col-xs-12 hidden alert alert-danger" role="alert">
+                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                        Message
+                        </div>
+                    </div>
+                    <div id="filtered-bar" class="row">
+                        <div class="col-md-2 col-xs-5 padding-xs">
+                            <select id="dropdownFilter" class="btn btn-default" onchange="onChangeFilter()">
+                                <option value="Port" selected="selected">Port</option>
+                                <option value="Pool">Pool</option>
+                                <option value="Temporary">Temporary / Prospect</option>
+                                <option value="CIS">ค้นหาลูกค้า</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 col-xs-7 padding-xs">
+                            <div id="inputSearch" class="input-group hidden">
+                                <input type="text" id="custom-search-input" class=" form-control" placeholder="Search" />
+                                <span class="input-group-addon btn glyphicon glyphicon-search" onclick="searchCustomer();" >
+                                </span>
+                            </div>
+                        </div>
+                        <div id="browser-bar" class="col-md-7 hidden padding-0">
+                            <div class="btn-group btn-group-justified" role="group">
+                                <div class="btn-group" role="group">
+
+                                    <button id="btnSearch" onclick="searchNearBy(); return false;" class="btn btn-info">
+                                    <span class="noselectable glyphicon glyphicon-map-marker" aria-hidden="true"/>
+                                        {!$Label.SEARCH_THIS_AREA}
+                                    </button>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button id="btnEditPin" onclick="editPin(); return false;" class="btn btn-info">
+                                    <span class="noselectable glyphicon glyphicon-edit" aria-hidden="true"/>
+                                        {!$Label.EDIT_PIN_LOCATION}
+                                    </button>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button id="btnNavigate" class="btn btn-info" onclick="navigateGoogle(); return false;">
+                                        <span class="noselectable glyphicon glyphicon-road" aria-hidden="true"/>
+                                        {!$Label.DIRECTION}
+                                    </button>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button id="btnNewCallReport" class="btn btn-info" onclick="newJob();">
+                                        <span class="noselectable glyphicon glyphicon-list-alt" aria-hidden="true"/>
+                                        New Job
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="mobile-bar" class="row margin-row bs-glyphicons hidden">
+                        <ul class="bs-glyphicons-list">
+                             <li class="noselectable" onclick="searchNearBy(); return false;">
+                                 <span class="noselectable glyphicon glyphicon-map-marker" aria-hidden="true"/>
+                                 <span class="noselectable glyphicon-class">Search Area</span>
+                             </li>
+                             <li class="noselectable" onclick="editPin();return false;">
+                                 <span class="noselectable glyphicon glyphicon-edit" aria-hidden="true"/>
+                                 <span class="noselectable glyphicon-class">Edit</span>
+                             </li>
+                             <li class="noselectable" onclick="navigateGoogle(); return false;">
+                                 <span class="noselectable glyphicon glyphicon-road" aria-hidden="true"/>
+                                 <span class="noselectable glyphicon-class">Direction</span>
+                             </li>
+                             <li class="noselectable" onclick="newJob();">
+                                 <span class="noselectable glyphicon glyphicon-list-alt" aria-hidden="true"/>
+                                 <span class="noselectable glyphicon-class">New Job</span>
+                             </li>
+                        </ul>
+                     </div>
+                    <div class="row">
+                        <div class="mapArea col-12">
+                            <div id="map-canvas"></div>
+                        </div>
+                        <div id="pinColorNote"></div>
+                    </div>
+                    <div id="manual-image-pc" class="row margin-row text-center hidden">
+                        <apex:image url="{!$Resource.Manual_Check_In_Around_Pin}"/>
+                    </div>
+                </div>
+            </div>
+    </body>
+</apex:page>

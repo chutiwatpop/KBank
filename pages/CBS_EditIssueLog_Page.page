@@ -1,0 +1,401 @@
+<apex:page title="Issue Log" showHeader="true" sidebar="true" standardController="Issue_Log__c" extensions="CBS_EditIssueLog_Controller">
+    <apex:includeScript value="{!$Resource.jquery_min_js}" />
+    <apex:includeScript value="{!$Resource.jquery_blockUI_js}"/>
+    <style type="text/css">
+        .customPopup {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 100%;
+            background-color: white;
+            border-style: solid;
+            border-color: #1797c0;
+            border-width: 2px;
+            border-radius: 5px;
+            padding: 20px;
+            /*position: fixed;*/
+            position:absolute;
+            z-index: 9998;
+
+           /* width: 25%;*/
+            top: 10px;
+            /*top:50%;*/
+            left:30%;
+            margin: 70px auto;
+        }
+
+        .disabledTextBox {
+            background-color: white;
+            border: 1px solid;
+            color: black;
+            cursor: default;
+            width: 90px;
+            display: table;
+            padding: 2px 1px;
+            text-align:right;
+        }
+    </style>
+
+    <script type="text/javascript">
+        var defaultRejectReason;
+        var defaultReAssignNote;
+        function togglePopUpModal(modalToToggle){
+            var ModalId = modalToToggle;
+            $("[id$='"+ModalId+"']").toggle(100, callbackFn);
+        }
+        function showReassignPopup(){
+            document.getElementById('reassignDialog').showModal();
+            $("[id$='reassignPopup']").toggle(100, callbackFn);
+        }
+        function hideReassignPopup(){
+            document.getElementById('reassignDialog').close();
+            $("[id$='reassignPopup']").toggle(100, callbackFn);
+        }
+        function callbackFn() {};
+        function saveRejectReason(){
+            defaultRejectReason = "{!issueLog.Reject_Reason__c}";
+        }
+        $(document).ready(function(){
+            saveRejectReason();
+        });
+        function doClickOkInRejectIssue(){
+            var rejectReason;
+            if(typeof $('[id*="rejectReason"]').val() !== 'undefined'){
+                rejectReason = $('[id*="rejectReason"]').val();    
+            }
+            if(rejectReason){
+                if(confirm('Save Reject Issue ?') == true){
+                    rejectIssue();
+                    togglePopUpModal('rejectPopup');
+                }else{
+                    // alert('Reject Issue was cancelled');
+                }
+            }else{ 
+                alert('Please input reject reason!');
+            }
+        }
+        function doClickCancelInRejectIssue(){
+            $('[id$="rejectReason"]').val(defaultRejectReason);
+        }
+        function doRecall(){
+            console.log('do recall');
+            if(confirm('Recall this Issue Log?') == true){
+                rerenderEditPageBlockID();
+            }else{
+               
+            }
+        }
+        function doEscalate(){
+            console.log('do escalate');
+            if(confirm('Escalate this Issue Log?') == true){
+                escalateIssue();
+            }else{
+               
+            }
+        }
+        function doClickReAssign(){
+            defaultReAssignNote = "{!issueLog.Re_Assign_Reason__c}";
+        }
+        function doCancelAfterClickReAssign(){
+            $('[id$="reassignReason"]').val(defaultReAssignNote);
+        }
+
+        // function showLoading(){
+        //     $.blockUI({
+        //         css: { 
+        //             border: 'none', 
+        //             padding: '15px', 
+        //             backgroundColor: '#000', 
+        //             '-webkit-border-radius': '10px', 
+        //             '-moz-border-radius': '10px', 
+        //             opacity: .5, 
+        //             color: '#fff' 
+        //         }
+        //     });
+        // }
+
+        // function hideLoading(){
+        //     $.unblockUI();
+        // }
+    </script>
+
+    
+
+    <apex:sectionHeader title="Issue Log" subtitle="Manage Issue Log" />
+    <apex:pageMessages id="errorMsg"></apex:pageMessages>
+    <apex:actionStatus id="loadingBar" onstart="showLoading();" onstop="hideLoading();" />
+    <!-- Reject Popup Window -->
+    <apex:form id="rejectPopup" style="display: none;">
+    <apex:actionFunction name="rerenderEditPageBlockID" action="{!setEditableIssueModeTrue}" rerender="editPageBlockID" oncomplete="console.log('rerender complete');"/>
+        <apex:outputPanel styleClass="customPopup" layout="block">
+            <apex:pageBlock title="Reject Issue">
+            <apex:pageblockSection >                         
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel value="Reject Reason" for="rejectReason"></apex:outputLabel>
+                    <apex:inputField id="rejectReason" value="{!issueLog.Reject_Reason__c}"/>
+                </apex:pageblockSectionItem>
+            </apex:pageblockSection>
+            </apex:pageBlock>
+            <apex:commandButton value="Ok" onclick="$(this).toggleClass('btnDisabled', true).attr('disabled', 'disabled');doClickOkInRejectIssue();" oncomplete="$(this).toggleClass('btnDisabled', false).attr('disabled', null);" reRender="additionalSection"/>
+            <apex:commandButton value="Cancel" title="Close the popup" onclick="$(this).toggleClass('btnDisabled', true).attr('disabled', 'disabled');" oncomplete="$(this).toggleClass('btnDisabled', false).attr('disabled', null);togglePopUpModal('rejectPopup');doClickCancelInRejectIssue();"/>
+        </apex:outputPanel>
+        <apex:actionFunction name="rejectIssue" action="{!rejectIssue}"/>
+    </apex:form>
+
+    <!-- Re-Assign Popup Window -->
+    <dialog id="reassignDialog" style="top:30%">
+        <apex:form id="reassignPopup" style="display: none;">
+            <apex:outputPanel layout="block">
+                <apex:pageBlock title="Re-Assign Issue">
+                <apex:pageBlockSection columns="1">
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Re-Assign To"/>
+                        <apex:selectList id="reassignToSelectList" value="{!selectReassignTo}" multiselect="false" size="1">
+                            <apex:actionSupport event="onchange" reRender="reassignNameSelectList" />
+                            <apex:selectOptions value="{!reAssignToList}"/>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Re-Assign Name"/>
+                        <apex:selectList id="reassignNameSelectList" value="{!selectReassignName}" multiselect="false" size="1" disabled="{!disableReAssignName}">
+                            <apex:selectOptions value="{!reAssignNameList}"/>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Re-Assign Notes" for="reassignReason"/>
+                        <apex:inputField id="reassignReason" value="{!issueLog.Re_Assign_Reason__c}"/>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                </apex:pageBlock>
+                <apex:commandButton value="Re-Assign" action="{!doSaveReAssign}" oncomplete="$(this).toggleClass('btnDisabled', false).attr('disabled', null);hideReassignPopup();"/>
+                <apex:commandButton value="Cancel" onclick="$(this).toggleClass('btnDisabled', true).attr('disabled', 'disabled');hideReassignPopup();" oncomplete="$(this).toggleClass('btnDisabled', false).attr('disabled', null);doCancelAfterClickReAssign();" reRender="reassignToSelectList,reassignNameSelectList,reassignReason"/>
+            </apex:outputPanel>
+        </apex:form>
+    </dialog>
+
+    <apex:form id="mainForm">
+        <apex:pageBlock title="Issue Log Detail" mode="edit" id="editPageBlockID">
+            <!-- Page Block Button -->
+            <apex:pageBlockButtons >
+                <apex:outputPanel rendered="{!!isEditableIssueMode}">
+                    <apex:commandButton value="Save" action="{!save}"/>
+                    <apex:commandButton value="Cancel" action="{!cancelEdit}"/>
+                    <apex:commandButton value="Escalate" onclick="doEscalate();$(this).toggleClass('btnDisabled', true).attr('disabled', 'disabled');" oncomplete="$(this).toggleClass('btnDisabled', false).attr('disabled', null);" rendered="{!isOwnerMode}"/>
+                    <apex:actionFunction name="escalateIssue" action="{!escalateOwnerAndSave}"/>
+                    <apex:commandButton value="Recall" onclick="doRecall();$(this).toggleClass('btnDisabled', true).attr('disabled', 'disabled');" oncomplete="$(this).toggleClass('btnDisabled', false).attr('disabled', null);" rendered="{!isOwnerMode}"/>
+                    <apex:commandButton value="Re-Assign" rendered="{!!isOwnerMode}" onclick="$(this).toggleClass('btnDisabled', true).attr('disabled', 'disabled');doClickReAssign();" oncomplete="$(this).toggleClass('btnDisabled', false).attr('disabled', null);showReassignPopup();"/>
+                    <apex:commandButton value="Reject" onclick="$(this).toggleClass('btnDisabled', true).attr('disabled', 'disabled');" oncomplete="$(this).toggleClass('btnDisabled', false).attr('disabled', null);togglePopUpModal('rejectPopup');" rendered="{!!isOwnerMode}"/>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!isEditableIssueMode}">
+                    <apex:commandButton value="Save Draft" action="{!doSaveDraftAfterRecall}"/>
+                    <apex:commandButton value="Save & Submit" action="{!doSaveAfterRecall}"/>
+                    <apex:commandButton value="Cancel" action="{!cancelEdit}" immediate="true"/>
+                </apex:outputPanel>
+            </apex:pageBlockButtons>
+
+            <apex:pageBlockSection columns="2">
+                <apex:inputField value="{!issueLog.Subject__c}" required="true"/>
+                <apex:outputField value="{!issueLog.Name}"/>
+
+                <apex:outputField value="{!issueLog.Parent_Issue__c}" rendered="{!issueLog.IsParentIssue__c}"/>
+                <apex:pageBlockSectionItem rendered="{!!issueLog.IsParentIssue__c}"/>
+                <apex:outputField value="{!issueLog.Date_Time_Opened__c}"/>
+
+                <!-- Assignee -->
+                <apex:selectList id="issueStatus" value="{!selectStatus}" multiselect="false" size="1" label="Status" rendered="{!!isOwnerMode}">
+                    <apex:selectOptions value="{!statusList}" />
+                </apex:selectList>
+                <apex:outputField value="{!issueLog.Status__c}" rendered="{!isOwnerMode}"/>
+                <apex:outputField value="{!issueLog.Date_Time_Closed__c}"/>
+
+                <apex:pageBlockSectionItem />
+                <apex:outputField value="{!issueLog.Time_Used_Days__c}"/>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection title="Customer Information" columns="2">
+                <apex:outputField value="{!issueLog.CIS_ID_or_Prospect_Name__c}"/>
+                <apex:outputField value="{!issueLog.Group__c}"/>
+                <apex:outputField value="{!issueLog.CIS_ID_or_Prospect_Name__r.Name_TH__c}"/>
+                <apex:outputField value="{!issueLog.Sub_Group__c}"/>
+            </apex:pageBlockSection>
+
+            <!-- Read-only Information Section -->
+            <apex:pageBlockSection title="Issue Information" columns="2" rendered="{!!isEditableIssueMode}">
+                <apex:outputField value="{!issueLog.Issue_Log_Owner__c}"/>
+                <apex:outputField value="{!issueLog.Assigned_Team_Person__c}"/>
+                <apex:outputField value="{!issueLog.IssueLog_Creator__c}"/>
+                <apex:outputField value="{!issueLog.Issue_Log_Creator_Phone__c}"/>
+                <apex:outputField value="{!issueLog.IssueLog_Creator_TL__c}"/>
+                <apex:outputField value="{!issueLog.Issue_Log_Creator_TL_Phone__c}"/>
+                <apex:outputField value="{!issueLog.IssueLog_Creator_FSVP__c}"/>
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+
+                <!-- Can Edit when status is Recalled -->
+                <apex:outputField value="{!issueLog.Division_Formula__c}"/>
+                <apex:pageBlockSectionItem />
+                <apex:outputField value="{!issueLog.Product_Formula__c}"/>
+                <apex:outputField value="{!issueLog.Product_Text__c}"/>
+                <apex:outputField value="{!issueLog.Category_Formula__c}"/>
+                <apex:outputField value="{!issueLog.Category_Specify__c}"/>
+                <apex:outputField value="{!issueLog.Sub_Category_Formula__c}"/>
+                <apex:outputField value="{!issueLog.Sub_Category_Specify__c}"/>
+
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <!-- <apex:inputField value="{!issueLog.Issue_Description__c}" style="width:95%;" rendered="{!isOwnerMode}"/> -->
+                <apex:pageBlockSectionItem rendered="{!isOwnerMode}">
+                    <apex:outputLabel value="Issue_Description" id="Issue_Description"/>
+                    <apex:actionRegion >
+                        <apex:inputField value="{!issueLog.Issue_Description__c}" required="true" style="width:95%;">
+                            <apex:actionSupport event="onchange" reRender="Issue_Description" status="loadingBar"/>
+                        </apex:inputField>
+                    </apex:actionRegion>
+                </apex:pageBlockSectionItem>
+                <apex:outputField value="{!issueLog.Issue_Description__c}" style="width:95%;" rendered="{!!isOwnerMode}"/>
+
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <apex:inputField value="{!issueLog.Progress_Solution__c}" style="width:95%;" rendered="{!!isOwnerMode}"/>
+                <apex:outputField value="{!issueLog.Progress_Solution__c}" style="width:95%;" rendered="{!isOwnerMode}"/>
+            </apex:pageBlockSection>
+            <!-- End of Read-only Information Section -->
+
+            <!-- Editable Issue Information Section -->
+            <!-- Version 1 -->
+            <!-- <apex:pageBlockSection id="issueInformation" title="Issue Information" columns="2" rendered="{!isEditableIssueMode}">        
+            
+                <apex:selectList id="divisionSelectList" value="{!selectDivision}" multiselect="false" size="1" label="Division">
+                    <apex:actionSupport event="onchange" reRender="productSelectList,categorySelectList,subCategorySelectList" status="loadingBar"/>
+                    <apex:selectOptions value="{!divisionList}"/>
+                </apex:selectList>
+            
+                <apex:pageBlockSectionItem />
+
+                <apex:selectList id="productSelectList" value="{!selectProduct}" multiselect="false" size="1" label="Product">
+                    <apex:actionSupport event="onchange" reRender="categorySelectList,subCategorySelectList" status="loadingBar"/>
+                    <apex:selectOptions value="{!productList}"/>
+                </apex:selectList>
+                <apex:pageBlockSectionItem />
+
+                <apex:selectList id="categorySelectList" value="{!selectCategory}" multiselect="false" size="1" label="Category">
+                    <apex:actionSupport event="onchange" reRender="subCategorySelectList" status="loadingBar"/>
+                    <apex:selectOptions value="{!categoryList}"/>
+                </apex:selectList>
+                <apex:inputField value="{!issueLog.Category_Specify__c}"/>
+
+                <apex:selectList id="subCategorySelectList" value="{!selectSubCategory}" multiselect="false" size="1" label="Sub Category">
+                    <apex:selectOptions value="{!subCategoryList}"/>
+                </apex:selectList>
+                <apex:inputField value="{!issueLog.Sub_Category_Specify__c}" style="width:95%;"/>
+
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <apex:inputField value="{!issueLog.Issue_Description__c}" style="width:95%;" rendered="{!isOwnerMode}"/>
+                <apex:outputField value="{!issueLog.Issue_Description__c}" style="width:95%;" rendered="{!!isOwnerMode}"/>
+
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <apex:inputField value="{!issueLog.Progress_Solution__c}" style="width:95%;" rendered="{!!isOwnerMode}"/>
+                <apex:outputField value="{!issueLog.Progress_Solution__c}" style="width:95%;" rendered="{!isOwnerMode}"/>
+
+            </apex:pageBlockSection> -->
+
+            <!-- Version 2 -->
+            <apex:pageBlockSection id="issueInformation" title="Issue Information" columns="2" rendered="{!isEditableIssueMode}">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Division" />
+                    <apex:outputPanel layout="block" styleClass="requiredInput">
+                    <apex:outputPanel layout="block" styleClass="requiredBlock" rendered="true"/>
+                        <apex:actionRegion >
+                            <apex:selectList id="divisionSelectList" value="{!selectDivision}" multiselect="false" size="1" required="true">
+                                <apex:actionSupport event="onchange" reRender="productSelectList,categorySelectList,subCategorySelectList,issueInformation,divHelpText" status="loadingBar" action="{!validateSelectDivision}"/>
+                                <apex:selectOptions value="{!divisionList}" />
+                            </apex:selectList>
+                        </apex:actionRegion>
+                        <apex:outputText id="divHelpText" value="{!divisionHelpText}"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem />
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Product" />
+                    <apex:outputPanel layout="block" styleClass="requiredInput">
+                    <apex:outputPanel layout="block" styleClass="requiredBlock" rendered="{!!productDisabled}"/>
+                        <apex:actionRegion >
+                            <apex:selectList id="productSelectList" value="{!selectProduct}" multiselect="false" size="1" label="Product" disabled="{!productDisabled}">
+                                <apex:actionSupport event="onchange" reRender="categorySelectList,subCategorySelectList,issueInformation" status="loadingBar" action="{!validateSelectProduct}"/>
+                                <apex:selectOptions value="{!productList}" />
+                            </apex:selectList>
+                        </apex:actionRegion>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem rendered="{!!otherProductRender}"/>
+                <apex:inputField value="{!issueLog.Product_Text__c}" required="{!otherProductRender}" rendered="{!otherProductRender}" />
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Category" />
+                    <apex:outputPanel layout="block" styleClass="requiredInput">
+                    <apex:outputPanel layout="block" styleClass="requiredBlock" rendered="{!!categoryDisabled}"/>
+                        <apex:actionRegion >
+                            <apex:selectList id="categorySelectList" value="{!selectCategory}" multiselect="false" size="1" label="Category" disabled="{!categoryDisabled}" >
+                                <apex:actionSupport event="onchange" reRender="subCategorySelectList,issueInformation" status="loadingBar" action="{!validateSelectCategory}"/>
+                                <apex:selectOptions value="{!categoryList}" />
+                            </apex:selectList>
+                        </apex:actionRegion>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem rendered="{!!otherCategoryRender}"/>
+                <apex:inputField value="{!issueLog.Category_Specify__c}" required="{!otherCategoryRender}" rendered="{!otherCategoryRender}"/>
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Sub Category" />
+                    <apex:outputPanel layout="block" styleClass="requiredInput">
+                    <apex:outputPanel layout="block" styleClass="requiredBlock" rendered="{!!subCatagoryDisabled}"/>
+                        <apex:actionRegion >
+                            <apex:selectList id="subCategorySelectList" value="{!selectSubCategory}" multiselect="false" size="1" label="Sub Category" disabled="{!subCatagoryDisabled}" >
+                                <apex:actionSupport event="onchange" reRender="issueInformation" status="loadingBar" action="{!validataSelectSubCategory}" />
+                                <apex:selectOptions value="{!subCategoryList}" />
+                            </apex:selectList>
+                        </apex:actionRegion>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>    
+
+                <apex:pageBlockSectionItem rendered="{!!otherSubCategoryRender}"/>
+                <apex:inputField value="{!issueLog.Sub_Category_Specify__c}" required="{!otherSubCategoryRender}" rendered="{!otherSubCategoryRender}" style="width:95%;"/>
+
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Issue_Description" id="Issue_Description"/>
+                    <apex:actionRegion >
+                        <apex:inputField value="{!issueLog.Issue_Description__c}" required="true" style="width:95%;">
+                            <apex:actionSupport event="onchange" reRender="Issue_Description" status="loadingBar"/>
+                        </apex:inputField>
+                    </apex:actionRegion>
+                </apex:pageBlockSectionItem>
+                <!-- <apex:inputField value="{!issueLog.Issue_Description__c}" style="width:95%;"/> -->
+
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem />
+                <apex:inputField value="{!issueLog.Progress_Solution__c}" style="width:95%;"/>
+            </apex:pageBlockSection>
+            <!-- End of Editable Issue Information Section -->
+
+            <apex:pageBlockSection title="Related Issues Summary" columns="2" rendered="{!issueLog.IsParentIssue__c}">
+            </apex:pageBlockSection>
+
+
+            <apex:pageBlockSection id="additionalSection" title="Additional Notes Section" columns="2">
+                <apex:outputField value="{!issueLog.Re_Open_Reason__c}"/>
+                <apex:outputField value="{!issueLog.Reject_Reason__c}"/>
+            </apex:pageBlockSection>
+
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

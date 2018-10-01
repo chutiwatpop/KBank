@@ -1,0 +1,514 @@
+<apex:page title="Customer Ownership Release" showHeader="true" sidebar="true" standardController="Customer_Ownership_Request__c" extensions="Account_ReferOutInformation_Controller" lightningStylesheets="true">
+    <apex:slds />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <apex:includeScript value="{!URLFOR($Resource.jquery, '')}"/>
+    <apex:includeScript value="/support/console/42.0/integration.js"/>
+    <script>
+    var bkkHubArray =new Array();
+    var idx=0;
+    <apex:repeat value="{!bkkHubList}" var="eachVal">
+    bkkHubArray[idx++]="{!eachVal}";
+    </apex:repeat>
+    </script>
+    <apex:outputPanel rendered="{!isSF1}">
+        <style>
+        .rightAlign {text-align:right;} 
+        @media screen and (device-width: 320px) and (device-height: 480px) and (-webkit-device-pixel-ratio: 2) {
+            html {
+                position: fixed;
+                overflow: auto;
+                width: 100%;
+                height: 100%;
+            }
+            html body {
+                position: fixed;
+                overflow-x: scroll;
+                height: 100%;
+                width: 100%;
+            }
+        }
+        
+        @media screen and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) {
+            html {
+                position: fixed;
+                overflow: auto;
+                width: 100%;
+                height: 100%;
+            }
+            html body {
+                position: fixed;
+                overflow-x: scroll;
+                height: 100%;
+                width: 100%;
+            }
+        }
+        
+        @media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (orientation: portrait) and (-webkit-min-device-pixel-ratio: 1) {
+            html {
+                position: fixed;
+                overflow: auto;
+                width: 100%;
+                height: 100%;
+            }
+            html body {
+                position: fixed;
+                overflow-x: scroll;
+                height: 100%;
+                width: 100%;
+            }
+        }
+        
+        @media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (orientation: portrait) and (-webkit-min-device-pixel-ratio: 2) {
+            html {
+                position: fixed;
+                overflow: auto;
+                width: 100%;
+                height: 100%;
+            }
+            html body {
+                position: fixed;
+                overflow-x: scroll;
+                height: 100%;
+                width: 100%;
+            }
+        }
+        
+        @media only screen and (max-device-width: 640px),
+        only screen and (max-device-width: 667px),
+        only screen and (max-width: 480px) {
+            html {
+                position: fixed;
+                overflow: auto;
+                width: 100%;
+                height: 100%;
+            }
+            html body {
+                position: fixed;
+                overflow-x: scroll;
+                height: 100%;
+                width: 100%;
+            }
+        }
+
+        .require_field{
+            color:red;
+        }
+        </style>
+        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    </apex:outputPanel>
+    <script>
+    function contains(a, obj) {
+        for (var i = 0; i < a.length; i++) {
+            if (a[i] === obj) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function numberFormatRemove(String){
+        var tmpVal = String.replace(/,/g , "");
+         return (tmpVal=='')?0:tmpVal;
+    }
+
+    $(document).ready(function() {
+        
+        setTimeout(function() {
+            $('select').addClass('form-control').removeAttr('size').change(function() {
+                setTimeout(function() {
+                    $('select').addClass('form-control').removeAttr('size');
+                }, 2000);
+            });
+        }, 1000);
+        checkDisableOnload();    
+    });
+    function prepareData(){
+        // console.log($('[id$="teamPickList"]').prop('disabled'));
+        // console.log($('[id$="teamPickList"]').val());
+        // return false;
+        if($('[id$="approvalStatus"]').val()=='Cancel'){
+            $('[id$="companyRelatedID"]').prop('disabled', false);
+            $('[id$="referOutShareHolder"]').prop('disabled', false);
+            $('[id$="referOutLanguage"]').prop('disabled', false);
+            $('[id$="provincePickList"]').attr('disabled',false);
+            $('[id$="teamPickList"]').attr('disabled',false);
+            return true;
+            
+        }else{
+            if($('[id$="referOutReason"]').val() == 'Company Related' ){
+                if($('[id$="companyRelatedID"]').val()==''){
+                    alert('กรุณากรอก CIS ID ในช่อง Company Related (CIS ID)');
+                    return false;
+                }else if($('[id$="teamPickList"]').val() == null || $('[id$="teamPickList"]').val() =='' || $('[id$="teamPickList"]').val() ==' - '){
+                    alert('กรุณาเลือกทีม');
+                    return false;
+                }
+            }else if($('[id$="referOutReason"]').val() == 'Other Team' || 
+                $('[id$="referOutReason"]').val() == 'Wrong Area' || 
+                $('[id$="referOutReason"]').val() == 'Not SME Segment' ||
+                $('[id$="referOutReason"]').val() == 'Nationality' ||
+                $('[id$="referOutReason"]').val() == 'Other Segment'){
+                if($('[id$="teamPickList"]').val() == null || $('[id$="teamPickList"]').val() =='' || $('[id$="teamPickList"]').val() ==' - '){
+                    alert('กรุณาเลือกทีม');
+                    return false;
+                }
+            }
+            
+        }
+                
+    }
+    function checkDisableOnload(){
+        if($('[id$="referOutReason"]').val() == 'Company Related'){
+                $('[id$="requiredSpanReferOutTeam"]').css('display','inline');
+                $('[id$="companyRelatedID"]').prop('disabled', false);
+                $('[id$="referOutShareHolder"]').prop('disabled', true);
+                $('[id$="referOutLanguage"]').prop('disabled', true);
+                $('[id$="provincePickList"]').attr('disabled',true);
+                $('[id$="teamPickList"]').attr('disabled',true);
+            }else if($('[id$="referOutReason"]').val() == 'Not SME Segment' || $('[id$="referOutReason"]').val() == 'Nationality'){
+                $('[id$="referOutSegment"]').prop('disabled', false);
+                $('[id$="requiredSpanReferOutTeam"]').css('display','inline');
+                $('[id$="companyRelatedID"]').prop('disabled', true);
+                $('[id$="referOutShareHolder"]').prop('disabled', true);
+                $('[id$="referOutLanguage"]').prop('disabled', true);
+                $('[id$="provincePickList"]').attr('disabled',true);
+                $('[id$="teamPickList"]').attr('disabled',true);
+            }else if($('[id$="referOutReason"]').val() == 'Wrong Area' || $('[id$="referOutReason"]').val() == 'Other Team'){
+                $('[id$="provinceRequiredBlockComponent"]').attr('class','');
+                $('[id$="teamRequiredBlockComponent"]').attr('class','');
+                $('[id$="companyRelatedID"]').prop('disabled', true);
+                $('[id$="referOutShareHolder"]').prop('disabled', true);
+                $('[id$="referOutLanguage"]').prop('disabled', true);
+                $('[id$="provincePickList"]').attr('disabled',false);
+                $('[id$="teamPickList"]').attr('disabled',false);
+            }else{
+                $('[id$="provinceRequiredBlockComponent"]').attr('class','');
+                $('[id$="teamRequiredBlockComponent"]').attr('class','');
+
+                $('[id$="companyRelatedID"]').prop('disabled', true);
+                $('[id$="referOutShareHolder"]').prop('disabled', true);
+                $('[id$="referOutLanguage"]').prop('disabled', true);
+                $('[id$="provincePickList"]').attr('disabled',true);
+                $('[id$="teamPickList"]').attr('disabled',true);
+            }
+    }
+    function checkDependentDisable(){
+        if($('[id$="referOutReason"]').val() == 'Company Related'){
+                $('[id$="requiredSpanReferOutTeam"]').css('display','inline');
+
+                $('[id$="referOutShareHolder"]').val("");
+                $('[id$="referOutLanguage"]').val("");
+                $('[id$="provincePickList"]').val("");
+                $('[id$="companyRelatedID"]').prop('disabled', false);
+                $('[id$="referOutShareHolder"]').prop('disabled', true);
+                $('[id$="referOutLanguage"]').prop('disabled', true);
+                $('[id$="provincePickList"]').attr('disabled',true);
+                $('[id$="teamPickList"]').attr('disabled',true);
+
+            }else if($('[id$="referOutReason"]').val() == 'Not SME Segment' || $('[id$="referOutReason"]').val() == 'Nationality'){
+                var saleSizeVal = numberFormatRemove($('[id$="optSaleSize"]').text());
+
+                $('[id$="referOutSegment"]').prop('disabled', false);
+                $('[id$="requiredSpanReferOutTeam"]').css('display','inline');
+                 $('[id$="companyRelatedID"]').prop('required', false);
+
+                if($('[id$="referOutReason"]').val() == 'Not SME Segment' && saleSizeVal < 400000000 ){
+                    $('[id$="referOutShareHolder"]').val("");
+                    $('[id$="referOutLanguage"]').val("");
+                    $('[id$="provincePickList"]').val('');
+                    $('[id$="teamPickList"]').val('');
+                    $('[id$="companyRelatedID"]').val('');
+                   
+                    $('[id$="provinceRequiredBlockComponent"]').attr('class','');
+                    $('[id$="teamRequiredBlockComponent"]').attr('class','');
+
+                    $('[id$="companyRelatedID"]').prop('disabled', true);
+                    $('[id$="referOutShareHolder"]').prop('disabled', true);
+                    $('[id$="referOutLanguage"]').prop('disabled', true);
+                    $('[id$="provincePickList"]').attr('disabled',true);
+                    $('[id$="teamPickList"]').attr('disabled',true);
+                    alert('{!$Label.YearEnd_InvalidSaleSize}');
+                }else{
+                    if($('[id$="referOutSegment"]').val() == '' || $('[id$="referOutSegment"]').length !=2 ){
+                        $('[id$="companyRelatedID"]').val("");
+                        $('[id$="companyRelatedID"]').prop('disabled', true);
+                        $('[id$="referOutShareHolder"]').prop('disabled', false);
+                        $('[id$="referOutLanguage"]').prop('disabled', false);
+                        
+                        //check Thai Thai
+                        if($('[id$="referOutShareHolder"]').val() =='Thai / Others' && $('[id$="referOutLanguage"]').val() =='Thai / Others'){
+                            // console.log(saleSizeVal);
+                            $('[id$="provincePickList"]').attr('disabled',false);
+                            $('[id$="teamPickList"]').attr('disabled',false);
+                            if($('[id$="referOutReason"]').val() == 'Nationality' && saleSizeVal < 400000000){
+                                $('[id$="provincePickList"]').attr('disabled',true);
+                                $('[id$="teamPickList"]').attr('disabled',true);
+                                alert('สำหรับลูกค้าสัญชาติไทยสามารถโอนขึ้น CBS ได้ในกรณีมีความสัมพันธ์หรือยอดขายมากกว่า 400 ล้าน เท่านั้น');
+                            }else{
+                                if(contains(bkkHubArray,$('[id$="provincePickList"]').val()) && $('[id$="businessCode"]').text().trim() ==''){
+                                    alert('Can not refer out because : BusinessCode is null');
+                                }else{
+                                    $('[id$="provincePickList"]').attr('disabled',false);
+                                    $('[id$="teamPickList"]').attr('disabled',false);
+                                }
+                            }
+                        }else if($('[id$="referOutShareHolder"]').val() !='' && $('[id$="referOutLanguage"]').val() !=''){
+                            $('[id$="provincePickList"]').attr('disabled',true);
+                            $('[id$="teamPickList"]').attr('disabled',false);
+                        }else{
+                            $('[id$="provincePickList"]').attr('disabled',true);
+                            $('[id$="teamPickList"]').attr('disabled',true);
+                        }
+                    }else{ //SME->MI,PC,......
+
+                        $('[id$="referOutShareHolder"]').val("");
+                        $('[id$="referOutLanguage"]').val("");
+                        $('[id$="companyRelatedID"]').val("");
+                        $('[id$="provincePickList"]').val("");
+                        $('[id$="teamPickList"]').val("");
+
+                        $('[id$="companyRelatedID"]').prop('disabled', true);
+                        $('[id$="referOutShareHolder"]').prop('disabled', true);
+                        $('[id$="referOutLanguage"]').prop('disabled', true);
+                        $('[id$="provincePickList"]').attr('disabled',true);
+                        $('[id$="teamPickList"]').attr('disabled',true);
+                    } 
+                }
+            }else if($('[id$="referOutReason"]').val() == 'Wrong Area' || $('[id$="referOutReason"]').val() == 'Other Team'){
+                $('[id$="companyRelatedID"]').val("");
+                $('[id$="referOutShareHolder"]').val("");
+                $('[id$="referOutLanguage"]').val("");
+               
+                $('[id$="provinceRequiredBlockComponent"]').attr('class','');
+                $('[id$="teamRequiredBlockComponent"]').attr('class','');
+
+                $('[id$="companyRelatedID"]').prop('disabled', true);
+                $('[id$="referOutShareHolder"]').prop('disabled', true);
+                $('[id$="referOutLanguage"]').prop('disabled', true);
+                $('[id$="provincePickList"]').attr('disabled',false);
+                $('[id$="teamPickList"]').attr('disabled',false);
+            }else{
+                $('[id$="companyRelatedID"]').val("");
+                $('[id$="referOutShareHolder"]').val("");
+                $('[id$="referOutLanguage"]').val("");
+                $('[id$="provincePickList"]').val('');
+                $('[id$="teamPickList"]').val('');
+               
+                $('[id$="provinceRequiredBlockComponent"]').attr('class','');
+                $('[id$="teamRequiredBlockComponent"]').attr('class','');
+
+                $('[id$="companyRelatedID"]').prop('disabled', true);
+                $('[id$="referOutShareHolder"]').prop('disabled', true);
+                $('[id$="referOutLanguage"]').prop('disabled', true);
+                $('[id$="provincePickList"]').attr('disabled',true);
+                $('[id$="teamPickList"]').attr('disabled',true);
+            }
+    }
+    
+    function showSelectTeam(){
+        // console.log($('[id$="teamPickList"]')[0].length);
+        if($('[id$="teamPickList"]')[0].length > 1 || $('[id$="companyRelatedID"]').val()=='' ){
+            $('[id$="teamPickList"]').prop('disabled', false);
+        }else{
+            alert('ไม่สามารถดำเนินการโอนลูกค้าได้เนื่องจากเลข CIS ไม่มีความสัมพันธ์กับทีมที่ท่าน Released ไป');
+            $('[id$="teamPickList"]').prop('disabled', true);
+        }
+    }
+
+    function checkIsSF1() {
+        return ("{!$User.UIThemeDisplayed}" == 'Theme4t');
+    }
+
+    function clickCancel() {
+        if(checkIsSF1()) {
+            sforce.one.back(true);
+        } else {
+            closeTab();
+        }
+        return false;
+    }
+     var callCloseTab = function callCloseTab(result) {
+        sforce.console.closeTab(result.id);
+    }
+
+    function closeTab() {
+        sforce.console.getEnclosingTabId(callCloseTab);
+    }
+
+    </script>
+    <apex:outputPanel rendered="{!!isSF1}">
+        <apex:form >
+            <apex:pageBlock title="Customer Ownership Release Edit" mode="edit">
+                <apex:pageBlockButtons style="position: absolute; left: 45%;">
+                    <apex:commandButton action="{!save}" value="{!$Label.Refer_Out_Save_Button}" onclick="return prepareData();"/>
+                    <button type="button" class="btn btn-default" onclick="clickCancel();">{!$Label.Cancel_Button}</button>
+                </apex:pageBlockButtons>
+                <apex:pageMessages id="errorMsg"/>
+                <apex:pageBlockSection title="{!$Label.Information_Section}" columns="2">
+                    <apex:inputField value="{!Customer_Ownership_Request__c.CIS_ID__c}" />
+                    <apex:pageBlockSectionItem />
+                    <apex:inputField value="{!Customer_Ownership_Request__c.Request_Type__c}" />
+                    <apex:inputField value="{!Customer_Ownership_Request__c.Approval_Status__c}" id="approvalStatus" required="true" />
+                    <apex:inputField value="{!Customer_Ownership_Request__c.Reason__c}" id="txtReason" required="true"/>
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection title="{!$Label.Refer_Out_Reason_Section}" columns="2">
+                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="{!$ObjectType.Customer_Ownership_Request__c.fields.Refer_Out_Reason__c.label}"/>
+                        <apex:actionRegion >
+                            <apex:inputField value="{!Customer_Ownership_Request__c.Refer_Out_Reason__c }" required="true" id="referOutReason">
+                                <apex:actionSupport event="onchange" action="{!checkReasonCondition}" reRender="provincePickList,teamRequiredBlock,provinceRequiredBlock" oncomplete="checkDependentDisable()" />
+                            </apex:inputField>
+                        </apex:actionRegion>
+                    </apex:pageBlockSectionItem>
+
+                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Company Related (CIS ID)" />
+                        <apex:actionRegion >
+                            <apex:inputField value="{!Customer_Ownership_Request__c.Company_Related_Text__c}" id="companyRelatedID">
+                                <apex:actionSupport event="onchange" action="{!checkReasonCondition}" reRender="teamRequiredBlock" oncomplete="showSelectTeam()" />
+                             </apex:inputField>
+                         </apex:actionRegion>
+                    </apex:pageBlockSectionItem>
+                     
+                    <apex:inputField value="{!Customer_Ownership_Request__c.Service_RM__c }"/>
+
+                     <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="%Shareholder"/>
+                        <apex:actionRegion >
+                        <apex:inputField value="{!Customer_Ownership_Request__c.Percent_Shareholder__c }" id="referOutShareHolder" >
+                        <apex:actionSupport event="onchange" reRender="teamRequiredBlock,errorMsg" oncomplete="checkDependentDisable()" />
+                            </apex:inputField>
+                        </apex:actionRegion>
+                    </apex:pageBlockSectionItem>
+
+                    
+                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="{!$ObjectType.Customer_Ownership_Request__c.fields.Refer_Out_Segment__c.label}"/>
+                        <apex:actionRegion >
+                            <apex:inputField value="{!Customer_Ownership_Request__c.Refer_Out_Segment__c }" id="referOutSegment" >
+                                <apex:actionSupport event="onchange" action="{!checkSegmentCondition}" reRender="provincePickList,teamRequiredBlock,provinceRequiredBlock" oncomplete="checkDependentDisable()"/>
+                            </apex:inputField>
+                        </apex:actionRegion>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Language" />
+                        <apex:actionRegion >
+                            <apex:inputField value="{!Customer_Ownership_Request__c.Language__c }" id="referOutLanguage" >
+                            <apex:actionSupport event="onchange" reRender="teamRequiredBlock,errorMsg" oncomplete="checkDependentDisable()"/>
+                            </apex:inputField>
+                        </apex:actionRegion>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Sale Size"/>
+                    <apex:outputText id="optSaleSize" value="{0, number, 000,000}">
+                        <apex:param value="{!accountRefer.Sales_Size__c}" />
+                    </apex:outputText>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="{!$ObjectType.Customer_Ownership_Request__c.fields.Refer_Out_Province__c.label}"/>
+                        <apex:outputPanel styleClass="requiredInput" layout="block" id="provinceRequiredBlock">
+                            <apex:actionRegion >
+                                <apex:selectList id="provincePickList" value="{!selectedProvince}" multiselect="false" size="1" label="Province" disabled="{!disabledFlag}">
+                                    <apex:actionSupport event="onchange" action="{!selectProvince}" reRender="teamRequiredBlock" oncomplete="checkDependentDisable()" />
+                                    <apex:selectOptions value="{!provinceList}" />
+                                </apex:selectList>
+                            </apex:actionRegion>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Business Code"/>
+                    <apex:outputLabel id="businessCode" value="{!accountRefer.Customer_s_Business_Code__c}"/>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="{!$ObjectType.Customer_Ownership_Request__c.fields.Refer_Out_Team__c.label}"/>
+                        <apex:outputPanel styleClass="requiredInput,rightAlign" layout="block" id="teamRequiredBlock">
+                            <apex:outputPanel styleClass="requiredBlock" layout="block" rendered="{!if(!disabledFlag,true,false)}"  id="teamRequiredBlockComponent"/>
+                            <apex:selectList id="teamPickList" value="{!selectedTeam}" multiselect="false" size="1" >
+                                <apex:selectOptions value="{!teamList}" />
+                            </apex:selectList>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+
+
+                </apex:pageBlockSection>
+                <apex:pageBlockSection title="{!$Label.System_Section}" columns="2">
+                    <apex:inputField value="{!Customer_Ownership_Request__c.Requested_Date__c}" label="{!$ObjectType.Customer_Ownership_Request__c.fields.Requested_Date__c.label}" />
+                    <apex:inputField value="{!Customer_Ownership_Request__c.Approved_Date__c}" label="{!$ObjectType.Customer_Ownership_Request__c.fields.Approved_Date__c.label}"/>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+        </apex:form>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!isSF1}">
+        <div class="container">
+            <h2>Customer Ownership Release Edit</h2>
+            <apex:form >
+                <apex:pageMessages />
+                <div class="form-group">
+                    <label>{!$ObjectType.Customer_Ownership_Request__c.fields.CIS_ID__c.Label}</label>
+                    <apex:inputField styleClass="form-control" value="{!Customer_Ownership_Request__c.CIS_ID__c}" />
+                </div>
+                <div class="form-group">
+                    <label>{!$ObjectType.Customer_Ownership_Request__c.fields.Request_Type__c.Label}</label>
+                    <apex:inputField styleClass="form-control" value="{!Customer_Ownership_Request__c.Request_Type__c}" />
+                </div>
+                <div class="form-group">
+                    <label>{!$ObjectType.Customer_Ownership_Request__c.fields.Approval_Status__c.Label}</label>
+                    <apex:inputField styleClass="form-control" value="{!Customer_Ownership_Request__c.Approval_Status__c}" />
+                </div>
+                <div class="form-group" >
+                    <label>{!$ObjectType.Customer_Ownership_Request__c.fields.Reason__c.Label}
+                        <span class="require_field">*</span>
+                    </label>
+                    <apex:inputField styleClass="form-control" value="{!Customer_Ownership_Request__c.Reason__c}" />
+                </div>
+                <div class="form-group">
+                    <label>{!$ObjectType.Customer_Ownership_Request__c.fields.Refer_Out_Reason__c.Label}<span class="require_field">*</span></label>
+                        <apex:inputField styleClass="form-control" value="{!Customer_Ownership_Request__c.Refer_Out_Reason__c }" required="true" id="referOutReason">
+                            <apex:actionSupport event="onchange" action="{!checkReasonCondition}" reRender="teamPickList,provincePickList" oncomplete="checkDependentDisable()"/>
+                        </apex:inputField>
+                </div>
+                
+                <div class="form-group">
+                    <label>{!$ObjectType.Customer_Ownership_Request__c.fields.Service_RM__c.Label}</label>
+                    <apex:inputField styleClass="form-control" value="{!Customer_Ownership_Request__c.Service_RM__c}" />
+                </div>
+               
+                <div class="form-group">
+                    <label>{!$ObjectType.Customer_Ownership_Request__c.fields.Refer_Out_Segment__c.Label}<span id= "requiredSpanReferOutSegment" class="require_field" style="display: none">*</span></label>
+                    <apex:inputField styleClass="form-control" value="{!Customer_Ownership_Request__c.Refer_Out_Segment__c}" id="referOutSegment">
+                        <apex:actionSupport event="onchange" action="{!checkSegmentCondition}" reRender="teamPickList,provincePickList" oncomplete="checkDependentDisable()"/>
+                    </apex:inputField>
+                </div>
+
+                <div class="form-group">
+                    <label>{!$ObjectType.Customer_Ownership_Request__c.fields.Refer_Out_Province__c.label}</label>
+                    <apex:selectList id="provincePickList" required="true" value="{!selectedProvince}" multiselect="false" size="1" label="Province" disabled="{!disabledFlag}" styleClass="form-control">
+                        <apex:actionSupport event="onchange" action="{!selectProvince}" reRender="teamPickList" />
+                        <apex:selectOptions value="{!provinceList}" />
+                    </apex:selectList>
+                </div>
+                 <div class="form-group">
+                    <label>{!$ObjectType.Customer_Ownership_Request__c.fields.Refer_Out_Team__c.label}<span id= "requiredSpanReferOutTeam" class="require_field" style="display: none">*</span></label>
+                    <apex:selectList id="teamPickList" required="true" value="{!selectedTeam}" multiselect="false" size="1" label="Team" disabled="{!disabledFlag}" styleClass="form-control">
+                        <apex:selectOptions value="{!teamList}" />
+                    </apex:selectList>
+                </div>
+                <div class="form-group">
+                    <apex:commandButton styleClass="btn btn-success" action="{!save}" value="Save" />
+                    <!-- <apex:commandButton styleClass="btn btn-danger" action="{!cancel}" value="Cancel" /> -->
+                </div>
+            </apex:form>
+        </div>
+    </apex:outputPanel>
+</apex:page>

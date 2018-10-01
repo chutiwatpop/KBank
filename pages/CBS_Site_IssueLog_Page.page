@@ -1,0 +1,83 @@
+<apex:page title="Issue Log" showHeader="false" sidebar="false" controller="CBS_Site_IssueLog_Controller">
+    <apex:form id="issueForm">
+    	<script>
+  			function CheckReject(){
+				callCheckReject();
+				console.log('callCheck');
+  			} 			
+    	</script>
+        <apex:pageBlock title="Issue Log Management" id="pageBlockId">
+        	<apex:pageMessages />
+        	<apex:pageMessage summary="{!warningMessage}" rendered="{!warningRender}" strength="1" severity="warning"/>
+        	<apex:pageMessage summary="{!infoMessage}" rendered="{!infoRender}" strength="1" severity="info"/>
+        	<script>
+                console.log('warningRender :'+'{!warningRender}');
+                console.log('{!warningMessage}');
+                console.log('resultRender :'+'{!resultRender}');
+        	</script>
+            <apex:pageBlockSection >
+                <apex:inputText label="System Reference ID:" value="{!refId}"/>
+            </apex:pageBlockSection>
+            <apex:pageBlockButtons location="bottom">
+				<apex:commandButton value="Enter" action="{!getIssue}" reRender="issueForm"/>
+			</apex:pageBlockButtons>
+        </apex:pageBlock>
+        <apex:pageBlock id="resultBlock" rendered="{!resultRender}">
+        <apex:actionRegion >
+			<apex:pageBlockSection columns="1" id="pageBlockSection">
+				<apex:outputField value="{!issue.Subject__c}"/>
+				<apex:outputField value="{!issue.Name}"/>
+				<apex:outputField value="{!issue.Date_Time_Opened__c}"/>
+				<apex:outputField value="{!issue.Date_Time_Closed__c}" rendered="{!closeDateRender}"/>
+				<apex:outputField value="{!issue.Status__c}" rendered="{!unEditable}"/>
+				<!-- <apex:selectList size="1" label="{!$ObjectType.Issue_Log__c.Fields.Status__c.Label}" rendered="{!!unEditable}" onchange="CheckReject()" value="{!issue.Status__c}">
+					<apex:selectOptions value="{!statusItems}" />
+				</apex:selectList> -->
+				<apex:pageBlockSectionItem rendered="{!!unEditable}">
+					<apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Status__c.Label}" />
+					<apex:outputPanel >						
+						<apex:selectList id="issueStatus" value="{!issue.Status__c}" multiselect="false" size="1" label="Status">
+                            <apex:actionSupport event="onchange" reRender="resultBlock" status="loadingBar" action="{!CheckStatusReject}"/>
+                            <apex:selectOptions value="{!statusItems}" />
+                        </apex:selectList>					
+						<apex:outputText style="padding-left: 10pt;" id="divStatusHelpText" value="{!statusHelpText}"/>
+						<!-- <apex:outputText id="divStatusHelpText" value="{!statusHelpText}"/> -->
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:inputCheckbox value="{!issue.Need_Long_Term_Solution__c}" disabled="{!unEditable}"/>
+				<apex:pageblocksectionitem rendered="{!reasonRender&&!unEditable}">
+					<apex:outputLabel value="{!$ObjectType.Issue_Log__c.fields.Reject_Reason__c.Label}" />
+					<apex:outputpanel layout="block" styleClass="requiredInput">
+						<apex:outputpanel layout="block" styleClass="requiredBlock"></apex:outputpanel>
+						<apex:inputField value="{!issue.Reject_Reason__c}" id="inputReason"/>
+					</apex:outputpanel>
+				</apex:pageblocksectionitem>
+
+				<apex:outputField value="{!issue.Reject_Reason__c}" rendered="{!reasonRender&&!!unEditable}"/>
+				<apex:actionFunction name="callCheckReject" action="{!CheckStatusReject}" rerender="resultBlock"/>
+
+			</apex:pageBlockSection>
+			</apex:actionRegion>
+			<apex:pageBlockSection columns="1" title="Customer Information">
+				<apex:outputField value="{!issue.CIS_ID_or_Prospect_Name_Text__c}"/>
+				<apex:outputField value="{!issue.Customer_Name__c}"/>
+			</apex:pageBlockSection>
+			<apex:pageBlockSection columns="1" title="Issue Information">
+				<apex:outputField value="{!issue.Issue_Log_Creator_Text__c}"/>
+				<apex:outputField value="{!issue.Division_Formula__c}"/>
+				<apex:outputField value="{!issue.Product_Formula__c}"/>
+				<apex:outputField value="{!issue.Product_Text__c}"/>
+				<apex:outputField value="{!issue.Category_Formula__c}"/>
+				<apex:outputField value="{!issue.Category_Specify__c}"/>
+				<apex:outputField value="{!issue.Sub_Category_Formula__c}"/>
+				<apex:outputField value="{!issue.Sub_Category_Specify__c}"/>
+				<apex:outputField value="{!issue.Issue_Description__c}"/>
+				<apex:inputField value="{!issue.Progress_Solution__c}" rendered="{!!unEditable}"/>
+				<apex:outputField value="{!issue.Progress_Solution__c}" rendered="{!unEditable}"/>
+			</apex:pageBlockSection>
+			<apex:pageBlockButtons location="bottom">
+				<apex:commandButton value="submit" onclick="return confirm('Submit for update?');" disabled="{!unEditable}" action="{!Submit}"/>
+			</apex:pageBlockButtons>
+		</apex:pageBlock>
+	</apex:form>
+</apex:page>

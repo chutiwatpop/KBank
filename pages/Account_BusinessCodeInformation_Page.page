@@ -1,0 +1,249 @@
+<apex:page sidebar="false" standardController="Account" extensions="Account_BusinessCodeInformation_CTRL" action="{!init}" lightningStylesheets="true"  showHeader="false" applyHtmlTag="false" applyBodyTag="true">
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <apex:includeScript value="{!URLFOR($Resource.jquery, '')}"/>
+    <!-- <apex:includeScript value="{!URLFOR($Resource.sfdc_bs3, 'dist/js/bootstrap.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.sfdc_bs3, 'dist/css/bootstrap-bs3.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bootstrap_icon, '')}"/> -->
+    <apex:slds />
+
+<script>
+$(function() {
+    var isSF1 = ("{!$User.UIThemeDisplayed}" == 'Theme4t');
+    // $(".sf1Version").hide();
+    //    $(".desktopVersion").show();
+    if(isSF1) {
+       $(".sf1Version").show();
+       $(".desktopVersion").hide();
+    }
+    else {
+       $(".sf1Version").hide();
+       $(".desktopVersion").show();
+    }
+});
+
+</script>
+<style>
+    .desktopVersion {
+        display: none;
+    }
+    .boldText {
+        font-weight: bold;
+    }
+    .secondColumn{
+        margin-left: 1.5rem;
+    }
+    .appLabel{
+        color:rgb(112, 110, 107)!important;
+    }
+    .slds-form-element_separator{
+          border-bottom: 1px solid rgb(221, 219, 218);
+    }
+</style>
+</head>
+<body class="slds-scope">
+<div class="desktopVersion">
+<h3 class="slds-section__title  test-id__section-header-container appLabel">ข้อมูลมาจากระบบ {!sourceData}</h3>
+<div class="slds-section slds-is-open full forcePageBlockSection forcePageBlockSectionView">
+    <div class="test-id__section-content slds-form slds-section__content section__content">
+            <div class="slds-grid full forcePageBlockSectionRow" >
+               <div class="slds-has-flexi-truncate forcePageBlockItem forcePageBlockItemView">
+                  <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                     <div class="">
+                        <span class="test-id__field-label slds-form-element__label appLabel">{!$ObjectType.Account.fields.Customer_s_Business_Code__c.Label}</span>
+                     </div>
+                     <div class="slds-form-element__control slds-grid itemBody" >
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator appLabel ">
+                            &nbsp;{!customerBusinessCode}
+                        </span>
+                     </div>
+                  </div>
+               </div>
+               <div class="slds-has-flexi-truncate forcePageBlockItem forcePageBlockItemView">
+                  <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element secondColumn">
+                     <div class="">
+                        <span class="test-id__field-label slds-form-element__label appLabel">{!$ObjectType.Business_Code__c.fields.Sub_Industry_Group__c.Label}</span>
+                     </div>
+                     <div class="slds-form-element__control slds-grid itemBody">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator appLabel">&nbsp;{!industrySubGroup}</span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="slds-grid full forcePageBlockSectionRow" >
+               <div class="slds-has-flexi-truncate forcePageBlockItem forcePageBlockItemView">
+                  <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                     <div class="">
+                        <span class="test-id__field-label slds-form-element__label appLabel">{!$ObjectType.Business_Code__c.fields.Business_Code_Description__c.Label}</span>
+                     </div>
+                     <div class="slds-form-element__control slds-grid itemBody" >
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator appLabel">
+                        &nbsp;{!description}
+                        </span>
+                     </div>
+                  </div>
+               </div>
+               <div class="slds-has-flexi-truncate forcePageBlockItem forcePageBlockItemView">
+                  <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element secondColumn">
+                     <div class="">
+                        <span class="test-id__field-label slds-form-element__label appLabel">{!$ObjectType.Business_Code__c.fields.Sub_Industry_Group_Description__c.Label}</span>
+                     </div>
+                     <div class="slds-form-element__control slds-grid itemBody">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator appLabel">&nbsp;{!subIndustryGroupDesc}</span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="slds-grid full forcePageBlockSectionRow" >
+               <div class="slds-has-flexi-truncate forcePageBlockItem forcePageBlockItemView">
+                  <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                     <div class="">
+                        <span class="test-id__field-label slds-form-element__label appLabel">{!$ObjectType.Business_Code__c.fields.Industry_Risk_Rating__c.Label}</span>
+                     </div>
+                     <div class="slds-form-element__control slds-grid itemBody" >
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator appLabel">
+                        &nbsp;{!gradeIndustry}
+                        </span>
+                     </div>
+                  </div>
+               </div>
+               <div class="slds-has-flexi-truncate forcePageBlockItem forcePageBlockItemView ">
+                  <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element secondColumn">
+                     <div class="">
+                        <span class="test-id__field-label slds-form-element__label appLabel"> {!$ObjectType.Business_Code__c.fields.X26_Industries_Group__c.Label}</span>
+                     </div>
+                     <div class="slds-form-element__control slds-grid itemBody">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator appLabel">&nbsp;{!industryGroup}</span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="slds-grid full forcePageBlockSectionRow" >
+               <div class="slds-has-flexi-truncate forcePageBlockItem forcePageBlockItemView">
+                  
+               </div>
+               <div class="slds-has-flexi-truncate forcePageBlockItem forcePageBlockItemView ">
+                  <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element secondColumn">
+                     <div class="">
+                        <span class="test-id__field-label slds-form-element__label appLabel">{!$ObjectType.Business_Code__c.fields.Industry_Type__c.Label}</span>
+                     </div>
+                     <div class="slds-form-element__control slds-grid itemBody">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator appLabel">&nbsp;{!industryType}</span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+    </div>
+
+</div>
+  
+</div>
+
+
+
+
+<div class="sf1Version">
+    <div class="slds-section slds-is-open full forcePageBlockSection forcePageBlockSectionView">
+     <h3 class="slds-section__title  test-id__section-header-container appLabel">ข้อมูลมาจากระบบ {!sourceData}</h3>
+    <div class="test-id__section-content slds-form slds-section__content section__content">
+            <div class="slds-grid full forcePageBlockSectionRow" >
+               <div class="slds-has-flexi-truncate forcePageBlockItem forcePageBlockItemView">
+                  <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                     <div class="">
+                        <span class="test-id__field-label slds-form-element__label appLabel">{!$ObjectType.Account.fields.Customer_s_Business_Code__c.Label}</span>
+                     </div>
+                     <div class="slds-form-element__control slds-grid itemBody" >
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator appLabel ">
+                            &nbsp;{!customerBusinessCode}
+                        </span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="slds-grid full forcePageBlockSectionRow" >
+              <div class="slds-has-flexi-truncate forcePageBlockItem forcePageBlockItemView">
+                  <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                     <div class="">
+                        <span class="test-id__field-label slds-form-element__label appLabel">{!$ObjectType.Business_Code__c.fields.Sub_Industry_Group__c.Label}</span>
+                     </div>
+                     <div class="slds-form-element__control slds-grid itemBody">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator appLabel">&nbsp;{!industrySubGroup}</span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="slds-grid full forcePageBlockSectionRow" >
+               <div class="slds-has-flexi-truncate forcePageBlockItem forcePageBlockItemView">
+                  <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                     <div class="">
+                        <span class="test-id__field-label slds-form-element__label appLabel">{!$ObjectType.Business_Code__c.fields.Business_Code_Description__c.Label}</span>
+                     </div>
+                     <div class="slds-form-element__control slds-grid itemBody" >
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator appLabel">
+                        &nbsp;{!description}
+                        </span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="slds-grid full forcePageBlockSectionRow">
+              <div class="slds-has-flexi-truncate forcePageBlockItem forcePageBlockItemView">
+                  <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                     <div class="">
+                        <span class="test-id__field-label slds-form-element__label appLabel">{!$ObjectType.Business_Code__c.fields.Sub_Industry_Group_Description__c.Label}</span>
+                     </div>
+                     <div class="slds-form-element__control slds-grid itemBody">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator appLabel">&nbsp;{!subIndustryGroupDesc}</span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="slds-grid full forcePageBlockSectionRow" >
+               <div class="slds-has-flexi-truncate forcePageBlockItem forcePageBlockItemView">
+                  <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                     <div class="">
+                        <span class="test-id__field-label slds-form-element__label appLabel">{!$ObjectType.Business_Code__c.fields.Industry_Risk_Rating__c.Label}</span>
+                     </div>
+                     <div class="slds-form-element__control slds-grid itemBody" >
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator appLabel">
+                        &nbsp;{!gradeIndustry}
+                        </span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="slds-grid full forcePageBlockSectionRow">
+              <div class="slds-has-flexi-truncate forcePageBlockItem forcePageBlockItemView ">
+                  <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                     <div class="">
+                        <span class="test-id__field-label slds-form-element__label appLabel"> {!$ObjectType.Business_Code__c.fields.X26_Industries_Group__c.Label}</span>
+                     </div>
+                     <div class="slds-form-element__control slds-grid itemBody">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator appLabel">&nbsp;{!industryGroup}</span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="slds-grid full forcePageBlockSectionRow" >
+               <div class="slds-has-flexi-truncate forcePageBlockItem forcePageBlockItemView ">
+                  <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                     <div class="">
+                        <span class="test-id__field-label slds-form-element__label appLabel">{!$ObjectType.Business_Code__c.fields.Industry_Type__c.Label}</span>
+                     </div>
+                     <div class="slds-form-element__control slds-grid itemBody">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator appLabel">&nbsp;{!industryType}</span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+    </div>
+
+</div>
+</div>
+</body>
+</html>
+</apex:page>

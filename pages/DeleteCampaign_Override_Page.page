@@ -1,0 +1,6 @@
+<apex:page standardcontroller="Campaign" extensions="CheckDeleteCampaignController" action="{!checkDelete}">
+  
+	<div style="font-size: 20px"><b>Unfortunately we cannot delete your campaign , Please remove all target list.</b></div>
+    <br/>
+	Click <a href="javascript:history.back()"> here</a> to return to the previous page
+</apex:page>

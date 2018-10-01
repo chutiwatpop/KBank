@@ -1,0 +1,23 @@
+<apex:page sidebar="false"  standardController="Account" extensions="SME_FraudSection_Controller" action="{!init}" lightningStylesheets="true"  showHeader="false" applyHtmlTag="false" applyBodyTag="false">
+<apex:slds />
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <apex:slds />
+        <style>
+            .appLabel{
+                color:rgb(112, 110, 107)!important;
+            }
+        </style>
+    </head>
+    <body class="slds-scope">
+        <div  class="slds-form-element__label appLabel">
+            Color Group
+        </div>
+        <div>
+            <canvas id="myCanvas" width="24" height="12" style="display:{!IF(isShowFraud,'inline-block','none')};background:{!colorCode};"/>
+            <span style="display:{!IF(isShowFraud,'none','inline-block')};margin-top:-2px">{!fraudMessage}</span>
+        </div>
+    </body>
+</html>
+</apex:page>

@@ -1,0 +1,688 @@
+<!-- 2017/04/20  Fix Incident INC000000622866   -->
+<apex:page standardController="Account" extensions="FinancialInformation_Controller,FinancialInformation_Remote" applyBodyTag="false" applyHtmlTag="false" docType="html-5.0" showHeader="false" sidebar="false" action="{!initData}">
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <apex:includeScript value="{!$Resource.jquery}"/>
+    <apex:includeScript value="{!URLFOR($Resource.sfdc_bs3, 'dist/js/bootstrap.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.sfdc_bs3, 'dist/css/bootstrap-bs3.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bootstrap_icon, '')}"/>
+    <style>
+        .bs3 {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10.92px;
+        }
+        .bs3 .nav > li > a {
+            font-weight: bold !important; 
+            padding: 5px 15px;
+        }
+        .bs3 a.utilization, .bs3 a.utilization:focus {
+            background-color: #86B7A4 !important;
+            color: Gainsboro; !important;
+        }
+
+        .bs3 .nav-tabs > li.active > a.utilization:focus, .bs3 .nav-tabs > li.active > a.utilization {
+             background: #A8E6CF !important;
+             color: black !important;
+     
+        }
+        .bs3 .nav-tabs > li> a.utilization:focus{
+             background: #839098 !important;
+        }
+
+        .bs3 a.interactionHistory, .bs3 a.interactionHistory:focus{
+            background-color: #86B7A4 !important;
+            color: Gainsboro; !important;
+
+        }
+        .bs3 a.financialInformation, .bs3 a.financialInformation:focus {
+             background-color: #AEBC99 !important;
+             color: Gainsboro !important;
+        }
+        .bs3 a.uu, .bs3 a.uu:focus {
+             background-color: #CBA892 !important;
+            color: Gainsboro !important;
+        }
+        .bs3 a.kbankStm, .bs3 a.kbankStm:focus {
+             background-color: #CB8784 !important;
+             color: Gainsboro !important;
+        }       
+        /*.bs3 thead {
+            background-color: #eee;
+        */}
+        .bs3 td, .bs3 th{
+            padding: 4px 2px 4px 5px;
+        }
+        .bs3 h2, .bs3 .h2 {
+            font-size: 20px;
+        }
+        .bs3 .nav-tabs > li.active > a.interactionHistory:focus, .bs3 .nav-tabs > li.active > a.interactionHistory {
+             background: #A8E6CF !important;
+             color: black !important;
+     
+        }
+        .bs3 .nav-tabs > li> a.interactionHistory:focus{
+             background: #839098 !important;
+        }
+      
+        .bs3 .nav-tabs > li.active > a.financialInformation:focus , .bs3 .nav-tabs > li.active > a.financialInformation{
+             background: #C7EA8F !important;
+            color: black !important;
+
+        }
+        .bs3 .nav-tabs > li > a.financialInformation:focus {
+             background: #839098 !important;
+        }
+        .bs3 .nav-tabs > li.active > a.uu:focus , .bs3 .nav-tabs > li.active > a.uu{
+             background: #FFD3B6 !important;
+                         color: white !important;
+
+        }
+        .bs3 .nav-tabs > li> a.uu:focus{
+             background: #839098 !important;
+        }
+        .bs3 .nav-tabs > li.active > a.kbankStm:focus , .bs3 .nav-tabs > li.active > a.kbankStm{
+             background: #FFAAA5 !important;
+                         color: black !important;
+
+        }
+        .bs3 .nav-tabs > li> a.kbankStm:focus{
+             background: #839098 !important;
+        }
+        body .pbBody table.list tr.headerRow td, body .pbBody table.list tr.headerRow th{
+            text-align: center;
+        }
+
+        .bs3 .wrap_datatable {
+            padding: 20px;
+        }
+        .bs3 .valignMiddle {
+            vertical-align: middle !important;
+        }
+
+        .bs3 th {
+            text-align: center !important;
+        }
+
+
+        #interactionHistory_div , #nonCreditTable , #creditTable{
+            display: none;
+        }
+
+        .bs3 h4 {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 13.104px;
+            font-weight: bold;
+        }
+
+        .bs3 .table-bordered thead {
+            background-color: #f4f4f4;
+        }
+
+        .bs3 .alignCenter {
+            text-align: center;
+        }
+
+        .bs3 .table-condensed th {
+            text-align: left !important;
+        }
+
+        .bs3 .alignRight {
+            text-align: right;
+        }
+
+        .bs3 th.alignRight {
+            text-align: right !important;
+        }
+        .bs3 .width145{
+            width: 145px !important;
+            display: inline-block;
+            border-top: 0 !important;
+            border-left: 0 !important;
+            border-right: 0 !important;
+        }
+        .bs3 .boldText {
+            font-weight: bold;
+        }
+
+        .bs3 span.topData {
+            font-size: 12px;
+        }
+        .errorMsg {
+            color: red;
+            display: none;
+        }
+
+    </style>
+    <script src='/soap/ajax/37.0/connection.js' type='text/javascript'></script>
+    <script>
+    var cis = {!cis};
+    var alreadyCallNonCreditData = false;
+    var alreadyCallCreditData = false;
+    var alreadyCallProductHolding = false;
+
+    function checkProfile(){
+        //var profileName = '{!$Profile.Name}';
+        // sforce.connection.sessionId = '{!$Api.Session_ID}';
+        // var accountResult = sforce.connection.query("Select Id, Name, Primary_Segment_Code__c From Account Where CIS__c = '{!cis}'");
+        // records = accountResult.getArray("records");
+        //var customerSegment = {!"'"+accountObj.Primary_Segment_Code__c+"'"};
+
+        // if(profileName == 'CBS-Admin' || profileName == 'CBS-FSVP' || profileName == 'CBS-Middle Office' || profileName == 'CBS-RM' || profileName == 'CBS-TL' || profileName == 'CBS-TM'){
+
+        /*if('{!primarySegment}' == 'HN' || '{!primarySegment}' == 'MI' || '{!primarySegment}' == 'TC' || '{!primarySegment}' == 'RO'){
+            document.getElementById('interactionHistoryHeaderTabId').style.display = "none";
+            document.getElementById('interactionHistory').style.display = "none";
+            document.getElementById("financialInformationHeaderTabId").style.display = "none";
+            document.getElementById("financialInformation").style.display = "none";
+            document.getElementById("kbankStmHeaderTabId").style.display = "none";
+            document.getElementById("kbankStm").style.display = "none";
+            document.getElementById("utilizationHeaderTabId").style.display = 'none';
+            document.getElementById("utilization").style.display = 'none';
+        }else*/ 
+        if({!accountObj.Is_CBS_Customer__c}){
+            document.getElementById('interactionHistoryHeaderTabId').style.display = "none";
+            document.getElementById('interactionHistory').style.display = "none";
+
+            // var cbs_ProductHolding = '<a href="#financialInformation" aria-controls="financialInformation" role="tab" data-toggle="tab" class="financialInformation" onclick="clickProductHolding();">Product Holding (CIS)</a>';
+            // document.getElementById("financialInformationHeaderTabId").innerHTML = cbs_ProductHolding;
+            // document.getElementById("financialInformationHeaderTabId").className = "active";
+            // document.getElementById("financialInformation").className = "tab-pane active";
+
+            document.getElementById("kbankStmHeaderTabId").style.display = "none";
+            document.getElementById("kbankStm").style.display = "none";
+            
+            var cbs_utilization = '<a href="#utilization" aria-controls="utilization" role="tab" data-toggle="tab" class="utilization">Credit Utilization</a>';
+            document.getElementById("utilizationHeaderTabId").innerHTML = cbs_utilization;
+            document.getElementById("utilizationHeaderTabId").className = "active";
+            document.getElementById("utilization").className = "tab-pane active";
+            clickProductHolding();
+        }/*else if({!!isAccountOwnerOrOwnerManager} &&({!accountObj.Is_CBS_Customer__c} || {!accountObj.Is_SME_Customer__c})){
+
+        }*/
+    }    
+
+    function retrieveInteractionHistory() {
+        if('{!primarySegment}' != 'HN'){
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.FinancialInformation_Remote.retrieveInteractionHistory}',
+                cis,
+                function(result, event){
+                    $("#interactionHistoryLoading").hide();
+                    if (event.status) {
+                        $("#interactionHistory_div").show();
+                        $("#appNumber").text(result["appNumber"]);
+                        $("#lastLoanRequestDate").text(result["lastLoanRequestDate"]);
+
+                        $("#salesCredit").text(result["salesCredit"]);
+                        $("#salesCash").text(result["salesCash"]);
+                        $("#salesTerm").text(result["salesTerm"]);
+                        $("#salesPreviousApp").text(result["salesPreviousApp"]);
+                        $("#salesVerifiedApp").text(result["salesVerifiedApp"]);
+
+                        $("#purchaseCredit").text(result["purchaseCredit"]);
+                        $("#purchaseCash").text(result["purchaseCash"]);
+                        $("#purchaseTerm").text(result["purchaseTerm"]);
+                        $("#purchasePreviousApp").text(result["purchasePreviousApp"]);
+                        $("#purchaseVerifiedApp").text(result["purchaseVerifiedApp"]);
+                    } else if (event.type == 'exception') {
+                        $("#interactionHistoryErrorMsg").text(getErrorMessage(event)).show();
+                    } else {
+                        $("#interactionHistoryErrorMsg").text('Unexpected error').show();
+                    }
+                }, 
+                {escape: true, timeout: 12000}
+            );
+        }
+    }
+
+    function handleBothCreditDetailDataResponse(responseMapJson) {
+        var responseMap = jQuery.parseJSON(responseMapJson);
+        for(var productName in responseMap) {
+            if(!responseMap.hasOwnProperty(productName)) continue;
+            $("#"+productName.replace(' ','_')+"_loading").hide();
+            $("#"+productName.replace(' ','_')+"_dataTable").show();
+            var result = responseMap[productName];
+            if(result == undefined || result["error"] != undefined ) {
+                $("#"+productName.replace(' ','_')+"_errorMsg").text(convertErrorMessage(result["error"])).show();
+            } else {
+                var productTbody = $("#"+productName+"_body");
+                productTbody.empty();
+                for(var iRecord=0; iRecord < result.length; iRecord++) {
+                    var trElem = $("<tr></tr>");
+                    for(var iCol=0; iCol < result[iRecord].length; iCol++) {
+                        var tdElem = $("<td>"+result[iRecord][iCol]+"</td>");
+                        trElem.append(tdElem);
+                    }
+                    productTbody.append(trElem);    
+                }
+            }
+        }
+    }
+
+    function handleFinancialInformationResponse(responseMapJson) {
+        var responseMap = jQuery.parseJSON(responseMapJson);
+        creditDataResponse(responseMap['creditData']);
+        nonCreditDataResponse(responseMap);
+    }
+
+    function creditDataResponse(result) {
+        var creditDataError = result['error'];
+        $("#creditLoading").hide();
+
+        var errorMsg = ''
+        if(typeof result == 'undefined' || creditDataError != undefined){
+            errorMsg += ('Credit Product Error : ' + creditDataError + '\n'); 
+        }
+        $("#creditProductErrorMsg").text(convertErrorMessage(errorMsg)).show();
+        $("#creditTable").show();
+        for (var key in result){
+            if(!result.hasOwnProperty(key)) continue;
+            $("#"+key).text(result[key]);
+        }
+    }
+
+    function nonCreditDataResponse(result) {
+        var nonCreditData = result['nonCreditData'];
+        $("#nonCreditTable").show();
+        for (var key in nonCreditData) {
+            if(!nonCreditData.hasOwnProperty(key)) continue;
+            $("#"+key).text(nonCreditData[key]);
+        } 
+        var fcdData = result['FCD'];
+        $("#nonCreditLoading").hide();
+        var errMsg = '';
+        var isNonCreditError = (nonCreditData == undefined || nonCreditData["error"] != undefined);
+        var isFCDError = (fcdData == undefined || fcdData["error"] != undefined);
+
+        if(isNonCreditError || isFCDError) {
+            if(isNonCreditError){
+                var nonCreditDataError = nonCreditData["error"];
+                errMsg += ('Non-credit product : ' + convertErrorMessage(nonCreditDataError));
+            }
+            if(isFCDError){
+                if(errMsg == ''){
+                    errMsg += ('FCD : ' + convertErrorMessage(fcdData["error"]));    
+                }else{
+                    errMsg += (' And FCD : ' + convertErrorMessage(fcdData["error"]));    
+                }
+            }
+            $("#nonCreditProductErrorMsg").text(errMsg).show();
+        }
+        
+    }
+
+    function interactionHistoryResponse(result) {
+        $("#interactionHistoryLoading").hide();
+
+        if(result == undefined || result["error"] != undefined ) {
+            $("#interactionHistoryErrorMsg").text(convertErrorMessage(result["error"])).show();
+        } else {
+            $("#interactionHistory_div").show();
+            $("#appNumber").text(result["appNumber"]);
+            $("#lastLoanRequestDate").text(result["lastLoanRequestDate"]);
+
+            $("#salesCredit").text(result["salesCredit"]);
+            $("#salesCash").text(result["salesCash"]);
+            $("#salesTerm").text(result["salesTerm"]);
+            $("#salesPreviousApp").text(result["salesPreviousApp"]);
+            $("#salesVerifiedApp").text(result["salesVerifiedApp"]);
+
+            $("#purchaseCredit").text(result["purchaseCredit"]);
+            $("#purchaseCash").text(result["purchaseCash"]);
+            $("#purchaseTerm").text(result["purchaseTerm"]);
+            $("#purchasePreviousApp").text(result["purchasePreviousApp"]);
+            $("#purchaseVerifiedApp").text(result["purchaseVerifiedApp"]);
+        }
+    }
+
+    function convertErrorMessage(errorMsg) {
+        if(errorMsg == undefined) return 'Unexpected error';
+        return errorMsg;
+    }
+
+    function getErrorMessage(event) {
+        var errorMessage = 'Unexpected error';
+        if(event.message.indexOf("StatusCode:404") > -1) {
+            errorMessage  = '{!ADAPTER_NOT_AVAILABLE}';
+        } else if(event.message.indexOf("Application Time Out") > -1) {
+            errorMessage = '{!HOST_EXCEPTION}';
+        }
+        return errorMessage;
+    }
+
+    function retrievedNonCreditDetailData(productName) {
+        $("#"+productName.replace(' ','_')+"_dataTable").hide();
+        $("#"+productName.replace(' ','_')+"_loading").show();
+
+        if( productName == 'FCD'){
+            if('{!responseMapJsonFCD}' != undefined && '{!responseMapJsonFCD}' != null ){
+                requestFCDDetailData();
+            }
+        }else{
+            requestNonCreditDetailData(cis, productName);
+        }
+    }
+
+    function retrievedCreditDetailData(productName) {
+        if( productName == 'CC' || productName == 'KEC')
+        {
+            $("#"+productName.replace(' ','_')+"_dataTable").hide();
+            $("#"+productName.replace(' ','_')+"_loading").show();
+            requestCreditDetailData(cis, productName);
+        }
+    }
+
+    function checkToggle(elem, afterClick) {
+        if(afterClick) {
+            if(elem.attr('aria-expanded') == 'true') {
+                elem.find('i').addClass('glyphicon-chevron-down');
+                elem.find('i').removeClass('glyphicon-chevron-right');
+            } else {
+                elem.find('i').addClass('glyphicon-chevron-right');
+                elem.find('i').removeClass('glyphicon-chevron-down');
+            }    
+        }
+        else {
+            if(elem.attr('aria-expanded') == 'true') {
+                elem.find('i').addClass('glyphicon-chevron-right');
+                elem.find('i').removeClass('glyphicon-chevron-down');
+            } else {
+                elem.find('i').addClass('glyphicon-chevron-down');
+                elem.find('i').removeClass('glyphicon-chevron-right');
+            }    
+        }
+    }
+    function clickProductHolding(){
+        if(!alreadyCallProductHolding){
+            requestFinancialInformation(cis);
+            alreadyCallProductHolding = true;
+        }
+    }
+    $(function() {
+        if({!isAllowShowComponent}) {
+            checkProfile();
+            $(".accordion-toggle").click(function() {
+                var thisElem = $(this);
+                checkToggle(thisElem, false);
+                setTimeout(function() {
+                    checkToggle(thisElem ,true);
+                },1000);
+            });
+            retrieveInteractionHistory();
+        } else {
+            $("#allTabAccount").hide();
+            $("#financialInformationErrorMsg").css('color','rgb(112, 110, 107)');
+            $("#financialInformationErrorMsg").html("<i><div>เฉพาะเจ้าของลูกค้าจึงสามารถเห็นข้อมูลนี้ได้ กรุณาติดต่อเจ้าของลูกค้า</div><div>Only the customer owner can view Financial Account Information.<br/>Please contact customer owner.</div></i>").show();
+        }
+    });
+
+    </script>
+    </head>
+
+    <body>
+        <apex:form >
+            <apex:actionFunction name="requestFinancialInformation" action="{!requestFinancialInformation}" oncomplete="handleFinancialInformationResponse('{!responseMapJson}')" >
+                <apex:param name="cis" value=""/>   
+            </apex:actionFunction>
+
+            <apex:actionFunction name="requestCreditDetailData" action="{!requestCreditDetailData}" oncomplete="handleBothCreditDetailDataResponse('{!responseMapJson}')" >
+                <apex:param name="cis" value="" />
+                <apex:param name="productName" value="" />
+            </apex:actionFunction>
+
+            <apex:actionFunction name="requestNonCreditDetailData" action="{!requestNonCreditDetailData}" oncomplete="handleBothCreditDetailDataResponse('{!responseMapJson}')" >
+                <apex:param name="cis" value="" />
+                <apex:param name="productName" value="" />
+            </apex:actionFunction>
+
+            <apex:actionFunction name="requestFCDDetailData" action="{!requestFCDDetailData}" oncomplete="handleBothCreditDetailDataResponse('{!responseMapJsonFCD}')" >
+            </apex:actionFunction>
+        </apex:form>
+    <div class="errorMsg" id="financialInformationErrorMsg"></div>
+    <div class="bs3" id="allTabAccount">
+        <div role="tabpanel">
+            <!-- Nav tabs -->
+            <ul class="nav nav-tabs" role="tablist" style="margin-bottom: -1px;">
+                <li role="presentation" class="active" id="interactionHistoryHeaderTabId" style="display: block">
+                    <a href="#interactionHistory" aria-controls="interactionHistory" role="tab" data-toggle="tab" class="interactionHistory">Interaction History</a>
+                </li>
+                <!-- <li role="presentation" id="financialInformationHeaderTabId">
+                    <a href="#financialInformation" aria-controls="financialInformation" role="tab" data-toggle="tab" 
+                    class="financialInformation" onclick="clickProductHolding();">Product Holding</a>
+                </li> -->
+                <li role="presentation" id="kbankStmHeaderTabId" style="display: block">
+                    <a href="#kbankStm" aria-controls="kbankStm" role="tab" data-toggle="tab" class="kbankStm">KBank Statement</a>
+                </li>
+                <li role="presentation" id="utilizationHeaderTabId">
+                    <a href="#utilization" aria-controls="utilization" role="tab" data-toggle="tab" class="utilization">Utilization</a>
+                </li>
+            </ul>
+
+            <!-- Tab panes -->
+            <div class="tab-content">
+                <div role="tabpanel" class="tab-pane active" id="interactionHistory" >
+                    <div id="interactionHistoryLoading" class="wrap_datatable">
+                        <span id="loading_status"></span>
+                        <img src="/img/loading32.gif" width="16px" />
+                    </div>
+                    <div class="errorMsg" id="interactionHistoryErrorMsg"></div>
+                    <div id="interactionHistory_div" class="wrap_datatable">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <span class="topData">Latest Loan Request Date :</span>
+                                <span id="lastLoanRequestDate"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <span class="topData">Application No. :</span> 
+                                <span id="appNumber"></span>
+                            </div>
+                        </div>
+                        <br/>
+                        <table id="interactionHistory_table" class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th class="alignCenter">Credit (%)</th>
+                                    <th>Cash (%)</th>
+                                    <th>Term (Days)</th>
+                                    <th>Previous App</th>
+                                    <th>Verified App</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="boldText">Sales</td>
+                                    <td class="alignRight" id="salesCredit"></td>
+                                    <td class="alignRight" id="salesCash"></td>
+                                    <td class="alignRight" id="salesTerm"></td>
+                                    <td class="alignRight" id="salesPreviousApp"></td>
+                                    <td class="alignRight" id="salesVerifiedApp"></td>
+                                </tr>
+                                <tr>
+                                    <td class="boldText">Purchase</td>
+                                    <td class="alignRight" id="purchaseCredit"></td>
+                                    <td class="alignRight" id="purchaseCash"></td>
+                                    <td class="alignRight" id="purchaseTerm"></td>
+                                    <td class="alignRight" id="purchasePreviousApp"></td>
+                                    <td class="alignRight" id="purchaseVerifiedApp"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane" id="financialInformation"> 
+                    <div class="col-lg-12" style="padding-top:10px;">
+                        <div id="creditProductErrorMsg" class="errorMsg"></div>
+                        <h4 style="padding:10px;">Credit Products</h4>
+                        <hr style="margin-top:10px;margin-bottom:10px;" />
+
+                        <div id="creditLoading" class="wrap_datatable">
+                            <span id="loading_status"></span>
+                            <img src="/img/loading32.gif" width="16px" />
+                        </div>
+                        
+                        <table id="creditTable" class="table table-condensed" style="border-collapse:collapse;">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="alignRight">{!financialInformationData.accountLimit}</th>
+                                <th class="alignRight">{!financialInformationData.accountOutstanding}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <apex:repeat value="{!financialInformationData.creditProductList}" var="creditName" id="creditName">
+                            <tr data-toggle="collapse" data-target="#{!SUBSTITUTE(creditName,' ','_')}_detail" class="accordion-toggle" onclick="retrievedCreditDetailData('{!creditName}'); return false;">
+                                <td class="boldText"><i class="glyphicon glyphicon-chevron-right"></i> {!creditName}
+                                </td>
+                                <td id="{!creditName}_Limit" class="alignRight"></td>
+                                <td id="{!creditName}_Outstanding" class="alignRight"></td>
+                                <td></td>
+                            </tr>
+
+                            <tr>
+                                <td colspan="4" class="hiddenRow">
+
+                                    <div id="{!SUBSTITUTE(creditName,' ','_')}_detail" class="accordian-body collapse">
+                                    <div id="{!SUBSTITUTE(creditName,' ','_')}_loading" class="wrap_datatable" style="display:none;">
+                                        <span id="loading_status"></span>
+                                        <img src="/img/loading32.gif" width="16px" />
+                                    </div>
+                                        <table class="table table-bordered" id="{!SUBSTITUTE(creditName,' ','_')}_dataTable">
+                                            <thead>
+                                                <tr>
+                                                    <apex:repeat value="{!financialInformationData.creditDetailHeader[creditName]}" var="headText" id="headText">
+                                                        <td class="alignCenter">{!headText}</td>
+                                                    </apex:repeat>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="{!SUBSTITUTE(creditName,' ','_')}_body">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                            </apex:repeat>
+                        </tbody>
+                    </table>
+                    </div>
+                    <div class="col-lg-12" style="padding-top:10px;">
+                        <h4 style="padding:10px;">Non-Credit Products</h4>
+                        <hr style="margin-top:10px;margin-bottom:10px;" />
+
+                        <div id="nonCreditLoading" class="wrap_datatable">
+                            <span id="loading_status"></span>
+                            <img src="/img/loading32.gif" width="16px" />
+                        </div>
+                        <div id="nonCreditProductErrorMsg" class="errorMsg"></div>
+
+                        <table id="nonCreditTable" class="table table-condensed" style="border-collapse:collapse;">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="alignRight">Outstanding</th>
+                                <th width="50%"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <apex:repeat value="{!financialInformationData.nonCreditProductList}" var="nonCreditName" id="nonCreditName">
+                            <tr data-toggle="collapse" data-target="#{!SUBSTITUTE(nonCreditName,' ','_')}_detail" class="accordion-toggle" onclick="retrievedNonCreditDetailData('{!nonCreditName}'); return false;">
+                                <td class="boldText"><i class="glyphicon glyphicon-chevron-right"></i> {!nonCreditName}
+                                </td>
+                                <td id="{!SUBSTITUTE(nonCreditName,' ','_')}_Outstanding" class="alignRight"></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="6"  class="hiddenRow">
+                                    <div id="{!SUBSTITUTE(nonCreditName,' ','_')}_detail" class="accordian-body collapse">
+                                    <div id="{!SUBSTITUTE(nonCreditName,' ','_')}_loading" class="wrap_datatable" style="display:none;">
+                                        <span id="loading_status"></span>
+                                        <img src="/img/loading32.gif" width="16px" />
+                                    </div>
+                                        <table class="table table-bordered" id="{!SUBSTITUTE(nonCreditName,' ','_')}_dataTable">
+                                            <thead>
+                                                <tr>
+                                                    <apex:repeat value="{!financialInformationData.nonCreditDetailHeader[nonCreditName]}" var="headText" id="headText">
+                                                        <td class="alignCenter">{!headText}</td>
+                                                    </apex:repeat>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="{!SUBSTITUTE(nonCreditName,' ','_')}_body">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                            </apex:repeat>
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane" id="kbankStm" >
+                    <div id="kbankstm_div" class="wrap_datatable">
+                        <table id="kbankstm_table" class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <apex:repeat value="{!kbankSTMHeader}" var="header" id="kbankSTMHeader">
+                                        <th>{!header}</th>
+                                    </apex:repeat>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <apex:repeat value="{!kbankSTMData}" var="row" id="kbankSTMData">
+                                <tr>
+                                    <apex:variable value="{!1}" var="rowNum"/>
+                                    <apex:repeat value="{!row}" var="col" id="kbankSTMRow">
+                                        <td class="{!IF(rowNum > 1,'alignRight','width145 boldText')}">{!col}</td>
+                                        <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                                    </apex:repeat>
+                                </tr>
+                                </apex:repeat>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane" id="utilization">
+                    <div id="utilization_div" class="wrap_datatable">
+                        <table id="utilization_table" class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th colspan="2">Product</th>
+                                    <apex:repeat value="{!utilizationData.headerList}" var="header" id="utilizationHeader">
+                                        <th>{!header}</th>
+                                    </apex:repeat>
+                                </tr>   
+                            </thead>
+                            <tbody>
+                                <apex:repeat value="{!utilizationData.utilizationMap}" var="productName" id="utilizationProduct">
+                                <tr>
+                                    <td rowspan="3" class="valignMiddle">{!productName}</td>
+                                    <td>AVG OUT</td>
+                                    <apex:repeat value="{!utilizationData.utilizationMap[productName].outstandingList}" var="col" id="avgoutRow">
+                                        <td class="alignRight">{!col}</td>
+                                    </apex:repeat>
+                                </tr>
+                                <tr>
+                                    <td>LIMIT</td>
+                                    <apex:repeat value="{!utilizationData.utilizationMap[productName]['limitList']}" var="col" id="limitRow">
+                                        <td class="alignRight">{!col}</td>
+                                    </apex:repeat>
+                                </tr>
+                                <tr>
+                                    <td>%Utilization</td>
+                                    <apex:repeat value="{!utilizationData.utilizationMap[productName].utilizationList}" var="col" id="utilizationRow">
+                                        <td class="alignRight">{!col}</td>
+                                    </apex:repeat>
+                                </tr>
+                                </apex:repeat>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div><!-- tabpanel -->
+    </div><!-- bs3 -->
+    </body>
+    </html>
+</apex:page>

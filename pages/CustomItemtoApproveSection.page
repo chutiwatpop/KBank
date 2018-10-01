@@ -1,0 +1,174 @@
+<apex:page controller="CustomItemtoApproveSection_Controller"  applyBodyTag="false" applyHtmlTag="false" docType="html-5.0" showHeader="false" sidebar="false" >
+<apex:includeScript value="{!URLFOR($Resource.jquery, '')}"/>
+	<style type="text/css">
+	body .bPageBlock{
+		border-color: #1797c0;
+	}
+	</style>
+	<apex:form >
+		<apex:pageBlock title="{!SECTION_TITLE}" id="pageBlockApproval" >
+		 	  <apex:pageBlockButtons location="top">
+
+            		<!-- <button type="button" onclick="submitApproval('{!APPROVE}');">{!APPROVE}</button>
+            		<button type="button" onclick="submitApproval('{!REJECT}')">{!REJECT}</button> -->
+
+            		<apex:commandButton id="submitButton" onclick="submitApproval('{!APPROVE}'); return false;" value="{!APPROVE}" 
+            		rendered="{!!isSelectBulkAssignment}"/>
+            		<apex:commandButton id="rejectButton" onclick="submitApproval('{!REJECT}'); return false;" value="{!REJECT}"
+            		rendered="{!!isSelectBulkAssignment}"/>
+            		<apex:commandButton onclick="redirectToBulkAssignmentPage();return false;" 
+            		value="{!GOTO_BULKASSIGNMENT_PAGE}"
+            		rendered="{!isSelectBulkAssignment}"/>
+
+	                    <apex:selectList multiselect="false" value="{!filterType}" size="1" style="float:right;" 
+	                    rendered="{!isCBSAdminUser}" onchange="setfilterInController(this.value)">
+	                    	<apex:selectOption itemValue="Others" itemLabel="Others"/>
+				            <apex:selectOption itemValue="Bulk Assignment" itemLabel="Bulk Assignment"/>                    
+	        			</apex:selectList>
+        			
+
+		 	  </apex:pageBlockButtons>
+		 	  	<!-- <apex:inputTextarea id="commentTextArea" value="{!commentText}">Comment</apex:inputTextarea> -->
+			<div style="overflow: scroll; max-height: 200px;min-height: 200px;">	  
+		 	<apex:pageBlockTable value="{!processInstanceWorkItemWrapperList}" var="processInstanceWorkItemWrapper"  id="pgTable">
+		 	  	<apex:column rendered="{!!isSelectBulkAssignment}">
+		 	  		<apex:facet name="header">
+                    	<apex:inputCheckbox id="checkBoxHeader" onclick="checkAll();">
+                    	</apex:inputCheckbox>
+                	</apex:facet>
+                	<apex:inputCheckbox styleClass="checkBoxClass" onclick="checkOnebox();" value="{!processInstanceWorkItemWrapper.isChecked}" >
+                    </apex:inputCheckbox>
+		 	  	</apex:column>
+
+		 	  	<apex:column headerValue="{!RELATED_TO}">
+		 	  		<apex:outputPanel >
+		 	  			<apex:outputLink value="/{!processInstanceWorkItemWrapper.processInstanceWorkItem.ProcessInstance.TargetObjectId}" 
+		 	  			target="_blank" rendered="{!!isSelectBulkAssignment}">{!processInstanceWorkItemWrapper.processInstanceWorkItem.ProcessInstance.TargetObject.Name}</apex:outputLink>
+		 	  			<apex:outputText value="{!processInstanceWorkItemWrapper.processInstanceWorkItem.ProcessInstance.TargetObject.Name}" 
+		 	  			rendered="{!isSelectBulkAssignment}">
+		 	  			</apex:outputText>
+		 	  		</apex:outputPanel>
+		 	  	</apex:column>
+
+		 	  	<apex:column headerValue="{!TYPE}">
+		 	  		<apex:outputPanel >
+		 	  			<apex:outputText value="{!processInstanceWorkItemWrapper.objectLabel}"/>
+		 	  		</apex:outputPanel>
+		 	  	</apex:column>
+
+		 	  	<apex:column headerValue="{!MOST_RECENT_APPROVER}" rendered="{!!isSelectBulkAssignment}">
+		 	  		<apex:outputPanel >
+		 	  			<apex:outputLink value="/{!processInstanceWorkItemWrapper.mostRecentApproverId}" target="_blank">{!processInstanceWorkItemWrapper.mostRecentApprover}</apex:outputLink>
+		 	  		</apex:outputPanel>
+		 	  	</apex:column>
+
+		 	  	<apex:column headerValue="{!$ObjectType.Account.Fields.CIS__c.Label}" 
+		 	  	rendered="{!isSelectBulkAssignment}">
+		 	  		<apex:outputPanel >
+		 	  			<apex:outputText value="{!processInstanceWorkItemWrapper.bulkAssignment.CIS_ID__r.CIS__c}"/>
+		 	  		</apex:outputPanel>
+		 	  	</apex:column>
+
+		 	  	<apex:column headerValue="{!$ObjectType.Bulk_Assignment__c.Fields.AssignmentOwner__c.Label}" 
+		 	  	rendered="{!isSelectBulkAssignment}">
+		 	  		<apex:outputPanel >
+		 	  		<apex:outputLink value="/{!processInstanceWorkItemWrapper.bulkAssignment.AssignmentOwner__r.Id}" target="_blank">{!processInstanceWorkItemWrapper.bulkAssignment.AssignmentOwner__r.Name}</apex:outputLink>
+		 	  		</apex:outputPanel>
+		 	  	</apex:column>
+
+		 	  	<apex:column headerValue="{!$ObjectType.Bulk_Assignment_Queue__c.Fields.Request_Reason_Picklist__c.Label}" 
+		 	  	rendered="{!isSelectBulkAssignment}">
+		 	  		<apex:outputPanel >
+		 	  			<apex:outputText value="{!processInstanceWorkItemWrapper.bulkAssignment.BulkAssignmentQueue__r.Request_Reason_Picklist__c}"/>
+		 	  		</apex:outputPanel>
+		 	  	</apex:column>
+
+		 	  	<apex:column headerValue="{!$ObjectType.Bulk_Assignment_Queue__c.Fields.Request_Reason_Text__c.Label}" 
+		 	  	rendered="{!isSelectBulkAssignment}">
+		 	  		<apex:outputPanel >
+		 	  			<apex:outputText value="{!processInstanceWorkItemWrapper.bulkAssignment.Request_Reason_CBS__c}"/>
+		 	  		</apex:outputPanel>
+		 	  	</apex:column>
+
+		 	  	<apex:column headerValue="{!DATE_SUBMITTED}">
+		 	  		<apex:outputPanel >
+		 	  			<apex:outputText value="{!processInstanceWorkItemWrapper.summitDate}"/>
+		 	  		</apex:outputPanel>
+		 	  	</apex:column>
+
+		 	</apex:pageBlockTable>
+		 	</div>
+		 	<apex:pageBlockSection rendered="{!!isSelectBulkAssignment}">
+			 	<apex:pageblocksectionItem >
+			 		<apex:outputlabel value="Comments"/>
+				 	<apex:inputTextarea id="commentTextArea" value="{!commentText}" cols="150" rows="2" style="resize:none;"/>
+			 	</apex:pageblocksectionItem>
+		 	</apex:pageBlockSection>
+		</apex:pageBlock>
+
+
+ 	<apex:actionFunction name="submitToController" action="{!submitForApproval}" 
+ 	 oncomplete="reditectOncomplete('{!isRedirectToBulkAssignment}');" >
+		<apex:param name="approvalType" assignTo="{!approvalType}" value="" />
+	</apex:actionFunction> 
+
+	<apex:actionFunction name="setfilterInController" action="{!setFilter}">
+		<apex:param name="filterType" assignTo="{!filterType}" value="" />
+	</apex:actionFunction> 
+
+
+	</apex:form>
+	
+
+	<script>
+	var waitForContollerResponse = false;
+	function checkAll(){
+		var uncheckboxlist = $(".checkBoxClass:checkbox").not(":checked");
+		if(uncheckboxlist.length == 0){
+			$('.checkBoxClass').prop('checked', false);
+		}else{
+			$('.checkBoxClass').prop('checked', true);
+		}
+	}
+	function checkOnebox(){
+		var uncheckboxlist = $(".checkBoxClass:checkbox").not(":checked");
+		if(uncheckboxlist.length == 0){
+			$('[id$="checkBoxHeader"]').prop('checked', true);
+		}else{
+			$('[id$="checkBoxHeader"]').prop('checked', false);
+		}
+	}
+
+	function submitApproval(type){
+
+		var checkboxList = $( ".checkBoxClass:checkbox:checked" );
+		if(checkboxList.length < 1){
+			alert("{!PLEASE_SELECT_AT_LEASE_ONE_ROW}");
+			return false;
+		}
+
+		if(!waitForContollerResponse){
+			waitForContollerResponse = true;
+			submitToController(type);
+		}
+
+	
+	}
+
+	function reditectOncomplete(isRedirect){
+		console.log('IsRedirect ::'+isRedirect);
+		if(isRedirect == "true"){
+			window.open('/apex/SME_Bulk_Assignment','_blank');
+		}
+		window.parent.location.href = '/home/home.jsp';
+	
+	}
+
+	function redirectToBulkAssignmentPage(){
+		window.parent.location.href = '/apex/SME_Bulk_Assignment';
+	}
+
+
+    
+	</script>
+</apex:page>

@@ -1,0 +1,24 @@
+<apex:page showHeader="false" sidebar="false" standardController="Account">
+    <apex:includeScript value="{!$Resource.jquery}"/>
+    <script type="text/javascript">
+        (function(){
+            // sforce.one.navigateToURL("/apex/Account_ReferOutInformation_Page?cisId={!Account.Id}");
+
+            // if( (typeof sforce != 'undefined') && (sforce != null) ) {
+            //     // do your SF1 mobile button stuff
+            //     sforce.one.navigateToURL("/apex/Account_ReferOutInformation_Page?cisId="+{!Account.Id});
+            // } else {
+            //     // do your desktop stuff
+            //     alert('For salesforce1 only');
+            // }
+            console.log('accountId:' + $('[id$="accountId"]').val());
+            
+        })();
+        $(document).ready(function() { 
+             console.log('ready accountId:' + $('[id$="accountId"]').val());
+        });
+    </script>
+    <apex:form id="mainForm">
+        <apex:inputField id="accountId" value="{!Account.Id}"/>
+    </apex:form> 
+</apex:page>

@@ -1,0 +1,203 @@
+<apex:page title="Create Prospect" showHeader="true" sidebar="true" standardController="Account" extensions="Account_OverrideNew_Controller" lightningStylesheets="true">
+    <apex:slds />
+    <apex:includeLightning />
+    <apex:includeScript value="{!$Resource.jquery}"/>
+    <style type="text/css">
+        body{
+            padding: 0px !important;
+        }
+        #loading-box {
+            display: none;
+            left: 50%;
+            top:30%;
+            position: fixed;
+            width: 32px;
+            height: 32px;
+            scroll no-repeat 0 0;
+            background: url('/img/loading32.gif');
+        }
+    </style>
+    <script type='text/javascript'>
+        function onchangeCompanyDate(component) {
+            var inputValue = document.getElementById(component).value;
+            $('[id$="individualBirthDate"]').val(inputValue);
+        }
+        function onchangeIndividualDate(component) {
+            var inputValue = document.getElementById(component).value;
+            $('[id$="companyBirthDate"]').val(inputValue);
+        }
+
+        function onchangeCISNumber(inputField) {
+            var inputValue = document.getElementById(inputField).value;
+            if(inputValue.length >= 10) {
+               checkCISNumber(inputField);
+            }
+        }
+
+        function checkCISNumber(inputField) {
+            var inputValue = document.getElementById(inputField).value;
+            var regex = new RegExp('^[0-9]+$'); 
+            if (!regex.test(inputValue) || inputValue.length > 10) {
+                alert ("ต้องเป็นตัวเลข 10 หลัก");
+                return false;
+            }
+        }
+
+        function onchangeCustomerType() {
+            var organizationType = "{!$Label.Create_Prospect_Organization}";
+            var individualType = "{!$Label.Create_Prospect_Individual}";
+            if($('[id$="customerType"]').val() == organizationType){
+                $('[name$="businessGroup"]').css('display','');
+                $('[name$="individualGroup"]').css('display','none');
+                $('[id$="businessTitle"]').css('display','');
+                $('[id$="individualSalutation"]').css('display','none');
+            } else if($('[id$="customerType"]').val() == individualType) {
+                $('[name$="businessGroup"]').css('display','none');
+                $('[name$="individualGroup"]').css('display','');
+                $('[id$="businessTitle"]').css('display','none');
+                $('[id$="individualSalutation"]').css('display','');
+            }
+        }
+
+        $(document).ready(function() { 
+            if($('[id$="customerType"]').val() == null || $('[id$="customerType"]').val() == '') {
+                $('[id$="customerType"]').val('Individual');    
+            }
+            onchangeCustomerType();
+        });
+
+        function alertHelpText(){
+            console.log("{!$User.UIThemeDisplayed}");
+            if("{!$User.UIThemeDisplayed}" == 'Theme4t' || "{!$User.UIThemeDisplayed}" == 'Theme4u'){
+                $Lightning.use("c:lightningApp", function() {
+                    $Lightning.createComponent("c:Beryl8Modal",
+                        {'showFooter' : true,'showHeader' : false,'inputContent' : '{!$ObjectType.Account.fields.Encrypt_Identification_No__c.inlineHelpText}','objectId':'001O000001HWysEIAT'},
+                            "myLN",
+                            function(cmp) {}
+                        );
+                });
+            }
+        }
+
+        function showLoading() {
+            $('#loading-box').css('display', 'block');
+        }
+
+        function hideLoading() {
+            $('#loading-box').css('display', 'none');
+        }
+    </script>
+    <div id="myLN"></div>
+    <apex:sectionHeader title="Prospect" subtitle="New Customer" />
+    <apex:form id="mainForm">
+        <div id="loading-box"/>
+        <apex:pageBlock id="pBlock" title="Prospect" mode="edit">
+
+            <apex:actionFunction name="save" action="{!save}" reRender="errorMsg,personCustomerInfo,businessCustomerInfo"/>
+            <apex:pageMessages id="errorMsg"></apex:pageMessages>
+            <div>
+                <table class="detailList" border="0" cellpadding="0" cellspacing="0">
+                    <tbody> 
+                        <tr>
+                            <th class="labelCol">Customer Type</th>
+                            <td class="dataCol">
+                                <apex:selectList id="customerType" value="{!customerType}" size="1" required="true" onchange="onchangeCustomerType()">
+                                    <apex:selectOptions value="{!customerTypeItems}"/>
+                                </apex:selectList>
+                            </td>
+                            <th></th><td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <div class="pbSubheader brandTertiaryBgr tertiaryPalette"><h3>Prospect Information</h3></div>
+                <div class="pbSubsection">
+                    <table class="detailList" border="0" cellpadding="0" cellspacing="0">
+                        <tbody> 
+                            <tr>
+                                <th name="businessGroup" class="labelCol vfLabelColTextWrap" scope="row"><label>{!$ObjectType.Account.fields.Title__c.Label}</label></th>
+                                <td class="dataCol" name="businessGroup"><apex:inputField value="{!Account.Title__c}"/></td>
+                                <th name="individualGroup" class="labelCol vfLabelColTextWrap" scope="row"><label>{!$ObjectType.Account.fields.Salutation.Label}</label></th>
+                                <td class="dataCol" name="individualGroup">
+                                    <apex:selectList value="{!inputSalutation}" size="1">
+                                        <apex:selectOptions value="{!salutations}"/>
+                                    </apex:selectList>
+                                </td>
+                            </tr>
+                            <!-- Individual -->
+                            <tr name="individualGroup">
+                                <th class="labelCol vfLabelColTextWrap" scope="row">
+                                    <label for="personFirstName">{!$ObjectType.Account.fields.FirstName.Label}</label>
+                                </th>
+                                <td class="dataCol"><apex:inputText id="personFirstName" value="{!inputFirstName}"/></td>
+                                <th class="labelCol vfLabelColTextWrap " scope="row">
+                                    {!$ObjectType.Account.fields.CIS__c.Label} / {!$ObjectType.Account.fields.LastName.Label}
+                                    <span style="color: rgb(194, 57, 52);">*</span>
+                                </th>
+
+                                <td class="dataCol">
+                                    <apex:inputText id="personLastName" value="{!inputLastName}"/>
+                                </td>
+                            </tr>
+                            <!-- Business -->
+                            <tr name="businessGroup">
+                                <th class="labelCol vfLabelColTextWrap " scope="row">
+                                    {!$ObjectType.Account.fields.CIS__c.Label} / {!$ObjectType.Account.fields.Name.Label}
+                                    <span style="color: rgb(194, 57, 52);">*</span>
+                                </th>
+                                
+                                <td class="dataCol">
+                                    <apex:inputText id="companyName" value="{!Account.Name}"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="labelCol vfLabelColTextWrap  first " scope="row">
+                                    <label>{!$ObjectType.Account.fields.Document_Type_Prospect__c.Label}</label>
+                                </th>
+                                <td><apex:inputField value="{!Account.Document_Type_Prospect__c}"/></td>
+                            </tr>
+                            <tr>
+                                <th class="labelCol vfLabelColTextWrap" scope="row">
+                                    <span class="helpButton">
+                                    <label for="idNoInput">{!$ObjectType.Account.fields.Encrypt_Identification_No__c.Label}</label>
+                                    <img src="/img/s.gif" alt="" class="helpOrb" title="{!$ObjectType.Account.fields.Encrypt_Identification_No__c.inlineHelpText}" onclick="alertHelpText()" /></span>
+                                </th>
+                                <td class="dataCol "><apex:inputField value="{!Account.Encrypt_Identification_No__c}"/></td>
+                                <th class="labelCol vfLabelColTextWrap " scope="row">
+                                    <label for="individualBirthDate">{!$ObjectType.Account.fields.Birthdate_Registration_Date__c.Label}</label>
+                                </th>
+                                <td>
+                                    <apex:inputField id="individualBirthDate" value="{!Account.Birthdate_Registration_Date__c}"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div>
+                <div class="pbSubheader brandTertiaryBgr tertiaryPalette"><h3>{!$Label.Owner_Information}</h3></div>
+                <div class="pbSubsection">
+                    <table class="detailList" border="0" cellpadding="0" cellspacing="0">
+                        <tbody> 
+                            <tr>
+                                <th class="labelCol vfLabelColTextWrap " scope="row">
+                                    <label for="ownerId">{!$ObjectType.Account.fields.OwnerId.Label}</label>
+                                </th>
+                                <td>
+                                    <apex:outputField id="ownerId" value="{!Account.OwnerId}"/>
+                                </td>
+                                <th></th><td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div style="text-align: center">
+                <apex:commandButton action="{!save}" value="Save" onClick="showLoading();" oncomplete="hideLoading();" reRender="errorMsg"/>
+                <apex:commandButton action="{!cancel}" value="Cancel" />
+            </div>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

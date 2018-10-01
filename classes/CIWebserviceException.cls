@@ -1,0 +1,1 @@
+public class CIWebserviceException extends Exception{}

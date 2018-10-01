@@ -1,0 +1,20 @@
+<apex:page showHeader="true" sidebar="true" controller="SME_FraudWarning_Controller" action="{!init}">
+<html>
+	<head>
+	</head>
+	<body>
+		<apex:form >
+			<apex:pageBlock >
+				<span id="title" style="display:{!IF(isShowFraud,'inline-block','none')};">
+					ลูกค้าอยู่ใน Color Group&nbsp;&nbsp;
+					<canvas id="myCanvas" width="24" height="12" style="background:{!colorCode};">Your browser does not support the HTML5 canvas tag.</canvas>
+				</span>
+				<span style="display:{!IF(isShowFraud,'none','inline-block')};">{!fraudMessage}</span>
+				<div style="margin-top:16px;">
+					<apex:commandButton style="margin:4px 4px 4px 4px;" id="okButton" action="{!redirectNewPage}" value="OK"/>
+				</div>
+			</apex:pageBlock>
+		</apex:form>
+	</body>
+</html>
+</apex:page>
