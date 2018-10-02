@@ -1,6 +1,0 @@
-<!-- redirect to Account_OverrideNew -->
-<aura:component implements="force:lightningQuickActionWithoutHeader,force:hasRecordId"> 
-    <aura:handler name="init" action="{!c.init}" value="{!this}" /> 
-    <aura:attribute name="recordId" type="String" /> 
-    <lightning:spinner variant="brand" aura:id="spinner" class="slds-show backgroundSpinner" alternativeText="Please wait..." />
-</aura:component>

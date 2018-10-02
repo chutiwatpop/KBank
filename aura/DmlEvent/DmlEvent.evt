@@ -1,4 +1,0 @@
-<aura:event type="APPLICATION" description="Event">
-	<aura:attribute name="dmltype" type="String" default=""/>
-	<aura:attribute name="params" type="Map"/>
-</aura:event>
